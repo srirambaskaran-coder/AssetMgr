@@ -968,6 +968,278 @@ async def bulk_import_asset_definitions(
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error processing file: {str(e)}")
 
+# Asset Allocation Routes (Asset Manager)
+@api_router.get("/asset-allocations", response_model=List[AssetAllocation])
+async def get_asset_allocations(
+    current_user: User = Depends(require_role([UserRole.ASSET_MANAGER, UserRole.ADMINISTRATOR]))
+):
+    """Get all asset allocations"""
+    allocations = await db.asset_allocations.find().to_list(1000)
+    return [AssetAllocation(**allocation) for allocation in allocations]
+
+@api_router.post("/asset-allocations", response_model=AssetAllocation)
+async def create_asset_allocation(
+    allocation_data: AssetAllocationCreate,
+    current_user: User = Depends(require_role([UserRole.ASSET_MANAGER, UserRole.ADMINISTRATOR]))
+):
+    """Allocate an asset to an employee based on approved requisition"""
+    # Get requisition details
+    requisition = await db.asset_requisitions.find_one({"id": allocation_data.requisition_id})
+    if not requisition:
+        raise HTTPException(status_code=404, detail="Requisition not found")
+    
+    if requisition["status"] not in [RequisitionStatus.MANAGER_APPROVED, RequisitionStatus.HR_APPROVED]:
+        raise HTTPException(status_code=400, detail="Requisition must be approved before allocation")
+    
+    # Get asset definition details
+    asset_def = await db.asset_definitions.find_one({"id": allocation_data.asset_definition_id})
+    if not asset_def:
+        raise HTTPException(status_code=404, detail="Asset definition not found")
+    
+    if asset_def["status"] != AssetStatus.AVAILABLE:
+        raise HTTPException(status_code=400, detail="Asset is not available for allocation")
+    
+    # Get asset type and user details
+    asset_type = await db.asset_types.find_one({"id": asset_def["asset_type_id"]})
+    requested_user = await db.users.find_one({"id": requisition["requested_by"]})
+    approved_by_user = await db.users.find_one({"id": requisition.get("manager_id") or requisition.get("hr_manager_id")})
+    
+    # Create allocation record
+    allocation_dict = {
+        "id": str(uuid.uuid4()),
+        "requisition_id": allocation_data.requisition_id,
+        "request_type": "Asset Request",
+        "asset_type_id": asset_def["asset_type_id"],
+        "asset_type_name": asset_type["name"] if asset_type else None,
+        "asset_definition_id": allocation_data.asset_definition_id,
+        "asset_definition_code": asset_def["asset_code"],
+        "requested_for": requisition["requested_by"],
+        "requested_for_name": requested_user["name"] if requested_user else None,
+        "approved_by": requisition.get("manager_id") or requisition.get("hr_manager_id"),
+        "approved_by_name": approved_by_user["name"] if approved_by_user else None,
+        "allocated_by": current_user.id,
+        "allocated_by_name": current_user.name,
+        "allocated_date": datetime.now(timezone.utc),
+        "remarks": allocation_data.remarks,
+        "reference_id": allocation_data.reference_id,
+        "document_id": allocation_data.document_id,
+        "dispatch_details": allocation_data.dispatch_details,
+        "status": AssetAllocationStatus.ALLOCATED_TO_EMPLOYEE,
+        "created_at": datetime.now(timezone.utc)
+    }
+    
+    await db.asset_allocations.insert_one(allocation_dict)
+    
+    # Update asset definition status and allocated to
+    await db.asset_definitions.update_one(
+        {"id": allocation_data.asset_definition_id},
+        {
+            "$set": {
+                "status": AssetStatus.ALLOCATED,
+                "allocated_to": requisition["requested_by"],
+                "allocated_to_name": requested_user["name"] if requested_user else None
+            }
+        }
+    )
+    
+    # Update requisition status
+    await db.asset_requisitions.update_one(
+        {"id": allocation_data.requisition_id},
+        {
+            "$set": {
+                "status": RequisitionStatus.ALLOCATED,
+                "allocated_asset_id": allocation_data.asset_definition_id,
+                "allocated_asset_code": asset_def["asset_code"]
+            }
+        }
+    )
+    
+    return AssetAllocation(**allocation_dict)
+
+@api_router.get("/pending-allocations")
+async def get_pending_allocations(
+    current_user: User = Depends(require_role([UserRole.ASSET_MANAGER, UserRole.ADMINISTRATOR]))
+):
+    """Get approved requisitions pending allocation"""
+    pending_requisitions = await db.asset_requisitions.find({
+        "status": {"$in": [RequisitionStatus.MANAGER_APPROVED, RequisitionStatus.HR_APPROVED]}
+    }).to_list(1000)
+    
+    return [AssetRequisition(**req) for req in pending_requisitions]
+
+# Asset Retrieval Routes (Asset Manager)
+@api_router.get("/asset-retrievals", response_model=List[AssetRetrieval])
+async def get_asset_retrievals(
+    current_user: User = Depends(require_role([UserRole.ASSET_MANAGER, UserRole.ADMINISTRATOR]))
+):
+    """Get all asset retrievals"""
+    retrievals = await db.asset_retrievals.find().to_list(1000)
+    return [AssetRetrieval(**retrieval) for retrieval in retrievals]
+
+@api_router.post("/asset-retrievals", response_model=AssetRetrieval)
+async def create_asset_retrieval(
+    retrieval_data: AssetRetrievalCreate,
+    current_user: User = Depends(require_role([UserRole.ASSET_MANAGER, UserRole.ADMINISTRATOR]))
+):
+    """Create asset retrieval record for employee separation"""
+    # Get employee and asset details
+    employee = await db.users.find_one({"id": retrieval_data.employee_id})
+    if not employee:
+        raise HTTPException(status_code=404, detail="Employee not found")
+    
+    asset_def = await db.asset_definitions.find_one({"id": retrieval_data.asset_definition_id})
+    if not asset_def:
+        raise HTTPException(status_code=404, detail="Asset definition not found")
+    
+    # Check if asset is allocated to this employee
+    if asset_def.get("allocated_to") != retrieval_data.employee_id:
+        raise HTTPException(status_code=400, detail="Asset is not allocated to this employee")
+    
+    # Get asset type details
+    asset_type = await db.asset_types.find_one({"id": asset_def["asset_type_id"]})
+    
+    # Find original allocation
+    allocation = await db.asset_allocations.find_one({
+        "asset_definition_id": retrieval_data.asset_definition_id,
+        "requested_for": retrieval_data.employee_id
+    })
+    
+    retrieval_dict = {
+        "id": str(uuid.uuid4()),
+        "employee_id": retrieval_data.employee_id,
+        "employee_name": employee["name"],
+        "asset_definition_id": retrieval_data.asset_definition_id,
+        "asset_definition_code": asset_def["asset_code"],
+        "asset_type_name": asset_type["name"] if asset_type else None,
+        "allocation_id": allocation["id"] if allocation else None,
+        "recovered": False,
+        "remarks": retrieval_data.remarks,
+        "status": "Pending Recovery",
+        "processed_by": current_user.id,
+        "processed_by_name": current_user.name,
+        "created_at": datetime.now(timezone.utc),
+        "updated_at": datetime.now(timezone.utc)
+    }
+    
+    await db.asset_retrievals.insert_one(retrieval_dict)
+    return AssetRetrieval(**retrieval_dict)
+
+@api_router.put("/asset-retrievals/{retrieval_id}", response_model=AssetRetrieval)
+async def update_asset_retrieval(
+    retrieval_id: str,
+    retrieval_update: AssetRetrievalUpdate,
+    current_user: User = Depends(require_role([UserRole.ASSET_MANAGER, UserRole.ADMINISTRATOR]))
+):
+    """Update asset retrieval record"""
+    existing_retrieval = await db.asset_retrievals.find_one({"id": retrieval_id})
+    if not existing_retrieval:
+        raise HTTPException(status_code=404, detail="Asset retrieval record not found")
+    
+    update_data = retrieval_update.dict(exclude_unset=True)
+    update_data["updated_at"] = datetime.now(timezone.utc)
+    
+    # If marking as recovered, update asset status
+    if update_data.get("recovered") == True and not existing_retrieval.get("recovered"):
+        asset_def = await db.asset_definitions.find_one({"id": existing_retrieval["asset_definition_id"]})
+        if asset_def:
+            new_status = AssetStatus.AVAILABLE
+            if update_data.get("asset_condition") == AssetCondition.DAMAGED:
+                new_status = AssetStatus.DAMAGED
+            
+            await db.asset_definitions.update_one(
+                {"id": existing_retrieval["asset_definition_id"]},
+                {
+                    "$set": {
+                        "status": new_status,
+                        "allocated_to": None,
+                        "allocated_to_name": None
+                    }
+                }
+            )
+        
+        # Update allocation status
+        if existing_retrieval.get("allocation_id"):
+            await db.asset_allocations.update_one(
+                {"id": existing_retrieval["allocation_id"]},
+                {"$set": {"status": AssetAllocationStatus.RECEIVED_FROM_EMPLOYEE}}
+            )
+        
+        update_data["status"] = "Recovered"
+        if not update_data.get("returned_on"):
+            update_data["returned_on"] = datetime.now(timezone.utc)
+    
+    await db.asset_retrievals.update_one({"id": retrieval_id}, {"$set": update_data})
+    updated_retrieval = await db.asset_retrievals.find_one({"id": retrieval_id})
+    return AssetRetrieval(**updated_retrieval)
+
+@api_router.get("/allocated-assets")
+async def get_allocated_assets(
+    current_user: User = Depends(require_role([UserRole.ASSET_MANAGER, UserRole.ADMINISTRATOR]))
+):
+    """Get all currently allocated assets"""
+    allocated_assets = await db.asset_definitions.find({"status": AssetStatus.ALLOCATED}).to_list(1000)
+    return allocated_assets
+
+# Asset Manager Dashboard Stats
+@api_router.get("/dashboard/asset-manager-stats")
+async def get_asset_manager_stats(
+    current_user: User = Depends(require_role([UserRole.ASSET_MANAGER, UserRole.ADMINISTRATOR]))
+):
+    """Get comprehensive asset statistics for Asset Manager dashboard"""
+    
+    # Basic asset counts
+    total_assets = await db.asset_definitions.count_documents({})
+    available_assets = await db.asset_definitions.count_documents({"status": AssetStatus.AVAILABLE})
+    allocated_assets = await db.asset_definitions.count_documents({"status": AssetStatus.ALLOCATED})
+    damaged_assets = await db.asset_definitions.count_documents({"status": AssetStatus.DAMAGED})
+    lost_assets = await db.asset_definitions.count_documents({"status": AssetStatus.LOST})
+    under_repair = await db.asset_definitions.count_documents({"status": AssetStatus.UNDER_REPAIR})
+    
+    # Requisition stats
+    pending_allocations = await db.asset_requisitions.count_documents({
+        "status": {"$in": [RequisitionStatus.MANAGER_APPROVED, RequisitionStatus.HR_APPROVED]}
+    })
+    total_allocations = await db.asset_allocations.count_documents({})
+    
+    # Retrieval stats
+    pending_retrievals = await db.asset_retrievals.count_documents({"recovered": False})
+    completed_retrievals = await db.asset_retrievals.count_documents({"recovered": True})
+    
+    # Asset type breakdown
+    asset_type_pipeline = [
+        {"$lookup": {
+            "from": "asset_types",
+            "localField": "asset_type_id",
+            "foreignField": "id",
+            "as": "asset_type"
+        }},
+        {"$unwind": "$asset_type"},
+        {"$group": {
+            "_id": "$asset_type.name",
+            "total": {"$sum": 1},
+            "available": {"$sum": {"$cond": [{"$eq": ["$status", "Available"]}, 1, 0]}},
+            "allocated": {"$sum": {"$cond": [{"$eq": ["$status", "Allocated"]}, 1, 0]}}
+        }}
+    ]
+    
+    asset_type_stats = await db.asset_definitions.aggregate(asset_type_pipeline).to_list(100)
+    
+    return {
+        "total_assets": total_assets,
+        "available_assets": available_assets,
+        "allocated_assets": allocated_assets,
+        "damaged_assets": damaged_assets,
+        "lost_assets": lost_assets,
+        "under_repair": under_repair,
+        "pending_allocations": pending_allocations,
+        "total_allocations": total_allocations,
+        "pending_retrievals": pending_retrievals,
+        "completed_retrievals": completed_retrievals,
+        "asset_type_breakdown": asset_type_stats,
+        "allocation_rate": round((allocated_assets / total_assets * 100) if total_assets > 0 else 0, 1),
+        "availability_rate": round((available_assets / total_assets * 100) if total_assets > 0 else 0, 1)
+    }
+
 # Include the router in the main app
 app.include_router(api_router)
 
