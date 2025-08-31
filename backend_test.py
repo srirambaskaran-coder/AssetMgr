@@ -204,21 +204,27 @@ class AssetInventoryAPITester:
             print(f"   Found {len(response)} asset definitions")
 
     def test_asset_requisition_workflow(self):
-        """Test Asset Requisition workflow"""
-        print(f"\n📝 Testing Asset Requisition Workflow")
+        """Test Enhanced Asset Requisition workflow"""
+        print(f"\n📝 Testing Enhanced Asset Requisition Workflow")
         
         if 'asset_type_id' not in self.test_data:
             print("❌ Skipping Requisition tests - no asset type created")
             return
         
-        # Employee creates requisition
+        # Test 1: New Allocation Request (Self)
+        from datetime import datetime, timedelta
+        required_by_date = (datetime.now() + timedelta(days=7)).isoformat()
+        
         requisition_data = {
             "asset_type_id": self.test_data['asset_type_id'],
-            "justification": "Need laptop for development work"
+            "request_type": "New Allocation",
+            "request_for": "Self",
+            "justification": "Need laptop for development work",
+            "required_by_date": required_by_date
         }
         
         success, response = self.run_test(
-            "Create Asset Requisition (Employee)",
+            "Create New Allocation Request (Employee)",
             "POST",
             "asset-requisitions",
             200,
@@ -228,7 +234,140 @@ class AssetInventoryAPITester:
         
         if success:
             self.test_data['requisition_id'] = response['id']
-            print(f"   Created requisition with ID: {response['id']}")
+            print(f"   Created requisition ID: {response['id'][:8]}...")
+            print(f"   Request type: {response['request_type']}")
+            print(f"   Request for: {response['request_for']}")
+            print(f"   Required by: {response.get('required_by_date', 'Not set')}")
+        
+        # Test 2: Replacement Request with conditional fields
+        replacement_data = {
+            "asset_type_id": self.test_data['asset_type_id'],
+            "request_type": "Replacement",
+            "reason_for_return_replacement": "Current laptop screen is damaged",
+            "asset_details": "Dell Inspiron 15, Serial: DL123456, screen has cracks",
+            "request_for": "Self",
+            "justification": "Need replacement laptop due to hardware failure",
+            "required_by_date": required_by_date
+        }
+        
+        success, response = self.run_test(
+            "Create Replacement Request (Employee)",
+            "POST",
+            "asset-requisitions",
+            200,
+            data=replacement_data,
+            user_role="Employee"
+        )
+        
+        if success:
+            print(f"   Replacement request ID: {response['id'][:8]}...")
+            print(f"   Reason: {response['reason_for_return_replacement'][:30]}...")
+            print(f"   Asset details: {response['asset_details'][:30]}...")
+        
+        # Test 3: Return Request
+        return_data = {
+            "asset_type_id": self.test_data['asset_type_id'],
+            "request_type": "Return",
+            "reason_for_return_replacement": "Project completed, no longer needed",
+            "asset_details": "MacBook Pro 16, Serial: MP789012, good condition",
+            "request_for": "Self",
+            "justification": "Returning equipment after project completion"
+        }
+        
+        success, response = self.run_test(
+            "Create Return Request (Employee)",
+            "POST",
+            "asset-requisitions",
+            200,
+            data=return_data,
+            user_role="Employee"
+        )
+        
+        if success:
+            print(f"   Return request ID: {response['id'][:8]}...")
+        
+        # Test 4: Team Member Request (if we have team members)
+        if "Administrator" in self.tokens:
+            # Get users to find a team member
+            success, users_response = self.run_test(
+                "Get Users for Team Member Test",
+                "GET",
+                "users",
+                200,
+                user_role="Administrator"
+            )
+            
+            if success and users_response:
+                team_member = None
+                for user in users_response:
+                    if user['role'] in ['Employee', 'Manager'] and user['id'] != self.users.get('Employee', {}).get('id'):
+                        team_member = user
+                        break
+                
+                if team_member:
+                    team_member_data = {
+                        "asset_type_id": self.test_data['asset_type_id'],
+                        "request_type": "New Allocation",
+                        "request_for": "Team Member",
+                        "team_member_employee_id": team_member['id'],
+                        "justification": "New team member needs laptop for onboarding",
+                        "required_by_date": required_by_date
+                    }
+                    
+                    success, response = self.run_test(
+                        "Create Team Member Request (Employee)",
+                        "POST",
+                        "asset-requisitions",
+                        200,
+                        data=team_member_data,
+                        user_role="Employee"
+                    )
+                    
+                    if success:
+                        print(f"   Team member request ID: {response['id'][:8]}...")
+                        print(f"   Team member: {response.get('team_member_name', 'Unknown')}")
+        
+        # Test 5: Validation - Replacement without conditional fields (should fail)
+        invalid_replacement = {
+            "asset_type_id": self.test_data['asset_type_id'],
+            "request_type": "Replacement",
+            "request_for": "Self",
+            "justification": "Need replacement"
+            # Missing reason_for_return_replacement and asset_details
+        }
+        
+        success, response = self.run_test(
+            "Invalid Replacement Request (Should Fail)",
+            "POST",
+            "asset-requisitions",
+            422,  # Expecting validation error
+            data=invalid_replacement,
+            user_role="Employee"
+        )
+        
+        if success:
+            print("   ✅ Validation correctly rejected replacement without conditional fields")
+        
+        # Test 6: Team Member request without member ID (should fail)
+        invalid_team_request = {
+            "asset_type_id": self.test_data['asset_type_id'],
+            "request_type": "New Allocation",
+            "request_for": "Team Member",
+            "justification": "Need for team member"
+            # Missing team_member_employee_id
+        }
+        
+        success, response = self.run_test(
+            "Invalid Team Member Request (Should Fail)",
+            "POST",
+            "asset-requisitions",
+            400,  # Expecting validation error
+            data=invalid_team_request,
+            user_role="Employee"
+        )
+        
+        if success:
+            print("   ✅ Validation correctly rejected team member request without member ID")
         
         # Test Get Requisitions for different roles
         for role in ["Employee", "Manager", "HR Manager", "Administrator"]:
@@ -242,6 +381,12 @@ class AssetInventoryAPITester:
                 )
                 if success:
                     print(f"   {role} can see {len(response)} requisitions")
+                    # Check if enhanced fields are present
+                    if response and len(response) > 0:
+                        req = response[0]
+                        enhanced_fields = ['request_type', 'request_for', 'required_by_date']
+                        present_fields = [field for field in enhanced_fields if field in req]
+                        print(f"   Enhanced fields present: {present_fields}")
 
     def test_role_based_access(self):
         """Test role-based access control"""
