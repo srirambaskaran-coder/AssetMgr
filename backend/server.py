@@ -834,6 +834,20 @@ async def update_user(
         raise HTTPException(status_code=404, detail="User not found")
     
     update_data = user_update.dict(exclude_unset=True)
+    
+    # Validate and update reporting manager if provided
+    if "reporting_manager_id" in update_data:
+        if update_data["reporting_manager_id"]:
+            reporting_manager = await db.users.find_one({"id": update_data["reporting_manager_id"]})
+            if not reporting_manager:
+                raise HTTPException(status_code=400, detail="Reporting manager not found")
+            if not reporting_manager.get("is_manager", False):
+                raise HTTPException(status_code=400, detail="Selected reporting manager is not marked as a manager")
+            update_data["reporting_manager_name"] = reporting_manager["name"]
+        else:
+            # Clear reporting manager
+            update_data["reporting_manager_name"] = None
+    
     if update_data:
         await db.users.update_one({"id": user_id}, {"$set": update_data})
         updated_user = await db.users.find_one({"id": user_id}, {"password_hash": 0})
