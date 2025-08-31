@@ -339,6 +339,7 @@ const UserManagement = () => {
             <UserForm 
               initialData={selectedUser}
               onSubmit={(formData) => handleUpdateUser(selectedUser.id, formData)}
+              managers={managers}
               isEdit={true}
             />
           )}
