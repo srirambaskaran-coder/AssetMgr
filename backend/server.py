@@ -811,6 +811,14 @@ async def get_users(
     users = await db.users.find({}, {"password_hash": 0}).to_list(1000)
     return [User(**user) for user in users]
 
+@api_router.get("/users/managers", response_model=List[User])
+async def get_managers(
+    current_user: User = Depends(require_role([UserRole.ADMINISTRATOR]))
+):
+    """Get all users marked as managers"""
+    managers = await db.users.find({"is_manager": True, "is_active": True}, {"password_hash": 0}).to_list(1000)
+    return [User(**manager) for manager in managers]
+
 @api_router.get("/users/{user_id}", response_model=User)
 async def get_user(
     user_id: str,
