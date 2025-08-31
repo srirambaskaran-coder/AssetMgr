@@ -373,6 +373,7 @@ async def login(user_data: UserLogin):
         {"email": "hr@company.com", "name": "HR Manager", "role": UserRole.HR_MANAGER},
         {"email": "manager@company.com", "name": "Department Manager", "role": UserRole.MANAGER},
         {"email": "employee@company.com", "name": "Employee", "role": UserRole.EMPLOYEE},
+        {"email": "assetmanager@company.com", "name": "Asset Manager Demo", "role": UserRole.ASSET_MANAGER},
     ]
     
     # Check if this is a demo user with correct password
