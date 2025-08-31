@@ -349,12 +349,16 @@ const UserManagement = () => {
   );
 };
 
-const UserForm = ({ initialData, onSubmit, isEdit = false }) => {
+const UserForm = ({ initialData, onSubmit, managers = [], isEdit = false }) => {
   const [formData, setFormData] = useState({
     name: initialData?.name || '',
     email: initialData?.email || '',
+    designation: initialData?.designation || '',
     role: initialData?.role || 'Employee',
     password: '',
+    date_of_joining: initialData?.date_of_joining ? new Date(initialData.date_of_joining).toISOString().split('T')[0] : '',
+    is_manager: initialData?.is_manager ?? false,
+    reporting_manager_id: initialData?.reporting_manager_id || '',
     is_active: initialData?.is_active ?? true
   });
   const [loading, setLoading] = useState(false);
@@ -366,10 +370,18 @@ const UserForm = ({ initialData, onSubmit, isEdit = false }) => {
     const submitData = isEdit 
       ? { 
           name: formData.name, 
+          designation: formData.designation,
           role: formData.role, 
+          date_of_joining: formData.date_of_joining ? new Date(formData.date_of_joining).toISOString() : null,
+          is_manager: formData.is_manager,
+          reporting_manager_id: formData.reporting_manager_id || null,
           is_active: formData.is_active 
         }
-      : formData;
+      : {
+          ...formData,
+          date_of_joining: formData.date_of_joining ? new Date(formData.date_of_joining).toISOString() : null,
+          reporting_manager_id: formData.reporting_manager_id || null
+        };
 
     await onSubmit(submitData);
     setLoading(false);
@@ -378,52 +390,108 @@ const UserForm = ({ initialData, onSubmit, isEdit = false }) => {
       setFormData({
         name: '',
         email: '',
+        designation: '',
         role: 'Employee',
         password: '',
+        date_of_joining: '',
+        is_manager: false,
+        reporting_manager_id: '',
         is_active: true
       });
     }
   };
 
+  // Filter out the current user from reporting managers (to prevent self-reporting)
+  const availableManagers = managers.filter(manager => 
+    !isEdit || manager.id !== initialData?.id
+  );
+
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <div>
-        <Label htmlFor="name">Full Name *</Label>
-        <Input
-          id="name"
-          value={formData.name}
-          onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-          placeholder="Enter full name"
-          required
-        />
+    <form onSubmit={handleSubmit} className="space-y-4 max-h-96 overflow-y-auto">
+      <div className="grid grid-cols-2 gap-4">
+        <div>
+          <Label htmlFor="name">Full Name *</Label>
+          <Input
+            id="name"
+            value={formData.name}
+            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+            placeholder="Enter full name"
+            required
+          />
+        </div>
+
+        <div>
+          <Label htmlFor="email">Email Address *</Label>
+          <Input
+            id="email"
+            type="email"
+            value={formData.email}
+            onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+            placeholder="Enter email address"
+            required
+            disabled={isEdit}
+          />
+        </div>
       </div>
 
-      <div>
-        <Label htmlFor="email">Email Address *</Label>
-        <Input
-          id="email"
-          type="email"
-          value={formData.email}
-          onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-          placeholder="Enter email address"
-          required
-          disabled={isEdit}
-        />
+      <div className="grid grid-cols-2 gap-4">
+        <div>
+          <Label htmlFor="designation">Designation</Label>
+          <Input
+            id="designation"
+            value={formData.designation}
+            onChange={(e) => setFormData({ ...formData, designation: e.target.value })}
+            placeholder="e.g., Software Engineer, HR Manager"
+          />
+        </div>
+
+        <div>
+          <Label htmlFor="date_of_joining">Date of Joining</Label>
+          <Input
+            id="date_of_joining"
+            type="date"
+            value={formData.date_of_joining}
+            onChange={(e) => setFormData({ ...formData, date_of_joining: e.target.value })}
+          />
+        </div>
       </div>
 
-      <div>
-        <Label htmlFor="role">Role *</Label>
-        <Select value={formData.role} onValueChange={(value) => setFormData({ ...formData, role: value })}>
-          <SelectTrigger>
-            <SelectValue placeholder="Select role" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="Employee">Employee</SelectItem>
-            <SelectItem value="Manager">Manager</SelectItem>
-            <SelectItem value="HR Manager">HR Manager</SelectItem>
-            <SelectItem value="Administrator">Administrator</SelectItem>
-          </SelectContent>
-        </Select>
+      <div className="grid grid-cols-2 gap-4">
+        <div>
+          <Label htmlFor="role">Role *</Label>
+          <Select value={formData.role} onValueChange={(value) => setFormData({ ...formData, role: value })}>
+            <SelectTrigger>
+              <SelectValue placeholder="Select role" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="Employee">Employee</SelectItem>
+              <SelectItem value="Manager">Manager</SelectItem>
+              <SelectItem value="HR Manager">HR Manager</SelectItem>
+              <SelectItem value="Asset Manager">Asset Manager</SelectItem>
+              <SelectItem value="Administrator">Administrator</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div>
+          <Label htmlFor="reporting_manager_id">Reporting Manager</Label>
+          <Select 
+            value={formData.reporting_manager_id} 
+            onValueChange={(value) => setFormData({ ...formData, reporting_manager_id: value })}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Select reporting manager" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="">No Reporting Manager</SelectItem>
+              {availableManagers.map(manager => (
+                <SelectItem key={manager.id} value={manager.id}>
+                  {manager.name} ({manager.role})
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
       </div>
 
       {!isEdit && (
@@ -440,14 +508,36 @@ const UserForm = ({ initialData, onSubmit, isEdit = false }) => {
         </div>
       )}
 
-      <div className="flex items-center space-x-2">
-        <Switch
-          id="is_active"
-          checked={formData.is_active}
-          onCheckedChange={(checked) => setFormData({ ...formData, is_active: checked })}
-        />
-        <Label htmlFor="is_active">Active User</Label>
+      <div className="flex items-center justify-between">
+        <div className="flex items-center space-x-2">
+          <Switch
+            id="is_manager"
+            checked={formData.is_manager}
+            onCheckedChange={(checked) => setFormData({ ...formData, is_manager: checked })}
+          />
+          <Label htmlFor="is_manager">Is Manager</Label>
+        </div>
+
+        <div className="flex items-center space-x-2">
+          <Switch
+            id="is_active"
+            checked={formData.is_active}
+            onCheckedChange={(checked) => setFormData({ ...formData, is_active: checked })}
+          />
+          <Label htmlFor="is_active">Active User</Label>
+        </div>
       </div>
+
+      {formData.is_manager && (
+        <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
+          <div className="flex items-center">
+            <UserCheck className="h-4 w-4 text-blue-600 mr-2" />
+            <span className="text-sm text-blue-800 font-medium">
+              This user will be available as a reporting manager for other employees
+            </span>
+          </div>
+        </div>
+      )}
 
       <div className="flex justify-end gap-2 pt-4">
         <Button type="submit" disabled={loading} className="bg-blue-600 hover:bg-blue-700">
