@@ -161,6 +161,79 @@ class AssetRequisitionCreate(BaseModel):
     asset_type_id: str
     justification: str
 
+class AssetAllocationStatus(str, Enum):
+    ALLOCATED_TO_EMPLOYEE = "Allocated to Employee"
+    RECEIVED_FROM_EMPLOYEE = "Received from Employee"
+    NOT_RECEIVED_FROM_EMPLOYEE = "Not Received from Employee"
+    DAMAGED = "Damaged"
+    LOST = "Lost"
+
+class AssetCondition(str, Enum):
+    GOOD_CONDITION = "Good Condition"
+    DAMAGED = "Damaged"
+
+class AssetAllocation(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    requisition_id: str
+    request_type: str = "Asset Request"
+    asset_type_id: str
+    asset_type_name: Optional[str] = None
+    asset_definition_id: str
+    asset_definition_code: Optional[str] = None
+    requested_for: str  # Employee ID
+    requested_for_name: Optional[str] = None
+    approved_by: str  # Manager ID / HR Manager ID
+    approved_by_name: Optional[str] = None
+    allocated_by: str  # Asset Manager ID
+    allocated_by_name: Optional[str] = None
+    allocated_date: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    remarks: Optional[str] = None
+    reference_id: Optional[str] = None
+    document_id: Optional[str] = None
+    dispatch_details: Optional[str] = None
+    status: AssetAllocationStatus = AssetAllocationStatus.ALLOCATED_TO_EMPLOYEE
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+class AssetAllocationCreate(BaseModel):
+    requisition_id: str
+    asset_definition_id: str
+    remarks: Optional[str] = None
+    reference_id: Optional[str] = None
+    document_id: Optional[str] = None
+    dispatch_details: Optional[str] = None
+
+class AssetRetrieval(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    employee_id: str
+    employee_name: Optional[str] = None
+    asset_definition_id: str
+    asset_definition_code: Optional[str] = None
+    asset_type_name: Optional[str] = None
+    allocation_id: Optional[str] = None  # Link to original allocation
+    recovered: bool = False
+    asset_condition: Optional[AssetCondition] = None
+    returned_on: Optional[datetime] = None
+    recovery_value: Optional[float] = None  # If asset condition is damaged
+    remarks: Optional[str] = None
+    status: str = "Pending Recovery"
+    processed_by: Optional[str] = None  # Asset Manager ID
+    processed_by_name: Optional[str] = None
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+class AssetRetrievalCreate(BaseModel):
+    employee_id: str
+    asset_definition_id: str
+    remarks: Optional[str] = None
+
+class AssetRetrievalUpdate(BaseModel):
+    recovered: Optional[bool] = None
+    asset_condition: Optional[AssetCondition] = None
+    returned_on: Optional[datetime] = None
+    recovery_value: Optional[float] = None
+    remarks: Optional[str] = None
+    status: Optional[str] = None
+
 class SessionData(BaseModel):
     id: str
     email: str
