@@ -151,7 +151,7 @@ const UserManagement = () => {
             <DialogHeader>
               <DialogTitle>Create New User</DialogTitle>
             </DialogHeader>
-            <UserForm onSubmit={handleCreateUser} />
+            <UserForm onSubmit={handleCreateUser} managers={managers} />
           </DialogContent>
         </Dialog>
       </div>
@@ -183,6 +183,7 @@ const UserManagement = () => {
                   <SelectItem value="HR Manager">HR Manager</SelectItem>
                   <SelectItem value="Manager">Manager</SelectItem>
                   <SelectItem value="Employee">Employee</SelectItem>
+                  <SelectItem value="Asset Manager">Asset Manager</SelectItem>
                 </SelectContent>
               </Select>
               <Select value={statusFilter} onValueChange={setStatusFilter}>
