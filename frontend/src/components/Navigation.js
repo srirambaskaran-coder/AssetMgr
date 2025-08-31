@@ -35,7 +35,7 @@ const Navigation = () => {
       name: 'Dashboard',
       href: '/dashboard',
       icon: LayoutDashboard,
-      roles: ['Administrator', 'HR Manager', 'Employee', 'Manager']
+      roles: ['Administrator', 'HR Manager', 'Employee', 'Manager', 'Asset Manager']
     },
     {
       name: 'Asset Types',
@@ -53,7 +53,19 @@ const Navigation = () => {
       name: 'Asset Requisitions',
       href: '/asset-requisitions',
       icon: ClipboardList,
-      roles: ['Administrator', 'HR Manager', 'Employee', 'Manager']
+      roles: ['Administrator', 'HR Manager', 'Employee', 'Manager', 'Asset Manager']
+    },
+    {
+      name: 'Asset Allocations',
+      href: '/asset-allocations',
+      icon: Package,
+      roles: ['Asset Manager', 'Administrator']
+    },
+    {
+      name: 'Asset Retrievals',
+      href: '/asset-retrievals',
+      icon: ClipboardList,
+      roles: ['Asset Manager', 'Administrator']
     },
     {
       name: 'User Management',
