@@ -183,15 +183,18 @@ frontend:
 
   - task: "Select Component Integration"
     implemented: true
-    working: true
+    working: false
     file: "/app/frontend/src/components/UserManagement.js"
-    stuck_count: 0
-    priority: "medium"
+    stuck_count: 1
+    priority: "high"
     needs_retesting: false
     status_history:
       - working: true
         agent: "main"
         comment: "React Select component for Reporting Manager working correctly. Previously reported error appears to be resolved."
+      - working: false
+        agent: "testing"
+        comment: "❌ CRITICAL ISSUE CONFIRMED: React Select component has runtime errors. Error message: 'A <Select.Item /> must have a value prop that is not an empty string. This is because the Select value can be set to an empty string to clear the selection and show the placeholder.' Multiple Select components affected including role selection and reporting manager selection. Requires immediate debugging and fix."
 
 metadata:
   created_by: "main_agent"
