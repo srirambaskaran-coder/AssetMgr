@@ -1,52 +1,273 @@
-import { useEffect } from "react";
-import "./App.css";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
-import axios from "axios";
+import React, { useState, useEffect, createContext, useContext } from 'react';
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import axios from 'axios';
+import './App.css';
+import { Toaster, toast } from 'sonner';
+
+// Components
+import LoginPage from './components/LoginPage';
+import Dashboard from './components/Dashboard';
+import AssetTypes from './components/AssetTypes';
+import AssetDefinitions from './components/AssetDefinitions';
+import AssetRequisitions from './components/AssetRequisitions';
+import Navigation from './components/Navigation';
+import { Button } from './components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from './components/ui/card';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
 
-const Home = () => {
-  const helloWorldApi = async () => {
+// Auth Context
+const AuthContext = createContext(null);
+
+export const useAuth = () => {
+  const context = useContext(AuthContext);
+  if (!context) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  return context;
+};
+
+// Auth Provider
+const AuthProvider = ({ children }) => {
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [sessionToken, setSessionToken] = useState(localStorage.getItem('session_token'));
+
+  // Set axios default headers
+  useEffect(() => {
+    if (sessionToken) {
+      axios.defaults.headers.common['Authorization'] = `Bearer ${sessionToken}`;
+    } else {
+      delete axios.defaults.headers.common['Authorization'];
+    }
+  }, [sessionToken]);
+
+  // Check for session token on app load
+  useEffect(() => {
+    const checkAuth = async () => {
+      if (sessionToken) {
+        try {
+          const response = await axios.get(`${API}/auth/me`);
+          setUser(response.data);
+        } catch (error) {
+          console.error('Auth check failed:', error);
+          localStorage.removeItem('session_token');
+          setSessionToken(null);
+        }
+      }
+      setLoading(false);
+    };
+
+    checkAuth();
+  }, [sessionToken]);
+
+  // Handle Emergent Auth callback
+  useEffect(() => {
+    const handleAuthCallback = async () => {
+      const hash = window.location.hash;
+      if (hash.includes('session_id=')) {
+        const sessionId = hash.split('session_id=')[1];
+        try {
+          const response = await axios.post(`${API}/auth/emergent-callback?session_id=${sessionId}`);
+          if (response.data.success) {
+            const token = response.data.session_token;
+            localStorage.setItem('session_token', token);
+            setSessionToken(token);
+            setUser(response.data.user);
+            toast.success('Successfully logged in!');
+            // Clear the hash from URL
+            window.location.hash = '';
+            window.location.pathname = '/dashboard';
+          }
+        } catch (error) {
+          console.error('Auth callback failed:', error);
+          toast.error('Authentication failed');
+        }
+      }
+    };
+
+    handleAuthCallback();
+  }, []);
+
+  const login = async (email, password) => {
     try {
-      const response = await axios.get(`${API}/`);
-      console.log(response.data.message);
-    } catch (e) {
-      console.error(e, `errored out requesting / api`);
+      const response = await axios.post(`${API}/auth/login`, { email, password });
+      if (response.data.success) {
+        const token = response.data.session_token;
+        localStorage.setItem('session_token', token);
+        setSessionToken(token);
+        setUser(response.data.user);
+        toast.success('Successfully logged in!');
+        return true;
+      }
+    } catch (error) {
+      console.error('Login failed:', error);
+      toast.error('Login failed. Please check your credentials.');
+      return false;
     }
   };
 
-  useEffect(() => {
-    helloWorldApi();
-  }, []);
+  const logout = () => {
+    localStorage.removeItem('session_token');
+    setSessionToken(null);
+    setUser(null);
+    delete axios.defaults.headers.common['Authorization'];
+    toast.success('Successfully logged out!');
+  };
+
+  const emergentLogin = () => {
+    const redirectUrl = encodeURIComponent(window.location.origin + '/profile');
+    window.location.href = `https://auth.emergentagent.com/?redirect=${redirectUrl}`;
+  };
 
   return (
-    <div>
-      <header className="App-header">
-        <a
-          className="App-link"
-          href="https://emergent.sh"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <img src="https://avatars.githubusercontent.com/in/1201222?s=120&u=2686cf91179bbafbc7a71bfbc43004cf9ae1acea&v=4" />
-        </a>
-        <p className="mt-5">Building something incredible ~!</p>
-      </header>
+    <AuthContext.Provider
+      value={{
+        user,
+        login,
+        logout,
+        emergentLogin,
+        loading,
+        isAuthenticated: !!user,
+      }}
+    >
+      {children}
+    </AuthContext.Provider>
+  );
+};
+
+// Protected Route Component
+const ProtectedRoute = ({ children, requiredRoles = [] }) => {
+  const { user, loading } = useAuth();
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return <Navigate to="/login" replace />;
+  }
+
+  if (requiredRoles.length > 0 && !requiredRoles.includes(user.role)) {
+    return (
+      <div className="min-h-screen flex items-center justify-center p-4">
+        <Card className="max-w-md w-full">
+          <CardHeader>
+            <CardTitle className="text-center text-red-600">Access Denied</CardTitle>
+          </CardHeader>
+          <CardContent className="text-center">
+            <p className="text-gray-600 mb-4">
+              You don't have permission to access this page.
+            </p>
+            <p className="text-sm text-gray-500">
+              Required roles: {requiredRoles.join(', ')}
+            </p>
+            <p className="text-sm text-gray-500">
+              Your role: {user.role}
+            </p>
+            <Button 
+              onClick={() => window.history.back()} 
+              className="mt-4"
+            >
+              Go Back
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  return children;
+};
+
+// Main App Layout
+const AppLayout = ({ children }) => {
+  const { user } = useAuth();
+  const location = useLocation();
+
+  if (location.pathname === '/login') {
+    return children;
+  }
+
+  return (
+    <div className="min-h-screen bg-gray-50">
+      <Navigation />
+      <main className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
+        {children}
+      </main>
     </div>
   );
+};
+
+// Home redirect component
+const Home = () => {
+  const { user } = useAuth();
+  
+  useEffect(() => {
+    if (user) {
+      window.location.pathname = '/dashboard';
+    }
+  }, [user]);
+
+  return <Navigate to="/login" replace />;
 };
 
 function App() {
   return (
     <div className="App">
-      <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Home />}>
-            <Route index element={<Home />} />
-          </Route>
-        </Routes>
-      </BrowserRouter>
+      <AuthProvider>
+        <BrowserRouter>
+          <AppLayout>
+            <Routes>
+              <Route path="/" element={<Home />} />
+              <Route path="/login" element={<LoginPage />} />
+              <Route path="/profile" element={<Navigate to="/dashboard" replace />} />
+              
+              <Route 
+                path="/dashboard" 
+                element={
+                  <ProtectedRoute>
+                    <Dashboard />
+                  </ProtectedRoute>
+                } 
+              />
+              
+              <Route 
+                path="/asset-types" 
+                element={
+                  <ProtectedRoute requiredRoles={['Administrator', 'HR Manager']}>
+                    <AssetTypes />
+                  </ProtectedRoute>
+                } 
+              />
+              
+              <Route 
+                path="/asset-definitions" 
+                element={
+                  <ProtectedRoute requiredRoles={['Administrator', 'HR Manager']}>
+                    <AssetDefinitions />
+                  </ProtectedRoute>
+                } 
+              />
+              
+              <Route 
+                path="/asset-requisitions" 
+                element={
+                  <ProtectedRoute>
+                    <AssetRequisitions />
+                  </ProtectedRoute>
+                } 
+              />
+            </Routes>
+          </AppLayout>
+        </BrowserRouter>
+        <Toaster position="top-right" />
+      </AuthProvider>
     </div>
   );
 }
