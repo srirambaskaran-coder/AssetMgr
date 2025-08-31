@@ -564,6 +564,271 @@ class AssetInventoryAPITester:
                 if success:
                     print(f"   ✅ {role} correctly denied access to {endpoint}")
 
+    def test_asset_manager_dashboard_stats(self):
+        """Test Asset Manager dashboard statistics"""
+        print(f"\n📊 Testing Asset Manager Dashboard Stats")
+        
+        success, response = self.run_test(
+            "Get Asset Manager Dashboard Stats",
+            "GET",
+            "dashboard/asset-manager-stats",
+            200,
+            user_role="Asset Manager"
+        )
+        
+        if success:
+            expected_keys = [
+                "total_assets", "available_assets", "allocated_assets", 
+                "damaged_assets", "lost_assets", "under_repair",
+                "pending_allocations", "total_allocations", 
+                "pending_retrievals", "completed_retrievals",
+                "asset_type_breakdown", "allocation_rate", "availability_rate"
+            ]
+            missing_keys = [key for key in expected_keys if key not in response]
+            if missing_keys:
+                print(f"   ⚠️ Missing keys in response: {missing_keys}")
+            else:
+                print(f"   ✅ All expected dashboard stats present")
+                print(f"   Total Assets: {response.get('total_assets', 0)}")
+                print(f"   Available: {response.get('available_assets', 0)}")
+                print(f"   Allocated: {response.get('allocated_assets', 0)}")
+                print(f"   Pending Allocations: {response.get('pending_allocations', 0)}")
+        
+        return success
+
+    def test_asset_allocations(self):
+        """Test Asset Allocation functionality"""
+        print(f"\n🎯 Testing Asset Allocation Operations")
+        
+        # First, ensure we have test data
+        if 'requisition_id' not in self.test_data or 'asset_def_id' not in self.test_data:
+            print("❌ Skipping Asset Allocation tests - missing requisition or asset definition")
+            return False
+        
+        # Test Get Asset Allocations
+        success, response = self.run_test(
+            "Get Asset Allocations",
+            "GET",
+            "asset-allocations",
+            200,
+            user_role="Asset Manager"
+        )
+        
+        if success:
+            print(f"   Found {len(response)} existing allocations")
+        
+        # Test Get Pending Allocations
+        success, response = self.run_test(
+            "Get Pending Allocations",
+            "GET",
+            "pending-allocations",
+            200,
+            user_role="Asset Manager"
+        )
+        
+        if success:
+            print(f"   Found {len(response)} pending allocations")
+        
+        # Test Create Asset Allocation
+        allocation_data = {
+            "requisition_id": self.test_data['requisition_id'],
+            "asset_definition_id": self.test_data['asset_def_id'],
+            "remarks": "Test allocation for automated testing",
+            "reference_id": "REF001",
+            "document_id": "DOC001",
+            "dispatch_details": "Dispatched via courier"
+        }
+        
+        success, response = self.run_test(
+            "Create Asset Allocation",
+            "POST",
+            "asset-allocations",
+            200,
+            data=allocation_data,
+            user_role="Asset Manager"
+        )
+        
+        if success:
+            self.test_data['allocation_id'] = response['id']
+            print(f"   Created allocation with ID: {response['id']}")
+            print(f"   Status: {response.get('status', 'Unknown')}")
+        
+        # Test Get Allocated Assets
+        success, response = self.run_test(
+            "Get Allocated Assets",
+            "GET",
+            "allocated-assets",
+            200,
+            user_role="Asset Manager"
+        )
+        
+        if success:
+            print(f"   Found {len(response)} allocated assets")
+        
+        return success
+
+    def test_asset_retrievals(self):
+        """Test Asset Retrieval functionality"""
+        print(f"\n🔄 Testing Asset Retrieval Operations")
+        
+        if 'asset_def_id' not in self.test_data:
+            print("❌ Skipping Asset Retrieval tests - missing asset definition")
+            return False
+        
+        # Get employee ID for retrieval test
+        employee_id = self.users.get("Employee", {}).get("id")
+        if not employee_id:
+            print("❌ Skipping Asset Retrieval tests - no employee user found")
+            return False
+        
+        # Test Get Asset Retrievals
+        success, response = self.run_test(
+            "Get Asset Retrievals",
+            "GET",
+            "asset-retrievals",
+            200,
+            user_role="Asset Manager"
+        )
+        
+        if success:
+            print(f"   Found {len(response)} existing retrievals")
+        
+        # Test Create Asset Retrieval
+        retrieval_data = {
+            "employee_id": employee_id,
+            "asset_definition_id": self.test_data['asset_def_id'],
+            "remarks": "Employee separation - asset recovery required"
+        }
+        
+        success, response = self.run_test(
+            "Create Asset Retrieval",
+            "POST",
+            "asset-retrievals",
+            200,
+            data=retrieval_data,
+            user_role="Asset Manager"
+        )
+        
+        if success:
+            self.test_data['retrieval_id'] = response['id']
+            print(f"   Created retrieval with ID: {response['id']}")
+            print(f"   Status: {response.get('status', 'Unknown')}")
+        
+        # Test Update Asset Retrieval
+        if 'retrieval_id' in self.test_data:
+            update_data = {
+                "recovered": True,
+                "asset_condition": "Good Condition",
+                "recovery_value": 0.0,
+                "remarks": "Asset recovered in good condition",
+                "status": "Recovered"
+            }
+            
+            success, response = self.run_test(
+                "Update Asset Retrieval",
+                "PUT",
+                f"asset-retrievals/{self.test_data['retrieval_id']}",
+                200,
+                data=update_data,
+                user_role="Asset Manager"
+            )
+            
+            if success:
+                print(f"   Updated retrieval status: {response.get('status', 'Unknown')}")
+                print(f"   Recovered: {response.get('recovered', False)}")
+        
+        return success
+
+    def test_asset_manager_access_control(self):
+        """Test Asset Manager role-based access control"""
+        print(f"\n🔒 Testing Asset Manager Access Control")
+        
+        # Test Asset Manager accessing allocation endpoints
+        endpoints_should_work = [
+            ("asset-allocations", "GET"),
+            ("pending-allocations", "GET"),
+            ("allocated-assets", "GET"),
+            ("asset-retrievals", "GET"),
+            ("dashboard/asset-manager-stats", "GET")
+        ]
+        
+        for endpoint, method in endpoints_should_work:
+            success, response = self.run_test(
+                f"Asset Manager {method} {endpoint}",
+                method,
+                endpoint,
+                200,
+                user_role="Asset Manager"
+            )
+            
+            if success:
+                print(f"   ✅ Asset Manager can access {endpoint}")
+        
+        # Test other roles trying to access Asset Manager endpoints
+        restricted_tests = [
+            ("Employee", "asset-allocations", "GET", 403),
+            ("Manager", "asset-allocations", "GET", 403),
+            ("Employee", "asset-retrievals", "GET", 403),
+            ("Manager", "asset-retrievals", "GET", 403),
+            ("Employee", "dashboard/asset-manager-stats", "GET", 403),
+            ("Manager", "dashboard/asset-manager-stats", "GET", 403)
+        ]
+        
+        for role, endpoint, method, expected_status in restricted_tests:
+            if role in self.tokens:
+                success, response = self.run_test(
+                    f"{role} {method} {endpoint} (Should Fail)",
+                    method,
+                    endpoint,
+                    expected_status,
+                    user_role=role
+                )
+                
+                if success:
+                    print(f"   ✅ {role} correctly denied access to {endpoint}")
+
+    def test_asset_manager_workflow(self):
+        """Test complete Asset Manager workflow"""
+        print(f"\n🔄 Testing Complete Asset Manager Workflow")
+        
+        # This test requires the full workflow to be set up
+        # 1. Asset type and definition should exist
+        # 2. Requisition should be created and approved
+        # 3. Asset Manager allocates asset
+        # 4. Asset Manager processes retrieval
+        
+        workflow_success = True
+        
+        # Check if we have the necessary test data
+        required_data = ['asset_type_id', 'asset_def_id', 'requisition_id']
+        missing_data = [key for key in required_data if key not in self.test_data]
+        
+        if missing_data:
+            print(f"   ⚠️ Missing test data for workflow: {missing_data}")
+            workflow_success = False
+        
+        # Test Asset Manager dashboard stats
+        if not self.test_asset_manager_dashboard_stats():
+            workflow_success = False
+        
+        # Test Asset Allocations
+        if not self.test_asset_allocations():
+            workflow_success = False
+        
+        # Test Asset Retrievals
+        if not self.test_asset_retrievals():
+            workflow_success = False
+        
+        # Test Access Control
+        self.test_asset_manager_access_control()
+        
+        if workflow_success:
+            print("   ✅ Asset Manager workflow completed successfully")
+        else:
+            print("   ⚠️ Asset Manager workflow had some issues")
+        
+        return workflow_success
+
 def main():
     print("🚀 Starting Asset Inventory Management System API Tests")
     print("=" * 60)
