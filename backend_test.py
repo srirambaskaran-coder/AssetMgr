@@ -857,14 +857,14 @@ def main():
         return 1
     
     # Test /auth/me for all users
-    for role in ["Administrator", "HR Manager", "Manager", "Employee"]:
+    for role in ["Administrator", "HR Manager", "Manager", "Employee", "Asset Manager"]:
         if role in tester.tokens:
             tester.test_auth_me(role)
     
     # Test dashboard stats for all users
     print("\n📊 DASHBOARD TESTS")
     print("-" * 20)
-    for role in ["Administrator", "HR Manager", "Manager", "Employee"]:
+    for role in ["Administrator", "HR Manager", "Manager", "Employee", "Asset Manager"]:
         if role in tester.tokens:
             tester.test_dashboard_stats(role)
     
