@@ -240,22 +240,31 @@ async def emergent_auth_callback(session_id: str):
 @api_router.post("/auth/login")
 async def login(user_data: UserLogin):
     """Simple username/password login (for demo purposes)"""
-    # For demo, create a simple hash-based authentication
-    password_hash = hashlib.sha256(user_data.password.encode()).hexdigest()
+    # Demo users configuration
+    demo_users = [
+        {"email": "admin@company.com", "name": "System Administrator", "role": UserRole.ADMINISTRATOR},
+        {"email": "hr@company.com", "name": "HR Manager", "role": UserRole.HR_MANAGER},
+        {"email": "manager@company.com", "name": "Department Manager", "role": UserRole.MANAGER},
+        {"email": "employee@company.com", "name": "Employee", "role": UserRole.EMPLOYEE},
+    ]
     
-    # Check if user exists
-    user = await db.users.find_one({"email": user_data.email})
-    if not user:
-        # Create demo users if they don't exist
-        demo_users = [
-            {"email": "admin@company.com", "name": "System Administrator", "role": UserRole.ADMINISTRATOR},
-            {"email": "hr@company.com", "name": "HR Manager", "role": UserRole.HR_MANAGER},
-            {"email": "manager@company.com", "name": "Department Manager", "role": UserRole.MANAGER},
-            {"email": "employee@company.com", "name": "Employee", "role": UserRole.EMPLOYEE},
-        ]
+    # Check if this is a demo user with correct password
+    demo_user = next((u for u in demo_users if u["email"] == user_data.email), None)
+    if demo_user and user_data.password == "password123":
+        # Check if user already exists in database
+        existing_user = await db.users.find_one({"email": user_data.email})
         
-        demo_user = next((u for u in demo_users if u["email"] == user_data.email), None)
-        if demo_user and user_data.password == "password123":  # Demo password
+        if existing_user:
+            # Update session token for existing user
+            session_token = str(uuid.uuid4())
+            await db.users.update_one(
+                {"email": user_data.email},
+                {"$set": {"session_token": session_token, "is_active": True}}
+            )
+            existing_user["session_token"] = session_token
+            user = User(**existing_user)
+        else:
+            # Create new demo user
             session_token = str(uuid.uuid4())
             user_data_dict = {
                 "id": str(uuid.uuid4()),
@@ -268,7 +277,8 @@ async def login(user_data: UserLogin):
             }
             await db.users.insert_one(user_data_dict)
             user = User(**user_data_dict)
-            return {"success": True, "user": user.dict(), "session_token": session_token}
+        
+        return {"success": True, "user": user.dict(), "session_token": session_token}
     
     raise HTTPException(status_code=401, detail="Invalid credentials")
 
