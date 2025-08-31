@@ -225,9 +225,12 @@ const UserManagement = () => {
                   <TableRow>
                     <TableHead>Name</TableHead>
                     <TableHead>Email</TableHead>
+                    <TableHead>Designation</TableHead>
                     <TableHead>Role</TableHead>
+                    <TableHead>Manager</TableHead>
+                    <TableHead>Reporting To</TableHead>
+                    <TableHead>Joining Date</TableHead>
                     <TableHead>Status</TableHead>
-                    <TableHead>Created</TableHead>
                     <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -237,9 +240,45 @@ const UserManagement = () => {
                       <TableCell className="font-medium">{user.name}</TableCell>
                       <TableCell>{user.email}</TableCell>
                       <TableCell>
+                        {user.designation && (
+                          <Badge variant="outline" className="bg-gray-50">
+                            {user.designation}
+                          </Badge>
+                        )}
+                      </TableCell>
+                      <TableCell>
                         <Badge className={getRoleBadgeColor(user.role)}>
                           {user.role}
                         </Badge>
+                      </TableCell>
+                      <TableCell>
+                        {user.is_manager ? (
+                          <div className="flex items-center">
+                            <UserCheck className="h-4 w-4 mr-1 text-green-600" />
+                            <Badge className="bg-green-100 text-green-800">Yes</Badge>
+                          </div>
+                        ) : (
+                          <div className="flex items-center">
+                            <UserX className="h-4 w-4 mr-1 text-gray-600" />
+                            <Badge className="bg-gray-100 text-gray-800">No</Badge>
+                          </div>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        {user.reporting_manager_name && (
+                          <div className="flex items-center">
+                            <User className="h-4 w-4 mr-1 text-gray-500" />
+                            <span className="text-sm">{user.reporting_manager_name}</span>
+                          </div>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        {user.date_of_joining && (
+                          <div className="flex items-center">
+                            <Calendar className="h-4 w-4 mr-1 text-gray-500" />
+                            {new Date(user.date_of_joining).toLocaleDateString()}
+                          </div>
+                        )}
                       </TableCell>
                       <TableCell>
                         <div className="flex items-center gap-2">
@@ -255,9 +294,6 @@ const UserManagement = () => {
                             </>
                           )}
                         </div>
-                      </TableCell>
-                      <TableCell>
-                        {new Date(user.created_at).toLocaleDateString()}
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-2">
