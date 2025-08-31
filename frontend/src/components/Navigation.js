@@ -159,6 +159,22 @@ const Navigation = () => {
                     Profile
                   </Link>
                 </DropdownMenuItem>
+                {user?.role === 'Administrator' && (
+                  <>
+                    <DropdownMenuItem asChild>
+                      <Link to="/settings" className="flex items-center cursor-pointer">
+                        <Settings className="mr-2 h-4 w-4" />
+                        Settings
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                      <Link to="/company-profile" className="flex items-center cursor-pointer">
+                        <Building className="mr-2 h-4 w-4" />
+                        Company Profile
+                      </Link>
+                    </DropdownMenuItem>
+                  </>
+                )}
                 <DropdownMenuSeparator />
                 <DropdownMenuItem 
                   onClick={logout}
