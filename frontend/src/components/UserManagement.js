@@ -66,6 +66,7 @@ const UserManagement = () => {
       const response = await axios.post(`${API}/users`, formData);
       setUsers([...users, response.data]);
       setIsCreateModalOpen(false);
+      await fetchManagers(); // Refresh managers list
       toast.success('User created successfully');
     } catch (error) {
       console.error('Error creating user:', error);
@@ -79,6 +80,7 @@ const UserManagement = () => {
       setUsers(users.map(user => user.id === id ? response.data : user));
       setIsEditModalOpen(false);
       setSelectedUser(null);
+      await fetchManagers(); // Refresh managers list
       toast.success('User updated successfully');
     } catch (error) {
       console.error('Error updating user:', error);
