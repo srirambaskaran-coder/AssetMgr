@@ -144,7 +144,7 @@ const AssetRequisitions = () => {
                 Request Asset
               </Button>
             </DialogTrigger>
-            <DialogContent className="max-w-md">
+            <DialogContent className="max-w-2xl">
               <DialogHeader>
                 <DialogTitle>New Asset Requisition</DialogTitle>
               </DialogHeader>
