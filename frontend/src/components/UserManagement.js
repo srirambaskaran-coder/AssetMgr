@@ -483,7 +483,7 @@ const UserForm = ({ initialData, onSubmit, managers = [], isEdit = false }) => {
               <SelectValue placeholder="Select reporting manager" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">No Reporting Manager</SelectItem>
+              <SelectItem value="none">No Reporting Manager</SelectItem>
               {availableManagers.map(manager => (
                 <SelectItem key={manager.id} value={manager.id}>
                   {manager.name} ({manager.role})
