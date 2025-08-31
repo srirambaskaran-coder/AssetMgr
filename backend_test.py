@@ -469,33 +469,207 @@ class AssetInventoryAPITester:
                 print("   ✅ Validation correctly rejected duplicate asset type code")
 
     def test_user_management(self):
-        """Test User Management CRUD operations (Administrator only)"""
-        print(f"\n👥 Testing User Management Operations")
+        """Test Enhanced User Management CRUD operations with new fields"""
+        print(f"\n👥 Testing Enhanced User Management Operations")
         
-        # Test Create User (Administrator only)
-        user_data = {
-            "email": f"testuser_{datetime.now().strftime('%H%M%S')}@company.com",
-            "name": "Test User",
+        # Test 1: Create Manager User (for reporting manager tests)
+        manager_data = {
+            "email": f"manager_{datetime.now().strftime('%H%M%S')}@company.com",
+            "name": "Test Manager",
+            "role": "Manager",
+            "designation": "Senior Manager",
+            "date_of_joining": "2023-01-15T00:00:00Z",
+            "is_manager": True,
+            "password": "TestPassword123!"
+        }
+        
+        success, response = self.run_test(
+            "Create Manager User with New Fields",
+            "POST",
+            "users",
+            200,
+            data=manager_data,
+            user_role="Administrator"
+        )
+        
+        if success:
+            self.test_data['manager_user_id'] = response['id']
+            print(f"   Created manager with ID: {response['id']}")
+            print(f"   Designation: {response.get('designation', 'Not set')}")
+            print(f"   Date of Joining: {response.get('date_of_joining', 'Not set')}")
+            print(f"   Is Manager: {response.get('is_manager', False)}")
+        
+        # Test 2: Create Employee User with all new fields including reporting manager
+        employee_data = {
+            "email": f"employee_{datetime.now().strftime('%H%M%S')}@company.com",
+            "name": "Test Employee",
+            "role": "Employee",
+            "designation": "Software Developer",
+            "date_of_joining": "2024-03-01T00:00:00Z",
+            "is_manager": False,
+            "reporting_manager_id": self.test_data.get('manager_user_id'),
+            "password": "TestPassword123!"
+        }
+        
+        success, response = self.run_test(
+            "Create Employee with Reporting Manager",
+            "POST",
+            "users",
+            200,
+            data=employee_data,
+            user_role="Administrator"
+        )
+        
+        if success:
+            self.test_data['employee_user_id'] = response['id']
+            print(f"   Created employee with ID: {response['id']}")
+            print(f"   Designation: {response.get('designation', 'Not set')}")
+            print(f"   Reporting Manager ID: {response.get('reporting_manager_id', 'Not set')}")
+            print(f"   Reporting Manager Name: {response.get('reporting_manager_name', 'Not set')}")
+        
+        # Test 3: Create User without optional fields
+        basic_user_data = {
+            "email": f"basic_{datetime.now().strftime('%H%M%S')}@company.com",
+            "name": "Basic User",
             "role": "Employee",
             "password": "TestPassword123!"
         }
         
         success, response = self.run_test(
-            "Create User (Administrator)",
+            "Create User Without Optional Fields",
             "POST",
             "users",
             200,
-            data=user_data,
+            data=basic_user_data,
             user_role="Administrator"
         )
         
         if success:
-            self.test_data['created_user_id'] = response['id']
-            print(f"   Created user with ID: {response['id']}")
+            self.test_data['basic_user_id'] = response['id']
+            print(f"   Created basic user with ID: {response['id']}")
+            print(f"   Is Manager (default): {response.get('is_manager', 'Not set')}")
         
-        # Test Get All Users (Administrator only)
+        # Test 4: Get Managers API
         success, response = self.run_test(
-            "Get All Users (Administrator)",
+            "Get All Managers",
+            "GET",
+            "users/managers",
+            200,
+            user_role="Administrator"
+        )
+        
+        if success:
+            print(f"   Found {len(response)} managers")
+            manager_found = False
+            for manager in response:
+                if manager.get('id') == self.test_data.get('manager_user_id'):
+                    manager_found = True
+                    print(f"   ✅ Created manager found in managers list")
+                    break
+            if not manager_found and self.test_data.get('manager_user_id'):
+                print(f"   ⚠️ Created manager not found in managers list")
+        
+        # Test 5: Validation - Invalid reporting manager (not marked as manager)
+        invalid_reporting_data = {
+            "email": f"invalid_{datetime.now().strftime('%H%M%S')}@company.com",
+            "name": "Invalid Reporting Test",
+            "role": "Employee",
+            "reporting_manager_id": self.test_data.get('basic_user_id'),  # Basic user is not a manager
+            "password": "TestPassword123!"
+        }
+        
+        success, response = self.run_test(
+            "Create User with Invalid Reporting Manager (Should Fail)",
+            "POST",
+            "users",
+            400,
+            data=invalid_reporting_data,
+            user_role="Administrator"
+        )
+        
+        if success:
+            print("   ✅ Validation correctly rejected non-manager as reporting manager")
+        
+        # Test 6: Validation - Non-existent reporting manager
+        nonexistent_reporting_data = {
+            "email": f"nonexist_{datetime.now().strftime('%H%M%S')}@company.com",
+            "name": "Non-existent Reporting Test",
+            "role": "Employee",
+            "reporting_manager_id": "non-existent-id",
+            "password": "TestPassword123!"
+        }
+        
+        success, response = self.run_test(
+            "Create User with Non-existent Reporting Manager (Should Fail)",
+            "POST",
+            "users",
+            400,
+            data=nonexistent_reporting_data,
+            user_role="Administrator"
+        )
+        
+        if success:
+            print("   ✅ Validation correctly rejected non-existent reporting manager")
+        
+        # Test 7: Update User with new fields
+        if 'employee_user_id' in self.test_data:
+            update_data = {
+                "designation": "Senior Software Developer",
+                "is_manager": True,
+                "reporting_manager_id": None  # Clear reporting manager
+            }
+            success, response = self.run_test(
+                "Update User with New Fields",
+                "PUT",
+                f"users/{self.test_data['employee_user_id']}",
+                200,
+                data=update_data,
+                user_role="Administrator"
+            )
+            
+            if success:
+                print(f"   Updated designation: {response.get('designation', 'Not set')}")
+                print(f"   Updated is_manager: {response.get('is_manager', False)}")
+                print(f"   Cleared reporting manager: {response.get('reporting_manager_id', 'Not cleared')}")
+        
+        # Test 8: Update User - Set new reporting manager
+        if 'basic_user_id' in self.test_data and 'manager_user_id' in self.test_data:
+            update_data = {
+                "reporting_manager_id": self.test_data['manager_user_id'],
+                "designation": "Junior Developer"
+            }
+            success, response = self.run_test(
+                "Update User - Set Reporting Manager",
+                "PUT",
+                f"users/{self.test_data['basic_user_id']}",
+                200,
+                data=update_data,
+                user_role="Administrator"
+            )
+            
+            if success:
+                print(f"   Set reporting manager: {response.get('reporting_manager_name', 'Not set')}")
+        
+        # Test 9: Update User - Invalid reporting manager validation
+        if 'basic_user_id' in self.test_data and 'employee_user_id' in self.test_data:
+            invalid_update_data = {
+                "reporting_manager_id": self.test_data['basic_user_id']  # Basic user is not a manager
+            }
+            success, response = self.run_test(
+                "Update User with Invalid Reporting Manager (Should Fail)",
+                "PUT",
+                f"users/{self.test_data['employee_user_id']}",
+                400,
+                data=invalid_update_data,
+                user_role="Administrator"
+            )
+            
+            if success:
+                print("   ✅ Update validation correctly rejected non-manager as reporting manager")
+        
+        # Test 10: Get All Users and verify new fields are present
+        success, response = self.run_test(
+            "Get All Users - Verify New Fields",
             "GET",
             "users",
             200,
@@ -504,30 +678,31 @@ class AssetInventoryAPITester:
         
         if success:
             print(f"   Found {len(response)} users")
+            if response:
+                user = response[0]
+                new_fields = ['designation', 'date_of_joining', 'is_manager', 'reporting_manager_id', 'reporting_manager_name']
+                present_fields = [field for field in new_fields if field in user]
+                print(f"   New fields present in user data: {present_fields}")
         
-        # Test Get Single User (Administrator only)
-        if 'created_user_id' in self.test_data:
+        # Test 11: Get Single User and verify all fields
+        if 'employee_user_id' in self.test_data:
             success, response = self.run_test(
-                "Get Single User (Administrator)",
+                "Get Single User - Verify All Fields",
                 "GET",
-                f"users/{self.test_data['created_user_id']}",
+                f"users/{self.test_data['employee_user_id']}",
                 200,
                 user_role="Administrator"
             )
+            
+            if success:
+                print(f"   User details:")
+                print(f"     Name: {response.get('name', 'Not set')}")
+                print(f"     Designation: {response.get('designation', 'Not set')}")
+                print(f"     Date of Joining: {response.get('date_of_joining', 'Not set')}")
+                print(f"     Is Manager: {response.get('is_manager', False)}")
+                print(f"     Reporting Manager: {response.get('reporting_manager_name', 'None')}")
         
-        # Test Update User (Administrator only)
-        if 'created_user_id' in self.test_data:
-            update_data = {"name": "Updated Test User", "role": "Manager"}
-            success, response = self.run_test(
-                "Update User (Administrator)",
-                "PUT",
-                f"users/{self.test_data['created_user_id']}",
-                200,
-                data=update_data,
-                user_role="Administrator"
-            )
-        
-        # Test Employee trying to access user management (should fail)
+        # Test 12: Employee trying to access user management (should fail)
         success, response = self.run_test(
             "Employee Get Users (Should Fail)",
             "GET",
@@ -538,6 +713,18 @@ class AssetInventoryAPITester:
         
         if success:
             print("   ✅ Employee correctly denied access to user management")
+        
+        # Test 13: Employee trying to access managers endpoint (should fail)
+        success, response = self.run_test(
+            "Employee Get Managers (Should Fail)",
+            "GET",
+            "users/managers",
+            403,  # Expecting forbidden
+            user_role="Employee"
+        )
+        
+        if success:
+            print("   ✅ Employee correctly denied access to managers endpoint")
 
     def test_company_profile(self):
         """Test Company Profile operations (Administrator only)"""
