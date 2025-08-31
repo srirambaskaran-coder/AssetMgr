@@ -62,6 +62,15 @@ class ActiveStatus(str, Enum):
     ACTIVE = "Active"
     INACTIVE = "Inactive"
 
+class RequestType(str, Enum):
+    NEW_ALLOCATION = "New Allocation"
+    REPLACEMENT = "Replacement"
+    RETURN = "Return"
+
+class RequestFor(str, Enum):
+    SELF = "Self"
+    TEAM_MEMBER = "Team Member"
+
 # Models
 class User(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
