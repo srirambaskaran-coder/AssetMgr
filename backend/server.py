@@ -586,6 +586,314 @@ async def get_dashboard_stats(current_user: User = Depends(get_current_user)):
     
     return stats
 
+# User Management Routes (Administrator only)
+@api_router.post("/users", response_model=User)
+async def create_user(
+    user_data: UserCreate,
+    current_user: User = Depends(require_role([UserRole.ADMINISTRATOR]))
+):
+    """Create a new user"""
+    # Check if user already exists
+    existing_user = await db.users.find_one({"email": user_data.email})
+    if existing_user:
+        raise HTTPException(status_code=400, detail="User with this email already exists")
+    
+    # Hash password (simple hash for demo)
+    password_hash = hashlib.sha256(user_data.password.encode()).hexdigest()
+    
+    user_dict = {
+        "id": str(uuid.uuid4()),
+        "email": user_data.email,
+        "name": user_data.name,
+        "role": user_data.role,
+        "password_hash": password_hash,
+        "created_at": datetime.now(timezone.utc),
+        "is_active": True
+    }
+    
+    await db.users.insert_one(user_dict)
+    user_dict.pop("password_hash", None)  # Don't return password hash
+    return User(**user_dict)
+
+@api_router.get("/users", response_model=List[User])
+async def get_users(
+    current_user: User = Depends(require_role([UserRole.ADMINISTRATOR]))
+):
+    """Get all users"""
+    users = await db.users.find({}, {"password_hash": 0}).to_list(1000)
+    return [User(**user) for user in users]
+
+@api_router.get("/users/{user_id}", response_model=User)
+async def get_user(
+    user_id: str,
+    current_user: User = Depends(require_role([UserRole.ADMINISTRATOR]))
+):
+    """Get a specific user"""
+    user = await db.users.find_one({"id": user_id}, {"password_hash": 0})
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    return User(**user)
+
+@api_router.put("/users/{user_id}", response_model=User)
+async def update_user(
+    user_id: str,
+    user_update: UserUpdate,
+    current_user: User = Depends(require_role([UserRole.ADMINISTRATOR]))
+):
+    """Update a user"""
+    existing_user = await db.users.find_one({"id": user_id})
+    if not existing_user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    update_data = user_update.dict(exclude_unset=True)
+    if update_data:
+        await db.users.update_one({"id": user_id}, {"$set": update_data})
+        updated_user = await db.users.find_one({"id": user_id}, {"password_hash": 0})
+        return User(**updated_user)
+    
+    existing_user.pop("password_hash", None)
+    return User(**existing_user)
+
+@api_router.delete("/users/{user_id}")
+async def delete_user(
+    user_id: str,
+    current_user: User = Depends(require_role([UserRole.ADMINISTRATOR]))
+):
+    """Delete a user"""
+    if user_id == current_user.id:
+        raise HTTPException(status_code=400, detail="Cannot delete your own account")
+    
+    result = await db.users.delete_one({"id": user_id})
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    return {"message": "User deleted successfully"}
+
+# Company Profile Routes
+@api_router.post("/company-profile", response_model=CompanyProfile)
+async def create_company_profile(
+    profile_data: CompanyProfileCreate,
+    current_user: User = Depends(require_role([UserRole.ADMINISTRATOR]))
+):
+    """Create or update company profile"""
+    # Check if profile already exists
+    existing_profile = await db.company_profile.find_one({})
+    
+    if existing_profile:
+        # Update existing profile
+        update_data = profile_data.dict()
+        update_data["updated_at"] = datetime.now(timezone.utc)
+        await db.company_profile.update_one({}, {"$set": update_data})
+        updated_profile = await db.company_profile.find_one({})
+        return CompanyProfile(**updated_profile)
+    else:
+        # Create new profile
+        profile_dict = profile_data.dict()
+        profile_dict["id"] = str(uuid.uuid4())
+        profile_dict["created_at"] = datetime.now(timezone.utc)
+        profile_dict["updated_at"] = datetime.now(timezone.utc)
+        await db.company_profile.insert_one(profile_dict)
+        return CompanyProfile(**profile_dict)
+
+@api_router.get("/company-profile", response_model=CompanyProfile)
+async def get_company_profile():
+    """Get company profile (public endpoint)"""
+    profile = await db.company_profile.find_one({})
+    if not profile:
+        # Return default profile
+        default_profile = {
+            "id": str(uuid.uuid4()),
+            "company_name": "Your Company Name",
+            "created_at": datetime.now(timezone.utc),
+            "updated_at": datetime.now(timezone.utc)
+        }
+        return CompanyProfile(**default_profile)
+    return CompanyProfile(**profile)
+
+@api_router.put("/company-profile", response_model=CompanyProfile)
+async def update_company_profile(
+    profile_update: CompanyProfileUpdate,
+    current_user: User = Depends(require_role([UserRole.ADMINISTRATOR]))
+):
+    """Update company profile"""
+    update_data = profile_update.dict(exclude_unset=True)
+    if not update_data:
+        raise HTTPException(status_code=400, detail="No data provided for update")
+    
+    update_data["updated_at"] = datetime.now(timezone.utc)
+    
+    # Check if profile exists
+    existing_profile = await db.company_profile.find_one({})
+    if not existing_profile:
+        # Create new profile with provided data
+        profile_dict = update_data
+        profile_dict["id"] = str(uuid.uuid4())
+        profile_dict["company_name"] = profile_dict.get("company_name", "Your Company Name")
+        profile_dict["created_at"] = datetime.now(timezone.utc)
+        await db.company_profile.insert_one(profile_dict)
+        return CompanyProfile(**profile_dict)
+    else:
+        await db.company_profile.update_one({}, {"$set": update_data})
+        updated_profile = await db.company_profile.find_one({})
+        return CompanyProfile(**updated_profile)
+
+# Password Change Route
+@api_router.post("/auth/change-password")
+async def change_password(
+    password_data: PasswordChange,
+    current_user: User = Depends(get_current_user)
+):
+    """Change user password"""
+    user = await db.users.find_one({"id": current_user.id})
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    # For demo users, check if current password is correct
+    current_hash = hashlib.sha256(password_data.current_password.encode()).hexdigest()
+    stored_hash = user.get("password_hash")
+    
+    # If no stored hash (demo users), allow password123
+    if not stored_hash and password_data.current_password != "password123":
+        raise HTTPException(status_code=400, detail="Current password is incorrect")
+    elif stored_hash and stored_hash != current_hash:
+        raise HTTPException(status_code=400, detail="Current password is incorrect")
+    
+    # Hash new password
+    new_hash = hashlib.sha256(password_data.new_password.encode()).hexdigest()
+    
+    # Update password
+    await db.users.update_one(
+        {"id": current_user.id},
+        {"$set": {"password_hash": new_hash}}
+    )
+    
+    return {"message": "Password changed successfully"}
+
+# Bulk Import Routes
+@api_router.get("/asset-definitions/template")
+async def download_asset_definitions_template(
+    current_user: User = Depends(require_role([UserRole.ADMINISTRATOR, UserRole.HR_MANAGER]))
+):
+    """Download CSV template for bulk asset definitions import"""
+    template_data = {
+        'asset_type_code': ['LAPTOP', 'MOBILE'],
+        'asset_code': ['LAP001', 'MOB001'],
+        'asset_description': ['Dell Laptop', 'iPhone 14'],
+        'asset_details': ['Dell Inspiron 15 3000 Series', 'iPhone 14 Pro 128GB'],
+        'asset_value': [50000.00, 80000.00],
+        'asset_depreciation_value_per_year': [16666.67, 26666.67],
+        'status': ['Available', 'Available']
+    }
+    
+    df = pd.DataFrame(template_data)
+    
+    # Create CSV in memory
+    output = io.StringIO()
+    df.to_csv(output, index=False)
+    output.seek(0)
+    
+    # Create response
+    response = StreamingResponse(
+        io.BytesIO(output.getvalue().encode()),
+        media_type="text/csv",
+        headers={"Content-Disposition": "attachment; filename=asset_definitions_template.csv"}
+    )
+    
+    return response
+
+@api_router.post("/asset-definitions/bulk-import", response_model=BulkImportResult)
+async def bulk_import_asset_definitions(
+    file: UploadFile = File(...),
+    current_user: User = Depends(require_role([UserRole.ADMINISTRATOR, UserRole.HR_MANAGER]))
+):
+    """Bulk import asset definitions from CSV file"""
+    if not file.filename.endswith('.csv'):
+        raise HTTPException(status_code=400, detail="Only CSV files are allowed")
+    
+    try:
+        contents = await file.read()
+        df = pd.read_csv(io.BytesIO(contents))
+        
+        required_columns = ['asset_type_code', 'asset_code', 'asset_description', 'asset_details', 'asset_value']
+        missing_columns = [col for col in required_columns if col not in df.columns]
+        
+        if missing_columns:
+            raise HTTPException(
+                status_code=400, 
+                detail=f"Missing required columns: {', '.join(missing_columns)}"
+            )
+        
+        total_rows = len(df)
+        successful_imports = 0
+        failed_imports = 0
+        errors = []
+        
+        # Get all asset types for lookup
+        asset_types = await db.asset_types.find().to_list(1000)
+        asset_type_lookup = {at['code']: at for at in asset_types}
+        
+        for index, row in df.iterrows():
+            try:
+                # Validate asset type exists
+                asset_type_code = row['asset_type_code']
+                if asset_type_code not in asset_type_lookup:
+                    errors.append({
+                        'row': index + 2,  # +2 because pandas is 0-indexed and CSV has header
+                        'error': f'Asset type code "{asset_type_code}" not found'
+                    })
+                    failed_imports += 1
+                    continue
+                
+                asset_type = asset_type_lookup[asset_type_code]
+                
+                # Check if asset code already exists
+                existing_asset = await db.asset_definitions.find_one({"asset_code": row['asset_code']})
+                if existing_asset:
+                    errors.append({
+                        'row': index + 2,
+                        'error': f'Asset code "{row["asset_code"]}" already exists'
+                    })
+                    failed_imports += 1
+                    continue
+                
+                # Create asset definition
+                asset_def_dict = {
+                    "id": str(uuid.uuid4()),
+                    "asset_type_id": asset_type['id'],
+                    "asset_type_name": asset_type['name'],
+                    "asset_code": row['asset_code'],
+                    "asset_description": row['asset_description'],
+                    "asset_details": row['asset_details'],
+                    "asset_value": float(row['asset_value']),
+                    "asset_depreciation_value_per_year": float(row.get('asset_depreciation_value_per_year', 0)) if pd.notna(row.get('asset_depreciation_value_per_year')) else None,
+                    "status": row.get('status', 'Available'),
+                    "current_depreciation_value": float(row['asset_value']),  # Initial value
+                    "created_at": datetime.now(timezone.utc),
+                    "created_by": current_user.id
+                }
+                
+                await db.asset_definitions.insert_one(asset_def_dict)
+                successful_imports += 1
+                
+            except Exception as e:
+                errors.append({
+                    'row': index + 2,
+                    'error': str(e)
+                })
+                failed_imports += 1
+        
+        return BulkImportResult(
+            success=successful_imports > 0,
+            message=f"Import completed. {successful_imports} successful, {failed_imports} failed.",
+            total_rows=total_rows,
+            successful_imports=successful_imports,
+            failed_imports=failed_imports,
+            errors=errors
+        )
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error processing file: {str(e)}")
+
 # Include the router in the main app
 app.include_router(api_router)
 
