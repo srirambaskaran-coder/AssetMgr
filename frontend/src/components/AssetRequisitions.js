@@ -217,9 +217,12 @@ const AssetRequisitions = () => {
               <Table>
                 <TableHeader>
                   <TableRow>
+                    <TableHead>Requisition ID</TableHead>
                     <TableHead>Asset Type</TableHead>
+                    <TableHead>Request Type</TableHead>
+                    <TableHead>Request For</TableHead>
                     <TableHead>Requested By</TableHead>
-                    <TableHead>Justification</TableHead>
+                    <TableHead>Required By</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead>Request Date</TableHead>
                     {user?.role !== 'Employee' && <TableHead>Actions</TableHead>}
@@ -228,18 +231,47 @@ const AssetRequisitions = () => {
                 <TableBody>
                   {filteredRequisitions.map((requisition) => (
                     <TableRow key={requisition.id}>
+                      <TableCell className="font-medium">
+                        <div className="text-xs text-gray-500">
+                          {requisition.id.substring(0, 8)}...
+                        </div>
+                      </TableCell>
                       <TableCell>
                         <Badge variant="outline">
                           {requisition.asset_type_name}
                         </Badge>
                       </TableCell>
+                      <TableCell>
+                        <Badge 
+                          variant={requisition.request_type === 'New Allocation' ? 'default' : 'secondary'}
+                          className={
+                            requisition.request_type === 'New Allocation' ? 'bg-blue-100 text-blue-800' :
+                            requisition.request_type === 'Replacement' ? 'bg-orange-100 text-orange-800' :
+                            'bg-purple-100 text-purple-800'
+                          }
+                        >
+                          {requisition.request_type}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center">
+                          <User className="h-4 w-4 mr-1 text-gray-500" />
+                          {requisition.request_for === 'Team Member' 
+                            ? requisition.team_member_name || 'Team Member' 
+                            : 'Self'
+                          }
+                        </div>
+                      </TableCell>
                       <TableCell className="font-medium">
                         {requisition.requested_by_name}
                       </TableCell>
-                      <TableCell className="max-w-xs">
-                        <div className="truncate" title={requisition.justification}>
-                          {requisition.justification}
-                        </div>
+                      <TableCell>
+                        {requisition.required_by_date && (
+                          <div className="flex items-center">
+                            <Calendar className="h-4 w-4 mr-1 text-gray-500" />
+                            {new Date(requisition.required_by_date).toLocaleDateString()}
+                          </div>
+                        )}
                       </TableCell>
                       <TableCell>
                         <div className="flex items-center gap-2">
