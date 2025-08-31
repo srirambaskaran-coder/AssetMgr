@@ -49,6 +49,18 @@ const Navigation = () => {
       href: '/asset-requisitions',
       icon: ClipboardList,
       roles: ['Administrator', 'HR Manager', 'Employee', 'Manager']
+    },
+    {
+      name: 'User Management',
+      href: '/users',
+      icon: User,
+      roles: ['Administrator']
+    },
+    {
+      name: 'Bulk Import',
+      href: '/bulk-import',
+      icon: FileText,
+      roles: ['Administrator', 'HR Manager']
     }
   ];
 
