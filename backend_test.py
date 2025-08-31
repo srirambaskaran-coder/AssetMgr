@@ -615,6 +615,15 @@ def main():
     # Test validation rules
     tester.test_validation_rules()
     
+    # Test new Administrator features
+    print("\n🆕 NEW ADMINISTRATOR FEATURES TESTS")
+    print("-" * 35)
+    tester.test_user_management()
+    tester.test_company_profile()
+    tester.test_password_change()
+    tester.test_bulk_import_template()
+    tester.test_new_admin_features_access_control()
+    
     # Print final results
     print("\n" + "=" * 60)
     print(f"📊 FINAL RESULTS")
