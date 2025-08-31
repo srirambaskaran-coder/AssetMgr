@@ -890,6 +890,14 @@ def main():
     tester.test_bulk_import_template()
     tester.test_new_admin_features_access_control()
     
+    # Test Asset Manager features
+    print("\n🎯 ASSET MANAGER FEATURES TESTS")
+    print("-" * 32)
+    if "Asset Manager" in tester.tokens:
+        tester.test_asset_manager_workflow()
+    else:
+        print("❌ Asset Manager not logged in - skipping Asset Manager tests")
+    
     # Print final results
     print("\n" + "=" * 60)
     print(f"📊 FINAL RESULTS")
