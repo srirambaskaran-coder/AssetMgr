@@ -771,6 +771,16 @@ async def create_user(
     if existing_user:
         raise HTTPException(status_code=400, detail="User with this email already exists")
     
+    # Validate reporting manager if provided
+    reporting_manager_name = None
+    if user_data.reporting_manager_id:
+        reporting_manager = await db.users.find_one({"id": user_data.reporting_manager_id})
+        if not reporting_manager:
+            raise HTTPException(status_code=400, detail="Reporting manager not found")
+        if not reporting_manager.get("is_manager", False):
+            raise HTTPException(status_code=400, detail="Selected reporting manager is not marked as a manager")
+        reporting_manager_name = reporting_manager["name"]
+    
     # Hash password (simple hash for demo)
     password_hash = hashlib.sha256(user_data.password.encode()).hexdigest()
     
@@ -779,6 +789,11 @@ async def create_user(
         "email": user_data.email,
         "name": user_data.name,
         "role": user_data.role,
+        "designation": user_data.designation,
+        "date_of_joining": user_data.date_of_joining,
+        "is_manager": user_data.is_manager,
+        "reporting_manager_id": user_data.reporting_manager_id,
+        "reporting_manager_name": reporting_manager_name,
         "password_hash": password_hash,
         "created_at": datetime.now(timezone.utc),
         "is_active": True
