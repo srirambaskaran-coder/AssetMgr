@@ -273,6 +273,24 @@ function App() {
               />
               
               <Route 
+                path="/asset-allocations" 
+                element={
+                  <ProtectedRoute requiredRoles={['Asset Manager', 'Administrator']}>
+                    <AssetAllocations />
+                  </ProtectedRoute>
+                } 
+              />
+              
+              <Route 
+                path="/asset-retrievals" 
+                element={
+                  <ProtectedRoute requiredRoles={['Asset Manager', 'Administrator']}>
+                    <AssetRetrievals />
+                  </ProtectedRoute>
+                } 
+              />
+              
+              <Route 
                 path="/users" 
                 element={
                   <ProtectedRoute requiredRoles={['Administrator']}>
