@@ -66,6 +66,8 @@ const Dashboard = () => {
         return <ManagerDashboard stats={stats} />;
       case 'Employee':
         return <EmployeeDashboard stats={stats} />;
+      case 'Asset Manager':
+        return <AssetManagerDashboard stats={stats} />;
       default:
         return <div>Unknown role</div>;
     }
