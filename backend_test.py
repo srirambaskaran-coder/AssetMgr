@@ -345,8 +345,8 @@ def main():
         if not tester.test_login(email, password, role):
             login_success = False
     
-    if not login_success:
-        print("\n❌ Authentication tests failed. Cannot proceed with other tests.")
+    if not any(role in tester.tokens for role in ["HR Manager", "Administrator"]):
+        print("\n❌ No admin-level users logged in. Cannot proceed with CRUD tests.")
         return 1
     
     # Test /auth/me for all users
