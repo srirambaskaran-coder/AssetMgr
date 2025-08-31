@@ -10,6 +10,8 @@ import Dashboard from './components/Dashboard';
 import AssetTypes from './components/AssetTypes';
 import AssetDefinitions from './components/AssetDefinitions';
 import AssetRequisitions from './components/AssetRequisitions';
+import AssetAllocations from './components/AssetAllocations';
+import AssetRetrievals from './components/AssetRetrievals';
 import UserManagement from './components/UserManagement';
 import BulkImport from './components/BulkImport';
 import Settings from './components/Settings';
