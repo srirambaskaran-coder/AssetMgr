@@ -231,6 +231,142 @@ const EmployeeDashboard = ({ stats }) => (
   </div>
 );
 
+const AssetManagerDashboard = ({ stats }) => (
+  <div className="space-y-6">
+    {/* Primary Stats */}
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <StatCard
+        title="Total Assets"
+        value={stats.total_assets || 0}
+        icon={Package}
+        color="text-blue-600"
+        bgColor="bg-blue-100"
+      />
+      <StatCard
+        title="Allocated Assets"
+        value={stats.allocated_assets || 0}
+        icon={Users}
+        color="text-green-600"
+        bgColor="bg-green-100"
+      />
+      <StatCard
+        title="Available Assets"
+        value={stats.available_assets || 0}
+        icon={CheckCircle}
+        color="text-emerald-600"
+        bgColor="bg-emerald-100"
+      />
+      <StatCard
+        title="Pending Allocations"
+        value={stats.pending_allocations || 0}
+        icon={Clock}
+        color="text-orange-600"
+        bgColor="bg-orange-100"
+      />
+    </div>
+
+    {/* Asset Health & Recovery Stats */}
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <StatCard
+        title="Damaged Assets"
+        value={stats.damaged_assets || 0}
+        icon={AlertTriangle}
+        color="text-red-600"
+        bgColor="bg-red-100"
+      />
+      <StatCard
+        title="Lost Assets"
+        value={stats.lost_assets || 0}
+        icon={AlertTriangle}
+        color="text-gray-600"
+        bgColor="bg-gray-100"
+      />
+      <StatCard
+        title="Under Repair"
+        value={stats.under_repair || 0}
+        icon={Activity}
+        color="text-yellow-600"
+        bgColor="bg-yellow-100"
+      />
+      <StatCard
+        title="Pending Retrievals"
+        value={stats.pending_retrievals || 0}
+        icon={Package}
+        color="text-purple-600"
+        bgColor="bg-purple-100"
+      />
+    </div>
+
+    {/* Key Metrics */}
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <Card className="p-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-sm text-gray-600">Allocation Rate</p>
+            <p className="text-3xl font-bold text-blue-600">{stats.allocation_rate || 0}%</p>
+            <p className="text-sm text-gray-500">of total assets allocated</p>
+          </div>
+          <Target className="h-12 w-12 text-blue-600" />
+        </div>
+      </Card>
+
+      <Card className="p-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-sm text-gray-600">Availability Rate</p>
+            <p className="text-3xl font-bold text-green-600">{stats.availability_rate || 0}%</p>
+            <p className="text-sm text-gray-500">of assets available</p>
+          </div>
+          <BarChart3 className="h-12 w-12 text-green-600" />
+        </div>
+      </Card>
+
+      <Card className="p-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-sm text-gray-600">Recovery Rate</p>
+            <p className="text-3xl font-bold text-purple-600">
+              {stats.completed_retrievals && stats.pending_retrievals + stats.completed_retrievals > 0
+                ? Math.round((stats.completed_retrievals / (stats.pending_retrievals + stats.completed_retrievals)) * 100)
+                : 0}%
+            </p>
+            <p className="text-sm text-gray-500">assets successfully recovered</p>
+          </div>
+          <TrendingUp className="h-12 w-12 text-purple-600" />
+        </div>
+      </Card>
+    </div>
+
+    {/* Asset Type Breakdown */}
+    {stats.asset_type_breakdown && stats.asset_type_breakdown.length > 0 && (
+      <Card className="p-6">
+        <h3 className="text-lg font-semibold text-gray-900 mb-4">Asset Type Breakdown</h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {stats.asset_type_breakdown.map((type, index) => (
+            <div key={index} className="p-4 bg-gray-50 rounded-lg">
+              <h4 className="font-medium text-gray-900">{type._id}</h4>
+              <div className="mt-2 space-y-1">
+                <div className="flex justify-between text-sm">
+                  <span className="text-gray-600">Total:</span>
+                  <span className="font-medium">{type.total}</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-green-600">Available:</span>
+                  <span className="font-medium">{type.available}</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-blue-600">Allocated:</span>
+                  <span className="font-medium">{type.allocated}</span>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </Card>
+    )}
+  </div>
+);
+
 const StatCard = ({ title, value, icon: Icon, color, bgColor }) => (
   <Card className="hover:shadow-lg transition-shadow duration-200">
     <CardContent className="p-6">
