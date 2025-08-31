@@ -25,11 +25,15 @@ const Dashboard = () => {
 
   useEffect(() => {
     fetchDashboardStats();
-  }, []);
+  }, [user?.role]);
 
   const fetchDashboardStats = async () => {
     try {
-      const response = await axios.get(`${API}/dashboard/stats`);
+      let endpoint = `${API}/dashboard/stats`;
+      if (user?.role === 'Asset Manager') {
+        endpoint = `${API}/dashboard/asset-manager-stats`;
+      }
+      const response = await axios.get(endpoint);
       setStats(response.data);
     } catch (error) {
       console.error('Error fetching dashboard stats:', error);
