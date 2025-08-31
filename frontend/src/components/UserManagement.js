@@ -374,13 +374,13 @@ const UserForm = ({ initialData, onSubmit, managers = [], isEdit = false }) => {
           role: formData.role, 
           date_of_joining: formData.date_of_joining ? new Date(formData.date_of_joining).toISOString() : null,
           is_manager: formData.is_manager,
-          reporting_manager_id: formData.reporting_manager_id || null,
+          reporting_manager_id: formData.reporting_manager_id === "none" ? null : formData.reporting_manager_id || null,
           is_active: formData.is_active 
         }
       : {
           ...formData,
           date_of_joining: formData.date_of_joining ? new Date(formData.date_of_joining).toISOString() : null,
-          reporting_manager_id: formData.reporting_manager_id || null
+          reporting_manager_id: formData.reporting_manager_id === "none" ? null : formData.reporting_manager_id || null
         };
 
     await onSubmit(submitData);
