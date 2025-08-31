@@ -194,10 +194,7 @@ metadata:
   run_ui: true
 
 test_plan:
-  current_focus:
-    - "User CRUD API Endpoints"
-    - "User Model Updates with New Fields"
-    - "Reporting Manager Validation"
+  current_focus: []
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
