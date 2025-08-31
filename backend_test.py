@@ -575,7 +575,8 @@ def main():
         ("admin@company.com", "password123", "Administrator"),
         ("hr@company.com", "password123", "HR Manager"),
         ("manager@company.com", "password123", "Manager"),
-        ("employee@company.com", "password123", "Employee")
+        ("employee@company.com", "password123", "Employee"),
+        ("assetmanager@company.com", "password123", "Asset Manager")
     ]
     
     # Test authentication for all users
