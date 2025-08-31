@@ -420,6 +420,37 @@ async def delete_asset_type(
     return {"message": "Asset type deleted successfully"}
 
 # Asset Definition Routes
+@api_router.get("/asset-definitions/template")
+async def download_asset_definitions_template(
+    current_user: User = Depends(require_role([UserRole.ADMINISTRATOR, UserRole.HR_MANAGER]))
+):
+    """Download CSV template for bulk asset definitions import"""
+    template_data = {
+        'asset_type_code': ['LAPTOP', 'MOBILE'],
+        'asset_code': ['LAP001', 'MOB001'],
+        'asset_description': ['Dell Laptop', 'iPhone 14'],
+        'asset_details': ['Dell Inspiron 15 3000 Series', 'iPhone 14 Pro 128GB'],
+        'asset_value': [50000.00, 80000.00],
+        'asset_depreciation_value_per_year': [16666.67, 26666.67],
+        'status': ['Available', 'Available']
+    }
+    
+    df = pd.DataFrame(template_data)
+    
+    # Create CSV in memory
+    output = io.StringIO()
+    df.to_csv(output, index=False)
+    output.seek(0)
+    
+    # Create response
+    response = StreamingResponse(
+        io.BytesIO(output.getvalue().encode()),
+        media_type="text/csv",
+        headers={"Content-Disposition": "attachment; filename=asset_definitions_template.csv"}
+    )
+    
+    return response
+
 @api_router.post("/asset-definitions", response_model=AssetDefinition)
 async def create_asset_definition(
     asset_def: AssetDefinitionCreate,
