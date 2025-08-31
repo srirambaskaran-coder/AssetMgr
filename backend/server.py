@@ -645,12 +645,25 @@ async def create_asset_requisition(
     if not asset_type:
         raise HTTPException(status_code=400, detail="Asset type not found")
     
+    # If request is for team member, verify the team member exists
+    team_member_name = None
+    if requisition.request_for == RequestFor.TEAM_MEMBER and requisition.team_member_employee_id:
+        team_member = await db.users.find_one({"id": requisition.team_member_employee_id})
+        if not team_member:
+            raise HTTPException(status_code=400, detail="Team member not found")
+        team_member_name = team_member["name"]
+    
     requisition_dict = requisition.dict()
     requisition_dict["id"] = str(uuid.uuid4())
     requisition_dict["asset_type_name"] = asset_type["name"]
     requisition_dict["requested_by"] = current_user.id
     requisition_dict["requested_by_name"] = current_user.name
+    requisition_dict["team_member_name"] = team_member_name
     requisition_dict["created_at"] = datetime.now(timezone.utc)
+    
+    # Convert required_by_date to datetime if provided as string
+    if requisition_dict.get("required_by_date") and isinstance(requisition_dict["required_by_date"], str):
+        requisition_dict["required_by_date"] = datetime.fromisoformat(requisition_dict["required_by_date"])
     
     await db.asset_requisitions.insert_one(requisition_dict)
     return AssetRequisition(**requisition_dict)
