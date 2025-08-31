@@ -151,13 +151,20 @@ class AssetRequisition(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     asset_type_id: str
     asset_type_name: Optional[str] = None
+    request_type: RequestType = RequestType.NEW_ALLOCATION
+    reason_for_return_replacement: Optional[str] = None
+    asset_details: Optional[str] = None
+    request_for: RequestFor = RequestFor.SELF
+    team_member_employee_id: Optional[str] = None
+    team_member_name: Optional[str] = None
     requested_by: str  # User ID
     requested_by_name: Optional[str] = None
     manager_id: Optional[str] = None
     manager_name: Optional[str] = None
     hr_manager_id: Optional[str] = None
     hr_manager_name: Optional[str] = None
-    justification: str
+    justification: str  # This serves as general remarks
+    required_by_date: Optional[datetime] = None
     status: RequisitionStatus = RequisitionStatus.PENDING
     manager_approval_date: Optional[datetime] = None
     hr_approval_date: Optional[datetime] = None
@@ -168,7 +175,13 @@ class AssetRequisition(BaseModel):
 
 class AssetRequisitionCreate(BaseModel):
     asset_type_id: str
+    request_type: RequestType = RequestType.NEW_ALLOCATION
+    reason_for_return_replacement: Optional[str] = None
+    asset_details: Optional[str] = None
+    request_for: RequestFor = RequestFor.SELF
+    team_member_employee_id: Optional[str] = None
     justification: str
+    required_by_date: Optional[datetime] = None
 
 class AssetAllocationStatus(str, Enum):
     ALLOCATED_TO_EMPLOYEE = "Allocated to Employee"
