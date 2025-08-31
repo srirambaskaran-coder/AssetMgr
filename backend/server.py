@@ -41,6 +41,7 @@ class UserRole(str, Enum):
     HR_MANAGER = "HR Manager"
     EMPLOYEE = "Employee"
     MANAGER = "Manager"
+    ASSET_MANAGER = "Asset Manager"
 
 class AssetStatus(str, Enum):
     AVAILABLE = "Available"
