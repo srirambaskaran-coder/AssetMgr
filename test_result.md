@@ -168,15 +168,18 @@ frontend:
 
   - task: "Enhanced User Form"
     implemented: true
-    working: true
+    working: false
     file: "/app/frontend/src/components/UserManagement.js"
-    stuck_count: 0
+    stuck_count: 1
     priority: "high"
     needs_retesting: false
     status_history:
       - working: true
         agent: "main"
         comment: "UserForm integrated into UserManagement.js with all new fields: Designation, Date of Joining, Is Manager switch, Reporting Manager select. Form UI verified with screenshot."
+      - working: false
+        agent: "testing"
+        comment: "❌ CRITICAL ISSUE: React Select component runtime errors detected causing red error screen. Form fields are present and functional but JavaScript errors prevent proper operation. Error: 'A <Select.Item /> must have a value prop that is not an empty string'. This affects user creation/editing dialogs. Core form structure is correct but Select components need debugging."
 
   - task: "Select Component Integration"
     implemented: true
