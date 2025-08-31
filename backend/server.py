@@ -167,6 +167,56 @@ class SessionData(BaseModel):
     picture: str
     session_token: str
 
+class CompanyProfile(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    company_name: str
+    company_address: Optional[str] = None
+    company_phone: Optional[str] = None
+    company_email: Optional[str] = None
+    company_website: Optional[str] = None
+    company_logo: Optional[str] = None
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+class CompanyProfileCreate(BaseModel):
+    company_name: str
+    company_address: Optional[str] = None
+    company_phone: Optional[str] = None
+    company_email: Optional[str] = None
+    company_website: Optional[str] = None
+    company_logo: Optional[str] = None
+
+class CompanyProfileUpdate(BaseModel):
+    company_name: Optional[str] = None
+    company_address: Optional[str] = None
+    company_phone: Optional[str] = None
+    company_email: Optional[str] = None
+    company_website: Optional[str] = None
+    company_logo: Optional[str] = None
+
+class UserCreate(BaseModel):
+    email: str
+    name: str
+    role: UserRole
+    password: str
+
+class UserUpdate(BaseModel):
+    name: Optional[str] = None
+    role: Optional[UserRole] = None
+    is_active: Optional[bool] = None
+
+class PasswordChange(BaseModel):
+    current_password: str
+    new_password: str
+
+class BulkImportResult(BaseModel):
+    success: bool
+    message: str
+    total_rows: int
+    successful_imports: int
+    failed_imports: int
+    errors: List[Dict[str, str]] = []
+
 # Authentication helpers
 async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(security)) -> User:
     try:
