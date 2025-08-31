@@ -267,6 +267,42 @@ function App() {
                   </ProtectedRoute>
                 } 
               />
+              
+              <Route 
+                path="/users" 
+                element={
+                  <ProtectedRoute requiredRoles={['Administrator']}>
+                    <UserManagement />
+                  </ProtectedRoute>
+                } 
+              />
+              
+              <Route 
+                path="/bulk-import" 
+                element={
+                  <ProtectedRoute requiredRoles={['Administrator', 'HR Manager']}>
+                    <BulkImport />
+                  </ProtectedRoute>
+                } 
+              />
+              
+              <Route 
+                path="/settings" 
+                element={
+                  <ProtectedRoute requiredRoles={['Administrator']}>
+                    <Settings />
+                  </ProtectedRoute>
+                } 
+              />
+              
+              <Route 
+                path="/company-profile" 
+                element={
+                  <ProtectedRoute requiredRoles={['Administrator']}>
+                    <CompanyProfile />
+                  </ProtectedRoute>
+                } 
+              />
             </Routes>
           </AppLayout>
         </BrowserRouter>
