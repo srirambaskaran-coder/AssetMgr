@@ -26,6 +26,7 @@ const API = `${BACKEND_URL}/api`;
 
 const UserManagement = () => {
   const [users, setUsers] = useState([]);
+  const [managers, setManagers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [roleFilter, setRoleFilter] = useState('all');
@@ -36,6 +37,7 @@ const UserManagement = () => {
 
   useEffect(() => {
     fetchUsers();
+    fetchManagers();
   }, []);
 
   const fetchUsers = async () => {
@@ -47,6 +49,15 @@ const UserManagement = () => {
       toast.error('Failed to load users');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchManagers = async () => {
+    try {
+      const response = await axios.get(`${API}/users/managers`);
+      setManagers(response.data);
+    } catch (error) {
+      console.error('Error fetching managers:', error);
     }
   };
 
