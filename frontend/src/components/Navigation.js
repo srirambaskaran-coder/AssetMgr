@@ -92,7 +92,8 @@ const Navigation = () => {
       'Administrator': 'text-purple-600 bg-purple-100',
       'HR Manager': 'text-blue-600 bg-blue-100',
       'Manager': 'text-green-600 bg-green-100',
-      'Employee': 'text-gray-600 bg-gray-100'
+      'Employee': 'text-gray-600 bg-gray-100',
+      'Asset Manager': 'text-orange-600 bg-orange-100'
     };
     return roleColors[role] || 'text-gray-600 bg-gray-100';
   };
