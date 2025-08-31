@@ -645,9 +645,28 @@ async def create_asset_requisition(
     if not asset_type:
         raise HTTPException(status_code=400, detail="Asset type not found")
     
-    # If request is for team member, verify the team member exists
+    # Validate conditional fields based on request type
+    if requisition.request_type in [RequestType.REPLACEMENT, RequestType.RETURN]:
+        if not requisition.reason_for_return_replacement:
+            raise HTTPException(
+                status_code=422, 
+                detail=f"Reason for {requisition.request_type.lower()} is required"
+            )
+        if not requisition.asset_details:
+            raise HTTPException(
+                status_code=422, 
+                detail="Asset details are required for replacement/return requests"
+            )
+    
+    # If request is for team member, verify the team member exists and employee ID is provided
     team_member_name = None
-    if requisition.request_for == RequestFor.TEAM_MEMBER and requisition.team_member_employee_id:
+    if requisition.request_for == RequestFor.TEAM_MEMBER:
+        if not requisition.team_member_employee_id:
+            raise HTTPException(
+                status_code=400, 
+                detail="Team member employee ID is required when requesting for team member"
+            )
+        
         team_member = await db.users.find_one({"id": requisition.team_member_employee_id})
         if not team_member:
             raise HTTPException(status_code=400, detail="Team member not found")
