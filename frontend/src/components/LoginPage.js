@@ -138,6 +138,7 @@ const LoginPage = () => {
                 <p><strong>HR Manager:</strong> hr@company.com / password123</p>
                 <p><strong>Manager:</strong> manager@company.com / password123</p>
                 <p><strong>Employee:</strong> employee@company.com / password123</p>
+                <p><strong>Asset Manager:</strong> assetmanager@company.com / password123</p>
               </div>
             </div>
           </CardContent>
