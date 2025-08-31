@@ -18,7 +18,9 @@ import {
   ClipboardList,
   LogOut,
   User,
-  ChevronDown
+  ChevronDown,
+  Settings,
+  Building
 } from 'lucide-react';
 
 const Navigation = () => {
