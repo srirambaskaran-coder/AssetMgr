@@ -187,6 +187,17 @@ frontend:
     file: "/app/frontend/src/components/UserManagement.js"
     stuck_count: 1
     priority: "high"
+  - task: "React Select Component Errors"
+    implemented: true
+    working: false
+    file: "/app/frontend/src/components/UserManagement.js"
+    stuck_count: 1
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: false
+        agent: "testing"
+        comment: "❌ CRITICAL JAVASCRIPT ERRORS: React Select components throwing runtime errors causing red error screen. Error: 'A <Select.Item /> must have a value prop that is not an empty string'. This affects role selection, reporting manager selection, and filter dropdowns. Errors prevent proper form submission and user interaction. Session management also affected causing OAuth redirects. Requires immediate debugging of Select component value props."
     needs_retesting: false
     status_history:
       - working: true
