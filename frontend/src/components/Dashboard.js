@@ -11,7 +11,10 @@ import {
   Clock, 
   Users,
   TrendingUp,
-  Activity
+  Activity,
+  DollarSign,
+  Target,
+  BarChart3
 } from 'lucide-react';
 import { toast } from 'sonner';
 
