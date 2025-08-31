@@ -358,7 +358,7 @@ const UserForm = ({ initialData, onSubmit, managers = [], isEdit = false }) => {
     password: '',
     date_of_joining: initialData?.date_of_joining ? new Date(initialData.date_of_joining).toISOString().split('T')[0] : '',
     is_manager: initialData?.is_manager ?? false,
-    reporting_manager_id: initialData?.reporting_manager_id || '',
+    reporting_manager_id: initialData?.reporting_manager_id || 'none',
     is_active: initialData?.is_active ?? true
   });
   const [loading, setLoading] = useState(false);
