@@ -354,51 +354,214 @@ const AssetRequisitions = () => {
 const RequisitionForm = ({ assetTypes, onSubmit }) => {
   const [formData, setFormData] = useState({
     asset_type_id: '',
-    justification: ''
+    request_type: 'New Allocation',
+    reason_for_return_replacement: '',
+    asset_details: '',
+    request_for: 'Self',
+    team_member_employee_id: '',
+    justification: '',
+    required_by_date: ''
   });
   const [loading, setLoading] = useState(false);
+  const [teamMembers, setTeamMembers] = useState([]);
+
+  // Fetch team members when request_for changes to Team Member
+  useEffect(() => {
+    if (formData.request_for === 'Team Member') {
+      fetchTeamMembers();
+    }
+  }, [formData.request_for]);
+
+  const fetchTeamMembers = async () => {
+    try {
+      const response = await axios.get(`${API}/users`);
+      // Filter out current user and only show employees/managers
+      setTeamMembers(response.data.filter(user => 
+        user.role === 'Employee' || user.role === 'Manager'
+      ));
+    } catch (error) {
+      console.error('Error fetching team members:', error);
+    }
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-    await onSubmit(formData);
+    
+    const submitData = {
+      ...formData,
+      required_by_date: formData.required_by_date ? new Date(formData.required_by_date).toISOString() : null
+    };
+    
+    await onSubmit(submitData);
     setLoading(false);
-    setFormData({ asset_type_id: '', justification: '' });
+    setFormData({
+      asset_type_id: '',
+      request_type: 'New Allocation',
+      reason_for_return_replacement: '',
+      asset_details: '',
+      request_for: 'Self',
+      team_member_employee_id: '',
+      justification: '',
+      required_by_date: ''
+    });
+  };
+
+  const isConditionalFieldRequired = () => {
+    return formData.request_type === 'Replacement' || formData.request_type === 'Return';
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <div>
-        <Label htmlFor="asset_type_id">Asset Type *</Label>
-        <Select 
-          value={formData.asset_type_id} 
-          onValueChange={(value) => setFormData({ ...formData, asset_type_id: value })}
-        >
-          <SelectTrigger>
-            <SelectValue placeholder="Select asset type needed" />
-          </SelectTrigger>
-          <SelectContent>
-            {assetTypes.map(type => (
-              <SelectItem key={type.id} value={type.id}>{type.name}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+    <form onSubmit={handleSubmit} className="space-y-4 max-h-96 overflow-y-auto">
+      <div className="grid grid-cols-2 gap-4">
+        <div>
+          <Label htmlFor="asset_type_id">Asset Type *</Label>
+          <Select 
+            value={formData.asset_type_id} 
+            onValueChange={(value) => setFormData({ ...formData, asset_type_id: value })}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Select asset type needed" />
+            </SelectTrigger>
+            <SelectContent>
+              {assetTypes.map(type => (
+                <SelectItem key={type.id} value={type.id}>{type.name}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        
+        <div>
+          <Label htmlFor="request_type">Request Type *</Label>
+          <Select 
+            value={formData.request_type} 
+            onValueChange={(value) => setFormData({ 
+              ...formData, 
+              request_type: value,
+              reason_for_return_replacement: '',
+              asset_details: ''
+            })}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Select request type" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="New Allocation">New Allocation</SelectItem>
+              <SelectItem value="Replacement">Replacement</SelectItem>
+              <SelectItem value="Return">Return</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+
+      {isConditionalFieldRequired() && (
+        <>
+          <div>
+            <Label htmlFor="reason_for_return_replacement">
+              Reason for {formData.request_type} *
+            </Label>
+            <Textarea
+              id="reason_for_return_replacement"
+              value={formData.reason_for_return_replacement}
+              onChange={(e) => setFormData({ ...formData, reason_for_return_replacement: e.target.value })}
+              placeholder={`Please explain why you need a ${formData.request_type.toLowerCase()}...`}
+              rows={3}
+              required={isConditionalFieldRequired()}
+            />
+          </div>
+          
+          <div>
+            <Label htmlFor="asset_details">Asset Details *</Label>
+            <Textarea
+              id="asset_details"
+              value={formData.asset_details}
+              onChange={(e) => setFormData({ ...formData, asset_details: e.target.value })}
+              placeholder="Provide details about the current asset (model, serial number, condition, etc.)"
+              rows={2}
+              required={isConditionalFieldRequired()}
+            />
+          </div>
+        </>
+      )}
+
+      <div className="grid grid-cols-2 gap-4">
+        <div>
+          <Label htmlFor="request_for">Request For *</Label>
+          <Select 
+            value={formData.request_for} 
+            onValueChange={(value) => setFormData({ 
+              ...formData, 
+              request_for: value,
+              team_member_employee_id: ''
+            })}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Select who this request is for" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="Self">Self</SelectItem>
+              <SelectItem value="Team Member">Team Member</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        
+        {formData.request_for === 'Team Member' && (
+          <div>
+            <Label htmlFor="team_member_employee_id">Team Member *</Label>
+            <Select 
+              value={formData.team_member_employee_id} 
+              onValueChange={(value) => setFormData({ ...formData, team_member_employee_id: value })}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select team member" />
+              </SelectTrigger>
+              <SelectContent>
+                {teamMembers.map(member => (
+                  <SelectItem key={member.id} value={member.id}>
+                    {member.name} ({member.email})
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        )}
       </div>
 
       <div>
-        <Label htmlFor="justification">Business Justification *</Label>
+        <Label htmlFor="required_by_date">Required By Date</Label>
+        <Input
+          id="required_by_date"
+          type="date"
+          value={formData.required_by_date}
+          onChange={(e) => setFormData({ ...formData, required_by_date: e.target.value })}
+          min={new Date().toISOString().split('T')[0]} // Prevent past dates
+        />
+      </div>
+
+      <div>
+        <Label htmlFor="justification">Business Justification / Remarks *</Label>
         <Textarea
           id="justification"
           value={formData.justification}
           onChange={(e) => setFormData({ ...formData, justification: e.target.value })}
-          placeholder="Please explain why you need this asset and how it will be used..."
+          placeholder="Please explain the business need and how this asset will be used..."
           rows={4}
           required
         />
       </div>
 
       <div className="flex justify-end gap-2 pt-4">
-        <Button type="submit" disabled={loading || !formData.asset_type_id || !formData.justification} className="bg-blue-600 hover:bg-blue-700">
+        <Button 
+          type="submit" 
+          disabled={
+            loading || 
+            !formData.asset_type_id || 
+            !formData.justification ||
+            (formData.request_for === 'Team Member' && !formData.team_member_employee_id) ||
+            (isConditionalFieldRequired() && (!formData.reason_for_return_replacement || !formData.asset_details))
+          } 
+          className="bg-blue-600 hover:bg-blue-700"
+        >
           {loading ? 'Submitting...' : 'Submit Request'}
         </Button>
       </div>
