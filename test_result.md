@@ -390,6 +390,54 @@ test_plan:
   test_all: false
   test_priority: "high_first"
 
+  - task: "Manager Approval Workflow - Login and Access"
+    implemented: true
+    working: "NA"
+    file: "/app/frontend/src/components/AssetRequisitions.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Manager approval workflow implemented with login access, approval buttons (Approve, Reject, Hold), and role-based access controls for managers to act on direct reports' asset requisitions."
+
+  - task: "Manager Approval Actions - Approve/Reject/Hold"
+    implemented: true
+    working: "NA"
+    file: "/app/frontend/src/components/AssetRequisitions.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Manager approval actions implemented with reason input requirements, status updates, and timestamp capture. Backend endpoint /api/asset-requisitions/{id}/manager-action handles approve/reject/hold actions."
+
+  - task: "Manager Direct Reports Validation"
+    implemented: true
+    working: "NA"
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Backend validation implemented to ensure managers can only act on asset requisitions from their direct reports. Non-admin managers are restricted to their reporting employees only."
+
+  - task: "Manager Approval UI/UX Enhancement"
+    implemented: true
+    working: "NA"
+    file: "/app/frontend/src/components/AssetRequisitions.js"
+    stuck_count: 0
+    priority: "medium"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Enhanced UI with properly styled approval buttons, reason prompt dialogs, success messages, and automatic table updates after manager actions. Multi-role integration with role-based access controls."
+
 agent_communication:
   - agent: "main"
     message: "Phase 1 User Management Enhancement - Frontend UI verified working correctly. All new fields displaying properly in table and form. Ready for backend API testing to complete verification."
@@ -417,3 +465,5 @@ agent_communication:
     message: "🎉 ENHANCED USER MANAGEMENT CRITICAL ISSUES RESOLVED: Comprehensive testing of the two reported critical issues completed successfully. ✅ ISSUE 1 - LOGIN FOR NEWLY CREATED USERS: FULLY RESOLVED - Created test user 'Test User Sriram' (sriram@company.com) with Employee role. New user can login immediately after creation and is redirected to dashboard with correct identity confirmation. User creation and authentication workflow working perfectly. ✅ ISSUE 2 - PASSWORD CHANGE IN EDIT MODE: FULLY RESOLVED - 'Change Password' button is visible in edit mode. Password field appears correctly after clicking the button. Password change functionality works completely including form submission and success confirmation. End-to-end password update verification passed - old password fails (as expected), new password succeeds. ✅ COMPREHENSIVE VERIFICATION: Both Create and Edit modes work correctly. Create mode shows password field directly, Edit mode shows 'Change Password' button that reveals password field when clicked. All React Select component errors have been resolved. System is production-ready and both critical issues have been completely fixed."
   - agent: "testing"
     message: "🔐 SRIRAM PASSWORD UPDATE AND LOGIN COMPREHENSIVE TESTING COMPLETED: Conducted extensive testing specifically for sriram@company.com password update and login functionality as requested. ✅ USER DATABASE STATE VERIFIED: User sriram@company.com exists in database with correct structure (ID: cf602201-1656-40e0-a9cf-beb85f96e0d4, Name: Test User Sriram, Roles: [Employee], Active: true). ✅ PASSWORD UPDATE VERIFICATION: PUT /api/users/{user_id} endpoint working perfectly - password updates are processed correctly and stored as SHA256 hashes in database. ✅ LOGIN AUTHENTICATION TESTING: POST /api/auth/login endpoint working flawlessly for regular users - successfully authenticates sriram@company.com with updated passwords and returns valid session tokens. ✅ PASSWORD HASHING CONSISTENCY: SHA256 hashing working consistently across all operations (creation, update, login) - tested with multiple password changes (hash1, hash2, hash3) and all worked perfectly. ✅ OLD PASSWORD REJECTION: After password update, old passwords are correctly rejected with 401 status, confirming proper hash replacement in database. ✅ END-TO-END FLOW TESTING: Complete user lifecycle tested - user creation with initial password, password update via API, old password rejection, new password login - all working seamlessly. ✅ AUTHENTICATION FLOW INTEGRITY: No issues found with password storage, retrieval, or validation. The authentication system is robust and secure. All password update and login functionality is working correctly for sriram@company.com and all other users."
+  - agent: "main"
+    message: "🎯 MANAGER APPROVAL WORKFLOW IMPLEMENTATION COMPLETED: Enhanced Manager approval workflow for Asset Requisitions has been implemented with comprehensive features. Manager login access, approval buttons (Approve, Reject, Hold), direct reports validation, reason input requirements, status updates, timestamp capture, and multi-role integration are all in place. Ready for comprehensive testing of the complete manager approval workflow."
