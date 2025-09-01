@@ -385,7 +385,11 @@ metadata:
   run_ui: true
 
 test_plan:
-  current_focus: []
+  current_focus:
+    - "Manager Approval Workflow - Login and Access"
+    - "Manager Approval Actions - Approve/Reject/Hold"
+    - "Manager Direct Reports Validation"
+    - "Manager Approval UI/UX Enhancement"
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
