@@ -590,11 +590,11 @@ class AssetInventoryAPITester:
             if not manager_found and self.test_data.get('manager_user_id'):
                 print(f"   ⚠️ Created manager not found in managers list")
         
-        # Test 5: Validation - Invalid reporting manager (not marked as manager)
+        # Test 6: Validation - Invalid reporting manager (not marked as manager)
         invalid_reporting_data = {
             "email": f"invalid_{datetime.now().strftime('%H%M%S')}@company.com",
             "name": "Invalid Reporting Test",
-            "role": "Employee",
+            "roles": ["Employee"],
             "reporting_manager_id": self.test_data.get('basic_user_id'),  # Basic user is not a manager
             "password": "TestPassword123!"
         }
