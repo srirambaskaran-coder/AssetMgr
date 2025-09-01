@@ -870,8 +870,11 @@ async def update_user(
             reporting_manager = await db.users.find_one({"id": update_data["reporting_manager_id"]})
             if not reporting_manager:
                 raise HTTPException(status_code=400, detail="Reporting manager not found")
-            if not reporting_manager.get("is_manager", False):
-                raise HTTPException(status_code=400, detail="Selected reporting manager is not marked as a manager")
+            
+            # Check if the reporting manager has Manager role
+            manager_roles = reporting_manager.get("roles", [])
+            if UserRole.MANAGER not in manager_roles:
+                raise HTTPException(status_code=400, detail="Selected reporting manager must have Manager role")
             update_data["reporting_manager_name"] = reporting_manager["name"]
         else:
             # Clear reporting manager
