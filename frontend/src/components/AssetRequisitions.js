@@ -131,6 +131,18 @@ const AssetRequisitions = () => {
     return userRoles.some(role => ['Employee', 'Manager'].includes(role));
   };
 
+  const canManageRequisitions = () => {
+    // Handle both old single role structure and new multi-role structure
+    const userRoles = user?.roles || (user?.role ? [user.role] : []);
+    return userRoles.some(role => ['Manager', 'HR Manager', 'Administrator', 'Asset Manager'].includes(role));
+  };
+
+  const hasRole = (roleName) => {
+    // Handle both old single role structure and new multi-role structure
+    const userRoles = user?.roles || (user?.role ? [user.role] : []);
+    return userRoles.includes(roleName);
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
