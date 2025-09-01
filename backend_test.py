@@ -300,7 +300,8 @@ class AssetInventoryAPITester:
             if success and users_response:
                 team_member = None
                 for user in users_response:
-                    if user['role'] in ['Employee', 'Manager'] and user['id'] != self.users.get('Employee', {}).get('id'):
+                    user_roles = user.get('roles', [])
+                    if any(role in ['Employee', 'Manager'] for role in user_roles) and user['id'] != self.users.get('Employee', {}).get('id'):
                         team_member = user
                         break
                 
