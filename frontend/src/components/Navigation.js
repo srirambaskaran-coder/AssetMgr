@@ -29,6 +29,30 @@ const Navigation = () => {
   const { user, logout } = useAuth();
   const location = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  
+  // Handle both old single role structure and new multi-role structure
+  const userRoles = user?.roles || (user?.role ? [user.role] : ['Employee']);
+  const [activeRole, setActiveRole] = useState(userRoles[0] || 'Employee');
+  
+  // Role hierarchy for determining accessible features
+  const getRoleHierarchy = (role) => {
+    switch (role) {
+      case 'Administrator':
+        return ['Administrator', 'HR Manager', 'Manager', 'Asset Manager', 'Employee'];
+      case 'HR Manager':
+        return ['HR Manager', 'Employee'];
+      case 'Manager':
+        return ['Manager', 'Employee'];
+      case 'Asset Manager':
+        return ['Asset Manager', 'Employee'];
+      case 'Employee':
+        return ['Employee'];
+      default:
+        return ['Employee'];
+    }
+  };
+  
+  const accessibleRoles = getRoleHierarchy(activeRole);
 
   const navigationItems = [
     {
