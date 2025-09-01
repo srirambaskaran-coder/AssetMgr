@@ -354,10 +354,9 @@ const UserForm = ({ initialData, onSubmit, managers = [], isEdit = false }) => {
     name: initialData?.name || '',
     email: initialData?.email || '',
     designation: initialData?.designation || '',
-    role: initialData?.role || 'Employee',
+    roles: initialData?.roles || ['Employee'],
     password: '',
     date_of_joining: initialData?.date_of_joining ? new Date(initialData.date_of_joining).toISOString().split('T')[0] : '',
-    is_manager: initialData?.is_manager ?? false,
     reporting_manager_id: initialData?.reporting_manager_id || 'none',
     is_active: initialData?.is_active ?? true
   });
