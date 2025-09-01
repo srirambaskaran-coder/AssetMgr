@@ -496,16 +496,39 @@ class AssetInventoryAPITester:
             print(f"   Created manager with ID: {response['id']}")
             print(f"   Designation: {response.get('designation', 'Not set')}")
             print(f"   Date of Joining: {response.get('date_of_joining', 'Not set')}")
-            print(f"   Is Manager: {response.get('is_manager', False)}")
+            print(f"   Roles: {response.get('roles', [])}")
         
-        # Test 2: Create Employee User with all new fields including reporting manager
+        # Test 2: Create User with multiple roles
+        multi_role_data = {
+            "email": f"multirole_{datetime.now().strftime('%H%M%S')}@company.com",
+            "name": "Multi Role User",
+            "roles": ["Manager", "Employee"],
+            "designation": "Team Lead",
+            "date_of_joining": "2024-01-01T00:00:00Z",
+            "password": "TestPassword123!"
+        }
+        
+        success, response = self.run_test(
+            "Create User with Multiple Roles",
+            "POST",
+            "users",
+            200,
+            data=multi_role_data,
+            user_role="Administrator"
+        )
+        
+        if success:
+            self.test_data['multi_role_user_id'] = response['id']
+            print(f"   Created multi-role user with ID: {response['id']}")
+            print(f"   Roles: {response.get('roles', [])}")
+        
+        # Test 3: Create Employee User with all new fields including reporting manager
         employee_data = {
             "email": f"employee_{datetime.now().strftime('%H%M%S')}@company.com",
             "name": "Test Employee",
-            "role": "Employee",
+            "roles": ["Employee"],
             "designation": "Software Developer",
             "date_of_joining": "2024-03-01T00:00:00Z",
-            "is_manager": False,
             "reporting_manager_id": self.test_data.get('manager_user_id'),
             "password": "TestPassword123!"
         }
