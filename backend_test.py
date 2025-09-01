@@ -2184,6 +2184,11 @@ def main():
     tester.test_role_based_requisition_access_multi_role()
     tester.test_dashboard_stats_multi_role()
     
+    # Test SPECIFIC PASSWORD UPDATE AND LOGIN FOR SRIRAM
+    print("\n🔐 SRIRAM PASSWORD UPDATE AND LOGIN TESTS")
+    print("-" * 40)
+    tester.test_sriram_password_update_and_login()
+    
     # Print final results
     print("\n" + "=" * 60)
     print(f"📊 FINAL RESULTS")
