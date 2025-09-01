@@ -32,11 +32,18 @@ def simple_manager_test():
     response = requests.get(f"{api_url}/asset-requisitions", headers=headers)
     if response.status_code == 200:
         requisitions = response.json()
+        print(f"Manager can see {len(requisitions)} requisitions")
+        for req in requisitions[-5:]:  # Show last 5
+            print(f"  ID: {req['id'][:8]}... Status: {req.get('status')} Requested by: {req.get('requested_by_name')}")
+        
         for req in requisitions:
             if req.get('requested_by_name') == 'Test Employee for Approval' and req.get('status') == 'Pending':
                 requisition_id = req['id']
                 print(f"Found test requisition: {requisition_id[:8]}...")
                 break
+    else:
+        print(f"Failed to get requisitions: {response.status_code}")
+        return
     
     approve_data = {
         "action": "approve",
