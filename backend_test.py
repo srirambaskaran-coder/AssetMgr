@@ -688,7 +688,7 @@ class AssetInventoryAPITester:
             if success:
                 print("   ✅ Update validation correctly rejected non-manager as reporting manager")
         
-        # Test 10: Get All Users and verify new fields are present
+        # Test 11: Get All Users and verify new fields are present
         success, response = self.run_test(
             "Get All Users - Verify New Fields",
             "GET",
