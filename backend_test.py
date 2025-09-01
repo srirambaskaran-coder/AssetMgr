@@ -549,11 +549,10 @@ class AssetInventoryAPITester:
             print(f"   Reporting Manager ID: {response.get('reporting_manager_id', 'Not set')}")
             print(f"   Reporting Manager Name: {response.get('reporting_manager_name', 'Not set')}")
         
-        # Test 3: Create User without optional fields
+        # Test 4: Create User without optional fields (should default to Employee role)
         basic_user_data = {
             "email": f"basic_{datetime.now().strftime('%H%M%S')}@company.com",
             "name": "Basic User",
-            "role": "Employee",
             "password": "TestPassword123!"
         }
         
