@@ -28,6 +28,16 @@ def simple_manager_test():
     # Try manager action on a test requisition
     requisition_id = "06f6ea82-b8b8-4b8b-8b8b-8b8b8b8b8b8b"  # One of our test requisitions
     
+    # First get the correct requisition ID
+    response = requests.get(f"{api_url}/asset-requisitions", headers=headers)
+    if response.status_code == 200:
+        requisitions = response.json()
+        for req in requisitions:
+            if req.get('requested_by_name') == 'Test Employee for Approval' and req.get('status') == 'Pending':
+                requisition_id = req['id']
+                print(f"Found test requisition: {requisition_id[:8]}...")
+                break
+    
     approve_data = {
         "action": "approve",
         "reason": "Simple test approval"
