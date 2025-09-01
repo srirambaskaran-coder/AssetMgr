@@ -280,6 +280,66 @@ frontend:
         agent: "testing"
         comment: "✅ MULTI-ROLE TABLE DISPLAY WORKING: Table successfully displays 'Roles' column with multiple role badges. Each role has appropriate color coding (Administrator: purple, HR Manager: blue, Manager: green, Asset Manager: orange, Employee: gray). Backward compatibility working - existing single-role users display correctly. Role filtering works with multi-role structure. Table shows proper role badges for users with multiple roles simultaneously."
 
+  - task: "Enhanced Asset Requisitions - Request Asset Button"
+    implemented: true
+    working: "NA"
+    file: "/app/frontend/src/components/AssetRequisitions.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Enhanced Asset Requisitions with 'Request Asset' button for employees. Button appears for users with Employee or Manager roles and opens a dialog for creating new asset requisitions."
+
+  - task: "Enhanced Asset Requisitions - Withdraw Request Functionality"
+    implemented: true
+    working: "NA"
+    file: "/app/frontend/src/components/AssetRequisitions.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Withdraw request functionality implemented. Employees can withdraw their own pending requests with confirmation dialog. Withdraw button appears in Actions column for employee's own pending requests only."
+
+  - task: "Enhanced Asset Requisitions - Multi-Role Compatibility"
+    implemented: true
+    working: "NA"
+    file: "/app/frontend/src/components/AssetRequisitions.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Asset Requisitions updated for multi-role compatibility. Functions canCreateRequisition(), canManageRequisitions(), and hasRole() handle both old single role structure and new multi-role structure. Role-based access controls implemented."
+
+  - task: "Enhanced Asset Requisitions - Actions Column Enhancement"
+    implemented: true
+    working: "NA"
+    file: "/app/frontend/src/components/AssetRequisitions.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Actions column enhanced to show appropriate buttons based on user role and request status. Includes Withdraw button for employees' own pending requests, Approve/Reject buttons for Managers and HR Managers based on request status."
+
+  - task: "Enhanced Asset Requisitions - Table Display and Filtering"
+    implemented: true
+    working: "NA"
+    file: "/app/frontend/src/components/AssetRequisitions.js"
+    stuck_count: 0
+    priority: "medium"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Asset Requisitions table displays all requisitions with proper columns, search functionality, and status filtering. Table shows requisition details, status badges, and actions column for all users."
+
 metadata:
   created_by: "main_agent"
   version: "1.0"
