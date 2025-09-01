@@ -671,7 +671,7 @@ class AssetInventoryAPITester:
             if success:
                 print(f"   Set reporting manager: {response.get('reporting_manager_name', 'Not set')}")
         
-        # Test 9: Update User - Invalid reporting manager validation
+        # Test 10: Update User - Invalid reporting manager validation
         if 'basic_user_id' in self.test_data and 'employee_user_id' in self.test_data:
             invalid_update_data = {
                 "reporting_manager_id": self.test_data['basic_user_id']  # Basic user is not a manager
