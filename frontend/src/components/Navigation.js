@@ -184,6 +184,22 @@ const Navigation = () => {
 
           {/* User Profile Section */}
           <div className="border-t border-gray-200 p-4">
+            {/* Role Selector */}
+            {userRoles.length > 1 && (
+              <div className="mb-4">
+                <div className="text-xs text-gray-500 mb-2">Active Role</div>
+                <select
+                  value={activeRole}
+                  onChange={(e) => setActiveRole(e.target.value)}
+                  className="w-full text-sm border border-gray-300 rounded-md px-2 py-1 bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                >
+                  {userRoles.map(role => (
+                    <option key={role} value={role}>{role}</option>
+                  ))}
+                </select>
+              </div>
+            )}
+            
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" className="flex items-center space-x-3 p-2 w-full justify-start hover:bg-gray-100">
@@ -195,8 +211,8 @@ const Navigation = () => {
                   </Avatar>
                   <div className="flex-1 text-left">
                     <div className="text-sm font-medium text-gray-900 truncate">{user?.name}</div>
-                    <div className={`text-xs px-2 py-1 rounded-full inline-block mt-1 ${getRoleColor(user?.role)}`}>
-                      {user?.role}
+                    <div className={`text-xs px-2 py-1 rounded-full inline-block mt-1 ${getRoleColor(activeRole)}`}>
+                      {activeRole}
                     </div>
                   </div>
                   <ChevronDown className="h-4 w-4 text-gray-500" />
