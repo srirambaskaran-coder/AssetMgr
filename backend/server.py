@@ -832,6 +832,12 @@ async def manager_action_on_requisition(
         raise HTTPException(status_code=404, detail="Asset requisition not found")
     
     # Check if requisition is in pending status
+    req_status = requisition.get("status")
+    pending_status = RequisitionStatus.PENDING
+    print(f"DEBUG: req_status = {repr(req_status)}, pending_status = {repr(pending_status)}")
+    print(f"DEBUG: req_status == pending_status: {req_status == pending_status}")
+    print(f"DEBUG: req_status != pending_status: {req_status != pending_status}")
+    
     if requisition.get("status") != RequisitionStatus.PENDING:
         raise HTTPException(
             status_code=400, 
