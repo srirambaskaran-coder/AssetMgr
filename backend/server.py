@@ -462,6 +462,23 @@ async def login(user_data: UserLogin):
         
         return {"success": True, "user": user.dict(), "session_token": session_token}
     
+    # If not a demo user, check for regular users in database
+    existing_user = await db.users.find_one({"email": user_data.email, "is_active": True})
+    if existing_user and existing_user.get("password_hash"):
+        # Hash the provided password and compare
+        password_hash = hashlib.sha256(user_data.password.encode()).hexdigest()
+        if password_hash == existing_user["password_hash"]:
+            # Generate session token and update user
+            session_token = str(uuid.uuid4())
+            await db.users.update_one(
+                {"email": user_data.email},
+                {"$set": {"session_token": session_token}}
+            )
+            existing_user["session_token"] = session_token
+            existing_user.pop("password_hash", None)  # Don't return password hash
+            user = User(**existing_user)
+            return {"success": True, "user": user.dict(), "session_token": session_token}
+    
     raise HTTPException(status_code=401, detail="Invalid credentials")
 
 @api_router.get("/auth/me")
