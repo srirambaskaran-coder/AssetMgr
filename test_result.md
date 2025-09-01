@@ -165,7 +165,7 @@ backend:
         agent: "testing"
         comment: "✅ TESTED: Managers endpoint filtering working perfectly. GET /api/users/managers correctly returns users with Manager role in their roles array. Endpoint properly filters users with roles: [Manager] and multi-role users like [Manager, Employee]. Found 13 managers in system including multi-role users. All managers have Manager role in their roles array."
 
-  - task: "Reporting Manager Validation"
+  - task: "Reporting Manager Validation with Roles"
     implemented: true
     working: true
     file: "/app/backend/server.py"
@@ -175,10 +175,25 @@ backend:
     status_history:
       - working: "unknown"
         agent: "main"
-        comment: "Backend validates reporting manager exists and is marked as manager. Need to verify validation logic."
+        comment: "Backend validates reporting manager exists and has Manager role in roles array. Updated validation logic for multi-role system."
       - working: true
         agent: "testing"
-        comment: "✅ TESTED: Reporting manager validation working perfectly. Validates reporting manager exists in database. Validates reporting manager is marked as is_manager=true. Properly rejects non-existent managers (400 error). Properly rejects users not marked as managers (400 error). Validation works for both user creation and updates. Can clear reporting manager by setting to null."
+        comment: "✅ TESTED: Reporting manager validation with roles working perfectly. Validates reporting manager exists in database. Validates reporting manager has Manager role in their roles array (not is_manager field). Properly rejects non-existent managers (400 error). Properly rejects users without Manager role in roles array (400 error). Validation works for both user creation and updates. Can clear reporting manager by setting to null. Multi-role managers (e.g., [Manager, Employee]) are correctly accepted as valid reporting managers."
+
+  - task: "Demo User Login with Roles Array"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "medium"
+    needs_retesting: false
+    status_history:
+      - working: "unknown"
+        agent: "main"
+        comment: "Demo users updated to be created with roles array instead of single role. Authentication system updated for multi-role support."
+      - working: true
+        agent: "testing"
+        comment: "✅ TESTED: Demo user login with roles array working perfectly. All demo users (admin@company.com, hr@company.com, manager@company.com, employee@company.com, assetmanager@company.com) successfully login with correct roles arrays. Administrator user has roles: [Administrator]. HR Manager has roles: [HR Manager]. Manager has roles: [Manager]. Employee has roles: [Employee]. Asset Manager has roles: [Asset Manager]. Authentication system properly handles multi-role users."
 
 frontend:
   - task: "User Management Table Enhancement"
