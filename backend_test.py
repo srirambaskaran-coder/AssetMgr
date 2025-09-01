@@ -632,15 +632,15 @@ class AssetInventoryAPITester:
         if success:
             print("   ✅ Validation correctly rejected non-existent reporting manager")
         
-        # Test 7: Update User with new fields
+        # Test 8: Update User with new fields and roles
         if 'employee_user_id' in self.test_data:
             update_data = {
                 "designation": "Senior Software Developer",
-                "is_manager": True,
+                "roles": ["Manager", "Employee"],  # Promote to manager with multiple roles
                 "reporting_manager_id": None  # Clear reporting manager
             }
             success, response = self.run_test(
-                "Update User with New Fields",
+                "Update User with Multiple Roles",
                 "PUT",
                 f"users/{self.test_data['employee_user_id']}",
                 200,
@@ -650,7 +650,7 @@ class AssetInventoryAPITester:
             
             if success:
                 print(f"   Updated designation: {response.get('designation', 'Not set')}")
-                print(f"   Updated is_manager: {response.get('is_manager', False)}")
+                print(f"   Updated roles: {response.get('roles', [])}")
                 print(f"   Cleared reporting manager: {response.get('reporting_manager_id', 'Not cleared')}")
         
         # Test 8: Update User - Set new reporting manager
