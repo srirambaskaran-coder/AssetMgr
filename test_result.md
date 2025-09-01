@@ -105,7 +105,7 @@
 user_problem_statement: "Complete User Management Enhancement - Phase 1: Verify and test the enhanced User Management functionality with new fields (Designation, Date of Joining, IsManager, Reporting Manager). Test backend APIs and frontend UI for creating/editing users with new fields."
 
 backend:
-  - task: "User Model Updates with New Fields"
+  - task: "Multi-Role User Model Updates"
     implemented: true
     working: true
     file: "/app/backend/server.py"
@@ -115,10 +115,10 @@ backend:
     status_history:
       - working: "unknown"
         agent: "main"
-        comment: "Backend models UserCreate and UserUpdate updated with designation, date_of_joining, is_manager, reporting_manager_id fields. Need to test API endpoints."
+        comment: "Backend models updated to use roles array instead of single role field. UserCreate and UserUpdate models updated with roles field. Removed is_manager field."
       - working: true
         agent: "testing"
-        comment: "✅ TESTED: All new fields working perfectly. UserCreate model accepts designation, date_of_joining, is_manager, reporting_manager_id. UserUpdate model handles all new fields correctly. Date format conversion working (ISO string to datetime). Default values properly set (is_manager defaults to False)."
+        comment: "✅ TESTED: Multi-role User model working perfectly. User model now uses roles: List[UserRole] with default [UserRole.EMPLOYEE]. UserCreate model accepts roles array with default Employee role. UserUpdate model handles roles field correctly. is_manager field successfully removed from all models. Database migration completed to convert existing users from single role to roles array."
 
   - task: "User CRUD API Endpoints"
     implemented: true
