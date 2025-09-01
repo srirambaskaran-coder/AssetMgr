@@ -739,6 +739,42 @@ async def get_asset_requisitions(current_user: User = Depends(get_current_user))
     
     return [AssetRequisition(**req) for req in requisitions]
 
+@api_router.delete("/asset-requisitions/{requisition_id}")
+async def delete_asset_requisition(
+    requisition_id: str,
+    current_user: User = Depends(get_current_user)
+):
+    """Delete/withdraw an asset requisition (employees can only delete their own pending requests)"""
+    # Get the requisition to check ownership and status
+    requisition = await db.asset_requisitions.find_one({"id": requisition_id})
+    if not requisition:
+        raise HTTPException(status_code=404, detail="Asset requisition not found")
+    
+    # Check if current user can delete this requisition
+    user_roles = current_user.roles if hasattr(current_user, 'roles') else [current_user.role] if hasattr(current_user, 'role') else []
+    
+    # Only the requester can withdraw their own pending requests, or admins/HR can delete any
+    if requisition["requested_by"] != current_user.id:
+        if not any(role in user_roles for role in ["Administrator", "HR Manager"]):
+            raise HTTPException(
+                status_code=403, 
+                detail="You can only withdraw your own asset requests"
+            )
+    
+    # Only allow deletion of pending requests (not approved/allocated ones)
+    if requisition["status"] not in ["Pending"]:
+        raise HTTPException(
+            status_code=400, 
+            detail="You can only withdraw pending requests. This request has already been processed."
+        )
+    
+    # Delete the requisition
+    result = await db.asset_requisitions.delete_one({"id": requisition_id})
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Asset requisition not found")
+    
+    return {"message": "Asset requisition withdrawn successfully"}
+
 # Dashboard Stats
 @api_router.get("/dashboard/stats")
 async def get_dashboard_stats(current_user: User = Depends(get_current_user)):
