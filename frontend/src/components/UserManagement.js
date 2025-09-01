@@ -249,22 +249,13 @@ const UserManagement = () => {
                         )}
                       </TableCell>
                       <TableCell>
-                        <Badge className={getRoleBadgeColor(user.role)}>
-                          {user.role}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        {user.is_manager ? (
-                          <div className="flex items-center">
-                            <UserCheck className="h-4 w-4 mr-1 text-green-600" />
-                            <Badge className="bg-green-100 text-green-800">Yes</Badge>
-                          </div>
-                        ) : (
-                          <div className="flex items-center">
-                            <UserX className="h-4 w-4 mr-1 text-gray-600" />
-                            <Badge className="bg-gray-100 text-gray-800">No</Badge>
-                          </div>
-                        )}
+                        <div className="flex flex-wrap gap-1">
+                          {(user.roles || [user.role]).map((role) => (
+                            <Badge key={role} className={getRoleBadgeColor(role)}>
+                              {role}
+                            </Badge>
+                          ))}
+                        </div>
                       </TableCell>
                       <TableCell>
                         {user.reporting_manager_name && (
