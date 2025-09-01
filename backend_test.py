@@ -1346,6 +1346,7 @@ def main():
     print("\n🆕 NEW ADMINISTRATOR FEATURES TESTS")
     print("-" * 35)
     tester.test_user_management()
+    tester.test_multi_role_system()
     tester.test_company_profile()
     tester.test_password_change()
     tester.test_bulk_import_template()
