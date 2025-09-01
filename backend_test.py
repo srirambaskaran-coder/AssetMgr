@@ -720,10 +720,10 @@ class AssetInventoryAPITester:
                 print(f"     Name: {response.get('name', 'Not set')}")
                 print(f"     Designation: {response.get('designation', 'Not set')}")
                 print(f"     Date of Joining: {response.get('date_of_joining', 'Not set')}")
-                print(f"     Is Manager: {response.get('is_manager', False)}")
+                print(f"     Roles: {response.get('roles', [])}")
                 print(f"     Reporting Manager: {response.get('reporting_manager_name', 'None')}")
         
-        # Test 12: Employee trying to access user management (should fail)
+        # Test 13: Employee trying to access user management (should fail)
         success, response = self.run_test(
             "Employee Get Users (Should Fail)",
             "GET",
