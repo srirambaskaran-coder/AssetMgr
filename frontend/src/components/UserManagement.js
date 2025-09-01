@@ -455,19 +455,38 @@ const UserForm = ({ initialData, onSubmit, managers = [], isEdit = false }) => {
 
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <Label htmlFor="role">Role *</Label>
-          <Select value={formData.role} onValueChange={(value) => setFormData({ ...formData, role: value })}>
-            <SelectTrigger>
-              <SelectValue placeholder="Select role" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="Employee">Employee</SelectItem>
-              <SelectItem value="Manager">Manager</SelectItem>
-              <SelectItem value="HR Manager">HR Manager</SelectItem>
-              <SelectItem value="Asset Manager">Asset Manager</SelectItem>
-              <SelectItem value="Administrator">Administrator</SelectItem>
-            </SelectContent>
-          </Select>
+          <Label htmlFor="roles">Roles *</Label>
+          <div className="space-y-2">
+            {['Employee', 'Manager', 'HR Manager', 'Asset Manager', 'Administrator'].map((roleOption) => (
+              <div key={roleOption} className="flex items-center space-x-2">
+                <input
+                  type="checkbox"
+                  id={`role_${roleOption}`}
+                  checked={formData.roles.includes(roleOption)}
+                  onChange={(e) => {
+                    if (e.target.checked) {
+                      setFormData({ 
+                        ...formData, 
+                        roles: [...formData.roles, roleOption]
+                      });
+                    } else {
+                      setFormData({ 
+                        ...formData, 
+                        roles: formData.roles.filter(r => r !== roleOption)
+                      });
+                    }
+                  }}
+                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                />
+                <Label htmlFor={`role_${roleOption}`} className="text-sm font-normal">
+                  {roleOption}
+                </Label>
+              </div>
+            ))}
+            {formData.roles.length === 0 && (
+              <p className="text-sm text-red-600">Please select at least one role</p>
+            )}
+          </div>
         </div>
 
         <div>
