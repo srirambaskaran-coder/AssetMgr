@@ -108,8 +108,13 @@ const Dashboard = () => {
           </div>
           <div className="text-right">
             <Badge variant="secondary" className="bg-white/20 text-white border-white/30">
-              {user?.role}
+              {effectiveRole}
             </Badge>
+            {userRoles.length > 1 && (
+              <p className="text-xs text-blue-100 mt-1">
+                All roles: {userRoles.join(', ')}
+              </p>
+            )}
             <p className="text-sm text-blue-100 mt-1">
               {new Date().toLocaleDateString('en-US', { 
                 weekday: 'long', 
