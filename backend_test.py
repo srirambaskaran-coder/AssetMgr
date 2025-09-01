@@ -1850,6 +1850,15 @@ def main():
     else:
         print("❌ Asset Manager not logged in - skipping Asset Manager tests")
     
+    # Test Enhanced Asset Requisition Withdrawal functionality
+    print("\n🗑️ ENHANCED ASSET REQUISITION WITHDRAWAL TESTS")
+    print("-" * 45)
+    tester.test_asset_requisition_withdrawal()
+    tester.test_multi_role_withdrawal_access()
+    tester.test_requisition_data_integrity()
+    tester.test_role_based_requisition_access_multi_role()
+    tester.test_dashboard_stats_multi_role()
+    
     # Print final results
     print("\n" + "=" * 60)
     print(f"📊 FINAL RESULTS")
