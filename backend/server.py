@@ -203,6 +203,14 @@ class AssetRequisitionCreate(BaseModel):
     justification: str
     required_by_date: Optional[datetime] = None
 
+class ManagerActionRequest(BaseModel):
+    action: str  # "approve", "reject", "hold"
+    reason: str  # Reason for the action
+    
+class HRActionRequest(BaseModel):
+    action: str  # "approve", "reject", "hold"
+    reason: str  # Reason for the action
+
 class AssetAllocationStatus(str, Enum):
     ALLOCATED_TO_EMPLOYEE = "Allocated to Employee"
     RECEIVED_FROM_EMPLOYEE = "Received from Employee"
