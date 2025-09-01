@@ -89,6 +89,58 @@ const AssetRequisitions = () => {
     }
   };
 
+  const handleManagerAction = async (requisitionId, action) => {
+    const actionMessages = {
+      approve: 'Are you sure you want to approve this asset request?',
+      reject: 'Are you sure you want to reject this asset request?',
+      hold: 'Are you sure you want to put this asset request on hold?'
+    };
+
+    const reason = window.prompt(`${actionMessages[action]}\n\nPlease provide a reason:`);
+    if (!reason || reason.trim() === '') {
+      toast.error('Reason is required for this action');
+      return;
+    }
+
+    try {
+      await axios.post(`${API}/asset-requisitions/${requisitionId}/manager-action`, {
+        action,
+        reason: reason.trim()
+      });
+      await fetchRequisitions();
+      toast.success(`Asset requisition ${action}d successfully`);
+    } catch (error) {
+      console.error(`Error ${action}ing requisition:`, error);
+      toast.error(error.response?.data?.detail || `Failed to ${action} requisition`);
+    }
+  };
+
+  const handleHRAction = async (requisitionId, action) => {
+    const actionMessages = {
+      approve: 'Are you sure you want to approve this asset request?',
+      reject: 'Are you sure you want to reject this asset request?',
+      hold: 'Are you sure you want to put this asset request on hold?'
+    };
+
+    const reason = window.prompt(`${actionMessages[action]}\n\nPlease provide a reason:`);
+    if (!reason || reason.trim() === '') {
+      toast.error('Reason is required for this action');
+      return;
+    }
+
+    try {
+      await axios.post(`${API}/asset-requisitions/${requisitionId}/hr-action`, {
+        action,
+        reason: reason.trim()
+      });
+      await fetchRequisitions();
+      toast.success(`Asset requisition ${action}d successfully`);
+    } catch (error) {
+      console.error(`Error ${action}ing requisition:`, error);
+      toast.error(error.response?.data?.detail || `Failed to ${action} requisition`);
+    }
+  };
+
   const filteredRequisitions = requisitions.filter(req => {
     const matchesSearch = req.asset_type_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          req.justification?.toLowerCase().includes(searchTerm.toLowerCase()) ||
