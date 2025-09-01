@@ -423,11 +423,11 @@ async def login(user_data: UserLogin):
     """Simple username/password login (for demo purposes)"""
     # Demo users configuration
     demo_users = [
-        {"email": "admin@company.com", "name": "System Administrator", "role": UserRole.ADMINISTRATOR},
-        {"email": "hr@company.com", "name": "HR Manager", "role": UserRole.HR_MANAGER},
-        {"email": "manager@company.com", "name": "Department Manager", "role": UserRole.MANAGER},
-        {"email": "employee@company.com", "name": "Employee", "role": UserRole.EMPLOYEE},
-        {"email": "assetmanager@company.com", "name": "Asset Manager Demo", "role": UserRole.ASSET_MANAGER},
+        {"email": "admin@company.com", "name": "System Administrator", "roles": [UserRole.ADMINISTRATOR]},
+        {"email": "hr@company.com", "name": "HR Manager", "roles": [UserRole.HR_MANAGER]},
+        {"email": "manager@company.com", "name": "Department Manager", "roles": [UserRole.MANAGER]},
+        {"email": "employee@company.com", "name": "Employee", "roles": [UserRole.EMPLOYEE]},
+        {"email": "assetmanager@company.com", "name": "Asset Manager Demo", "roles": [UserRole.ASSET_MANAGER]},
     ]
     
     # Check if this is a demo user with correct password
