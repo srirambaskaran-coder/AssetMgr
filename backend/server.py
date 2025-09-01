@@ -758,17 +758,17 @@ async def get_dashboard_stats(current_user: User = Depends(get_current_user)):
         "allocated_assets": allocated_assets,
     })
     
-    if current_user.role in [UserRole.ADMINISTRATOR, UserRole.HR_MANAGER]:
+    if UserRole.ADMINISTRATOR in current_user.roles or UserRole.HR_MANAGER in current_user.roles:
         pending_requisitions = await db.asset_requisitions.count_documents({"status": RequisitionStatus.PENDING})
         stats["pending_requisitions"] = pending_requisitions
     
-    if current_user.role == UserRole.MANAGER:
+    if UserRole.MANAGER in current_user.roles:
         pending_approvals = await db.asset_requisitions.count_documents({
             "status": RequisitionStatus.PENDING
         })
         stats["pending_approvals"] = pending_approvals
     
-    if current_user.role == UserRole.EMPLOYEE:
+    if UserRole.EMPLOYEE in current_user.roles:
         my_requisitions = await db.asset_requisitions.count_documents({"requested_by": current_user.id})
         my_allocated_assets = await db.asset_definitions.count_documents({"allocated_to": current_user.id})
         stats.update({
