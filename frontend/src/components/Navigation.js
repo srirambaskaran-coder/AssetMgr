@@ -105,8 +105,8 @@ const Navigation = () => {
     }
   ];
 
-  const filteredNavItems = navigationItems.filter(item => 
-    item.roles.includes(user?.role)
+  const filteredNavItems = navigationItems.filter(item =>
+    item.roles.some(role => accessibleRoles.includes(role))
   );
 
   const isActivePage = (href) => location.pathname === href;
