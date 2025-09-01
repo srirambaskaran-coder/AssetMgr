@@ -102,7 +102,7 @@
 # Testing Data - Main Agent and testing sub agent both should log testing data below this section
 #====================================================================================================
 
-user_problem_statement: "Complete User Management Enhancement - Phase 1: Verify and test the enhanced User Management functionality with new fields (Designation, Date of Joining, IsManager, Reporting Manager). Test backend APIs and frontend UI for creating/editing users with new fields."
+user_problem_statement: "Implement Multi-Role User Management System: Remove IsManager field, enable multiple role selection, implement real-time role switching with role hierarchy (Administrator sees everything), and update all frontend/backend components to support the new multi-role architecture."
 
 backend:
   - task: "Multi-Role User Model Updates"
