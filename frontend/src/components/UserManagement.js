@@ -503,7 +503,8 @@ const UserForm = ({ initialData, onSubmit, managers = [], isEdit = false }) => {
         </div>
       </div>
 
-      {!isEdit && (
+      {/* Password Section */}
+      {!isEdit ? (
         <div>
           <Label htmlFor="password">Password *</Label>
           <Input
@@ -514,6 +515,35 @@ const UserForm = ({ initialData, onSubmit, managers = [], isEdit = false }) => {
             placeholder="Enter password"
             required
           />
+        </div>
+      ) : (
+        <div>
+          <div className="flex items-center justify-between mb-2">
+            <Label>Password</Label>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => setShowPasswordChange(!showPasswordChange)}
+            >
+              {showPasswordChange ? 'Cancel' : 'Change Password'}
+            </Button>
+          </div>
+          {showPasswordChange && (
+            <div>
+              <Input
+                id="password"
+                type="password"
+                value={formData.password}
+                onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                placeholder="Enter new password"
+                required
+              />
+              <p className="text-sm text-gray-500 mt-1">
+                Leave empty to keep current password
+              </p>
+            </div>
+          )}
         </div>
       )}
 
