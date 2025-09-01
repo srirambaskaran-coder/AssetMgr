@@ -347,7 +347,12 @@ metadata:
   run_ui: true
 
 test_plan:
-  current_focus: []
+  current_focus:
+    - "Enhanced Asset Requisitions - Request Asset Button"
+    - "Enhanced Asset Requisitions - Withdraw Request Functionality"
+    - "Enhanced Asset Requisitions - Multi-Role Compatibility"
+    - "Enhanced Asset Requisitions - Actions Column Enhancement"
+    - "Enhanced Asset Requisitions - Table Display and Filtering"
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
