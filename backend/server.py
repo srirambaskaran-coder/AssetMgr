@@ -76,10 +76,9 @@ class User(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     email: str
     name: str
-    role: UserRole
+    roles: List[UserRole] = Field(default=[UserRole.EMPLOYEE])
     designation: Optional[str] = None
     date_of_joining: Optional[datetime] = None
-    is_manager: bool = False
     reporting_manager_id: Optional[str] = None
     reporting_manager_name: Optional[str] = None
     picture: Optional[str] = None
