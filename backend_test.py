@@ -611,11 +611,11 @@ class AssetInventoryAPITester:
         if success:
             print("   ✅ Validation correctly rejected non-manager as reporting manager")
         
-        # Test 6: Validation - Non-existent reporting manager
+        # Test 7: Validation - Non-existent reporting manager
         nonexistent_reporting_data = {
             "email": f"nonexist_{datetime.now().strftime('%H%M%S')}@company.com",
             "name": "Non-existent Reporting Test",
-            "role": "Employee",
+            "roles": ["Employee"],
             "reporting_manager_id": "non-existent-id",
             "password": "TestPassword123!"
         }
