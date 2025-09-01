@@ -74,6 +74,21 @@ const AssetRequisitions = () => {
     }
   };
 
+  const handleWithdrawRequisition = async (requisitionId) => {
+    if (!window.confirm('Are you sure you want to withdraw this asset request? This action cannot be undone.')) {
+      return;
+    }
+
+    try {
+      await axios.delete(`${API}/asset-requisitions/${requisitionId}`);
+      await fetchRequisitions();
+      toast.success('Asset requisition withdrawn successfully');
+    } catch (error) {
+      console.error('Error withdrawing requisition:', error);
+      toast.error(error.response?.data?.detail || 'Failed to withdraw requisition');
+    }
+  };
+
   const filteredRequisitions = requisitions.filter(req => {
     const matchesSearch = req.asset_type_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          req.justification?.toLowerCase().includes(searchTerm.toLowerCase()) ||
