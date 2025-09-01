@@ -524,16 +524,7 @@ const UserForm = ({ initialData, onSubmit, managers = [], isEdit = false }) => {
         </div>
       )}
 
-      <div className="flex items-center justify-between">
-        <div className="flex items-center space-x-2">
-          <Switch
-            id="is_manager"
-            checked={formData.is_manager}
-            onCheckedChange={(checked) => setFormData({ ...formData, is_manager: checked })}
-          />
-          <Label htmlFor="is_manager">Is Manager</Label>
-        </div>
-
+      <div className="flex justify-end">
         <div className="flex items-center space-x-2">
           <Switch
             id="is_active"
@@ -544,12 +535,12 @@ const UserForm = ({ initialData, onSubmit, managers = [], isEdit = false }) => {
         </div>
       </div>
 
-      {formData.is_manager && (
+      {formData.roles.includes('Manager') && (
         <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
           <div className="flex items-center">
             <UserCheck className="h-4 w-4 text-blue-600 mr-2" />
             <span className="text-sm text-blue-800 font-medium">
-              This user will be available as a reporting manager for other employees
+              This user has Manager role and will be available as a reporting manager for other employees
             </span>
           </div>
         </div>
