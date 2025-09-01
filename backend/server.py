@@ -336,12 +336,34 @@ async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(s
 
 def require_role(required_roles: List[UserRole]):
     async def role_checker(current_user: User = Depends(get_current_user)):
-        if current_user.role not in required_roles:
-            raise HTTPException(
-                status_code=403, 
-                detail=f"Access denied. Required roles: {', '.join(required_roles)}"
-            )
-        return current_user
+        # Role hierarchy logic - Administrator has access to everything
+        if UserRole.ADMINISTRATOR in current_user.roles:
+            return current_user
+        
+        # Check if user has any of the required roles
+        user_roles_set = set(current_user.roles)
+        required_roles_set = set(required_roles)
+        
+        # Role hierarchy: HR Manager can access Employee functions
+        if UserRole.HR_MANAGER in user_roles_set and UserRole.EMPLOYEE in required_roles_set:
+            return current_user
+            
+        # Role hierarchy: Manager can access Employee functions  
+        if UserRole.MANAGER in user_roles_set and UserRole.EMPLOYEE in required_roles_set:
+            return current_user
+            
+        # Role hierarchy: Asset Manager can access Employee functions
+        if UserRole.ASSET_MANAGER in user_roles_set and UserRole.EMPLOYEE in required_roles_set:
+            return current_user
+        
+        # Check direct role match
+        if user_roles_set.intersection(required_roles_set):
+            return current_user
+            
+        raise HTTPException(
+            status_code=403, 
+            detail=f"Access denied. Required roles: {', '.join(required_roles)}"
+        )
     return role_checker
 
 # Authentication Routes
