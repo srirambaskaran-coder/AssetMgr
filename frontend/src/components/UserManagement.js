@@ -353,6 +353,7 @@ const UserForm = ({ initialData, onSubmit, managers = [], isEdit = false }) => {
     is_active: initialData?.is_active ?? true
   });
   const [loading, setLoading] = useState(false);
+  const [showPasswordChange, setShowPasswordChange] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
