@@ -230,7 +230,7 @@ const Navigation = () => {
                     Profile
                   </Link>
                 </DropdownMenuItem>
-                {user?.role === 'Administrator' && (
+                {accessibleRoles.includes('Administrator') && (
                   <>
                     <DropdownMenuItem asChild>
                       <Link to="/settings" className="flex items-center cursor-pointer">
