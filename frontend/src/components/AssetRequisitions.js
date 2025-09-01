@@ -256,7 +256,7 @@ const AssetRequisitions = () => {
                     <TableHead>Required By</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead>Request Date</TableHead>
-                    {user?.role !== 'Employee' && <TableHead>Actions</TableHead>}
+                    <TableHead>Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
