@@ -653,7 +653,7 @@ class AssetInventoryAPITester:
                 print(f"   Updated roles: {response.get('roles', [])}")
                 print(f"   Cleared reporting manager: {response.get('reporting_manager_id', 'Not cleared')}")
         
-        # Test 8: Update User - Set new reporting manager
+        # Test 9: Update User - Set new reporting manager
         if 'basic_user_id' in self.test_data and 'manager_user_id' in self.test_data:
             update_data = {
                 "reporting_manager_id": self.test_data['manager_user_id'],
