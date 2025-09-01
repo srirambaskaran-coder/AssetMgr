@@ -818,6 +818,116 @@ async def delete_asset_requisition(
     
     return {"message": "Asset requisition withdrawn successfully"}
 
+@api_router.post("/asset-requisitions/{requisition_id}/manager-action")
+async def manager_action_on_requisition(
+    requisition_id: str,
+    action_request: ManagerActionRequest,
+    current_user: User = Depends(require_role([UserRole.MANAGER, UserRole.ADMINISTRATOR]))
+):
+    """Manager action on asset requisition (approve/reject/hold)"""
+    # Get the requisition
+    requisition = await db.asset_requisitions.find_one({"id": requisition_id})
+    if not requisition:
+        raise HTTPException(status_code=404, detail="Asset requisition not found")
+    
+    # Check if requisition is in pending status
+    if requisition.get("status") != RequisitionStatus.PENDING:
+        raise HTTPException(
+            status_code=400, 
+            detail="Only pending requisitions can be acted upon by managers"
+        )
+    
+    # Get the requester to verify manager relationship (for non-admin users)
+    user_roles = current_user.roles if hasattr(current_user, 'roles') else [current_user.role] if hasattr(current_user, 'role') else []
+    if UserRole.ADMINISTRATOR not in user_roles:
+        # For managers, verify they are the reporting manager of the requester
+        requester = await db.users.find_one({"id": requisition["requested_by"]})
+        if not requester or requester.get("reporting_manager_id") != current_user.id:
+            raise HTTPException(
+                status_code=403, 
+                detail="You can only act on requisitions from your direct reports"
+            )
+    
+    # Prepare update data based on action
+    update_data = {
+        "manager_action_by": current_user.id,
+        "manager_action_by_name": current_user.name,
+        "manager_approval_date": datetime.now(timezone.utc)
+    }
+    
+    if action_request.action.lower() == "approve":
+        update_data["status"] = RequisitionStatus.MANAGER_APPROVED
+        update_data["manager_approval_reason"] = action_request.reason
+    elif action_request.action.lower() == "reject":
+        update_data["status"] = RequisitionStatus.REJECTED
+        update_data["manager_rejection_reason"] = action_request.reason
+    elif action_request.action.lower() == "hold":
+        update_data["status"] = RequisitionStatus.ON_HOLD
+        update_data["manager_hold_reason"] = action_request.reason
+    else:
+        raise HTTPException(status_code=400, detail="Invalid action. Must be 'approve', 'reject', or 'hold'")
+    
+    # Update the requisition
+    await db.asset_requisitions.update_one({"id": requisition_id}, {"$set": update_data})
+    
+    # Get updated requisition to return
+    updated_requisition = await db.asset_requisitions.find_one({"id": requisition_id})
+    
+    return {
+        "message": f"Requisition {action_request.action.lower()}ed successfully",
+        "requisition": AssetRequisition(**updated_requisition).dict()
+    }
+
+@api_router.post("/asset-requisitions/{requisition_id}/hr-action")
+async def hr_action_on_requisition(
+    requisition_id: str,
+    action_request: HRActionRequest,
+    current_user: User = Depends(require_role([UserRole.HR_MANAGER, UserRole.ADMINISTRATOR]))
+):
+    """HR Manager action on asset requisition (approve/reject/hold)"""
+    # Get the requisition
+    requisition = await db.asset_requisitions.find_one({"id": requisition_id})
+    if not requisition:
+        raise HTTPException(status_code=404, detail="Asset requisition not found")
+    
+    # Check if requisition is in manager approved or on hold status
+    valid_statuses = [RequisitionStatus.MANAGER_APPROVED, RequisitionStatus.ON_HOLD]
+    if requisition.get("status") not in valid_statuses:
+        raise HTTPException(
+            status_code=400, 
+            detail="HR can only act on manager-approved or on-hold requisitions"
+        )
+    
+    # Prepare update data based on action
+    update_data = {
+        "hr_action_by": current_user.id,
+        "hr_action_by_name": current_user.name,
+        "hr_approval_date": datetime.now(timezone.utc)
+    }
+    
+    if action_request.action.lower() == "approve":
+        update_data["status"] = RequisitionStatus.HR_APPROVED
+        update_data["hr_approval_reason"] = action_request.reason
+    elif action_request.action.lower() == "reject":
+        update_data["status"] = RequisitionStatus.REJECTED
+        update_data["hr_rejection_reason"] = action_request.reason
+    elif action_request.action.lower() == "hold":
+        update_data["status"] = RequisitionStatus.ON_HOLD
+        update_data["hr_hold_reason"] = action_request.reason
+    else:
+        raise HTTPException(status_code=400, detail="Invalid action. Must be 'approve', 'reject', or 'hold'")
+    
+    # Update the requisition
+    await db.asset_requisitions.update_one({"id": requisition_id}, {"$set": update_data})
+    
+    # Get updated requisition to return
+    updated_requisition = await db.asset_requisitions.find_one({"id": requisition_id})
+    
+    return {
+        "message": f"Requisition {action_request.action.lower()}ed successfully",
+        "requisition": AssetRequisition(**updated_requisition).dict()
+    }
+
 # Dashboard Stats
 @api_router.get("/dashboard/stats")
 async def get_dashboard_stats(current_user: User = Depends(get_current_user)):
