@@ -469,17 +469,16 @@ class AssetInventoryAPITester:
                 print("   ✅ Validation correctly rejected duplicate asset type code")
 
     def test_user_management(self):
-        """Test Enhanced User Management CRUD operations with new fields"""
-        print(f"\n👥 Testing Enhanced User Management Operations")
+        """Test Multi-Role User Management CRUD operations with new fields"""
+        print(f"\n👥 Testing Multi-Role User Management Operations")
         
-        # Test 1: Create Manager User (for reporting manager tests)
+        # Test 1: Create Manager User with single role (for reporting manager tests)
         manager_data = {
             "email": f"manager_{datetime.now().strftime('%H%M%S')}@company.com",
             "name": "Test Manager",
-            "role": "Manager",
+            "roles": ["Manager"],
             "designation": "Senior Manager",
             "date_of_joining": "2023-01-15T00:00:00Z",
-            "is_manager": True,
             "password": "TestPassword123!"
         }
         
