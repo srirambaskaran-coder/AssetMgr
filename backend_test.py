@@ -747,6 +747,114 @@ class AssetInventoryAPITester:
         if success:
             print("   ✅ Employee correctly denied access to managers endpoint")
 
+    def test_multi_role_system(self):
+        """Test Multi-Role System functionality"""
+        print(f"\n🎭 Testing Multi-Role System")
+        
+        # Test 1: Role hierarchy - Administrator access
+        success, response = self.run_test(
+            "Administrator Access to Employee Functions",
+            "GET",
+            "dashboard/stats",
+            200,
+            user_role="Administrator"
+        )
+        
+        if success:
+            print("   ✅ Administrator can access employee functions (role hierarchy)")
+        
+        # Test 2: Role hierarchy - HR Manager access to Employee functions
+        if "HR Manager" in self.tokens:
+            success, response = self.run_test(
+                "HR Manager Access to Employee Functions",
+                "GET",
+                "dashboard/stats",
+                200,
+                user_role="HR Manager"
+            )
+            
+            if success:
+                print("   ✅ HR Manager can access employee functions (role hierarchy)")
+        
+        # Test 3: Role hierarchy - Manager access to Employee functions
+        if "Manager" in self.tokens:
+            success, response = self.run_test(
+                "Manager Access to Employee Functions",
+                "GET",
+                "dashboard/stats",
+                200,
+                user_role="Manager"
+            )
+            
+            if success:
+                print("   ✅ Manager can access employee functions (role hierarchy)")
+        
+        # Test 4: Test demo user login with roles array
+        demo_login_data = {
+            "email": "admin@company.com",
+            "password": "password123"
+        }
+        
+        success, response = self.run_test(
+            "Demo User Login with Roles Array",
+            "POST",
+            "auth/login",
+            200,
+            data=demo_login_data
+        )
+        
+        if success:
+            user_roles = response.get('user', {}).get('roles', [])
+            print(f"   Demo user roles: {user_roles}")
+            if isinstance(user_roles, list) and len(user_roles) > 0:
+                print("   ✅ Demo user has roles array")
+            else:
+                print("   ❌ Demo user missing roles array")
+        
+        # Test 5: Managers endpoint filtering by roles array
+        success, response = self.run_test(
+            "Managers Endpoint Filtering by Roles Array",
+            "GET",
+            "users/managers",
+            200,
+            user_role="Administrator"
+        )
+        
+        if success:
+            print(f"   Found {len(response)} managers")
+            for manager in response:
+                manager_roles = manager.get('roles', [])
+                if 'Manager' in manager_roles:
+                    print(f"   ✅ Manager {manager.get('name', 'Unknown')} has Manager role in roles array")
+                else:
+                    print(f"   ❌ Manager {manager.get('name', 'Unknown')} missing Manager role in roles array")
+        
+        # Test 6: Multi-role validation - User with multiple roles accessing different endpoints
+        if 'multi_role_user_id' in self.test_data:
+            # Create a session for the multi-role user
+            multi_role_login = {
+                "email": f"multirole_{datetime.now().strftime('%H%M%S')}@company.com",
+                "password": "TestPassword123!"
+            }
+            
+            # Note: This would require the user to actually exist and be able to login
+            # For now, we'll test the creation and retrieval of multi-role users
+            success, response = self.run_test(
+                "Get Multi-Role User Details",
+                "GET",
+                f"users/{self.test_data['multi_role_user_id']}",
+                200,
+                user_role="Administrator"
+            )
+            
+            if success:
+                user_roles = response.get('roles', [])
+                print(f"   Multi-role user roles: {user_roles}")
+                if len(user_roles) > 1:
+                    print("   ✅ User successfully created with multiple roles")
+                else:
+                    print("   ❌ User does not have multiple roles")
+
     def test_company_profile(self):
         """Test Company Profile operations (Administrator only)"""
         print(f"\n🏢 Testing Company Profile Operations")
