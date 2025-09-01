@@ -762,7 +762,8 @@ async def delete_asset_requisition(
             )
     
     # Only allow deletion of pending requests (not approved/allocated ones)
-    if requisition["status"] not in ["Pending"]:
+    requisition_status = requisition.get("status", "Pending")  # Default to Pending if status is missing
+    if requisition_status not in ["Pending"]:
         raise HTTPException(
             status_code=400, 
             detail="You can only withdraw pending requests. This request has already been processed."
