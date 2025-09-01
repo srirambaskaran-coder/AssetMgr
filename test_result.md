@@ -120,7 +120,7 @@ backend:
         agent: "testing"
         comment: "✅ TESTED: Multi-role User model working perfectly. User model now uses roles: List[UserRole] with default [UserRole.EMPLOYEE]. UserCreate model accepts roles array with default Employee role. UserUpdate model handles roles field correctly. is_manager field successfully removed from all models. Database migration completed to convert existing users from single role to roles array."
 
-  - task: "User CRUD API Endpoints"
+  - task: "Role-Based Access Control with Hierarchy"
     implemented: true
     working: true
     file: "/app/backend/server.py"
@@ -130,10 +130,40 @@ backend:
     status_history:
       - working: "unknown"
         agent: "main"
-        comment: "User creation and update endpoints modified to handle new fields. Manager fetching endpoint added at /api/users/managers. Need backend testing."
+        comment: "Role hierarchy logic implemented. Administrator has access to all endpoints. HR Manager can access Employee functions. Manager can access Employee functions."
       - working: true
         agent: "testing"
-        comment: "✅ TESTED: All User CRUD APIs working perfectly. POST /api/users creates users with all new fields. PUT /api/users/{user_id} updates users with new fields. GET /api/users/managers returns only users marked as managers. All endpoints properly restricted to Administrator role. New fields present in all API responses."
+        comment: "✅ TESTED: Role hierarchy working perfectly. Administrator role has access to all endpoints. HR Manager can access Employee functions through role hierarchy. Manager can access Employee functions through role hierarchy. Asset Manager can access Employee functions. Multi-role validation logic working correctly for users with multiple roles."
+
+  - task: "User Creation with Multiple Roles"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: "unknown"
+        agent: "main"
+        comment: "User creation endpoints updated to handle multiple roles. Default role assignment implemented."
+      - working: true
+        agent: "testing"
+        comment: "✅ TESTED: Multi-role user creation working perfectly. Users can be created with single role (e.g., [Manager]). Users can be created with multiple roles (e.g., [Manager, Employee]). Default role assignment works correctly - users without specified roles get [Employee]. All role combinations properly validated and stored."
+
+  - task: "Managers Endpoint with Array Filtering"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: "unknown"
+        agent: "main"
+        comment: "GET /api/users/managers endpoint updated to filter by roles array instead of single role field."
+      - working: true
+        agent: "testing"
+        comment: "✅ TESTED: Managers endpoint filtering working perfectly. GET /api/users/managers correctly returns users with Manager role in their roles array. Endpoint properly filters users with roles: [Manager] and multi-role users like [Manager, Employee]. Found 13 managers in system including multi-role users. All managers have Manager role in their roles array."
 
   - task: "Reporting Manager Validation"
     implemented: true
