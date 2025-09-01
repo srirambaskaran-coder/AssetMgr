@@ -159,7 +159,11 @@ const ProtectedRoute = ({ children, requiredRoles = [] }) => {
     return <Navigate to="/login" replace />;
   }
 
-  if (requiredRoles.length > 0 && !requiredRoles.includes(user.role)) {
+  // Handle both old single role structure and new multi-role structure
+  const userRoles = user?.roles || (user?.role ? [user.role] : ['Employee']);
+  const hasRequiredRole = requiredRoles.length === 0 || requiredRoles.some(role => userRoles.includes(role));
+  
+  if (!hasRequiredRole) {
     return (
       <div className="min-h-screen flex items-center justify-center p-4">
         <Card className="max-w-md w-full">
@@ -174,7 +178,7 @@ const ProtectedRoute = ({ children, requiredRoles = [] }) => {
               Required roles: {requiredRoles.join(', ')}
             </p>
             <p className="text-sm text-gray-500">
-              Your role: {user.role}
+              Your roles: {userRoles.join(', ')}
             </p>
             <Button 
               onClick={() => window.history.back()} 
