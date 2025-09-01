@@ -229,8 +229,7 @@ const UserManagement = () => {
                     <TableHead>Name</TableHead>
                     <TableHead>Email</TableHead>
                     <TableHead>Designation</TableHead>
-                    <TableHead>Role</TableHead>
-                    <TableHead>Manager</TableHead>
+                    <TableHead>Roles</TableHead>
                     <TableHead>Reporting To</TableHead>
                     <TableHead>Joining Date</TableHead>
                     <TableHead>Status</TableHead>
