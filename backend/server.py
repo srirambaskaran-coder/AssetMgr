@@ -56,6 +56,7 @@ class RequisitionStatus(str, Enum):
     MANAGER_APPROVED = "Manager Approved"
     HR_APPROVED = "HR Approved"
     REJECTED = "Rejected"
+    ON_HOLD = "On Hold"
     ALLOCATED = "Allocated"
 
 class ActiveStatus(str, Enum):
