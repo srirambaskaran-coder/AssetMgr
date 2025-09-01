@@ -722,10 +722,10 @@ async def create_asset_requisition(
 @api_router.get("/asset-requisitions", response_model=List[AssetRequisition])
 async def get_asset_requisitions(current_user: User = Depends(get_current_user)):
     """Get asset requisitions based on user role"""
-    if current_user.role == UserRole.EMPLOYEE:
-        # Employees can only see their own requisitions
+    if UserRole.EMPLOYEE in current_user.roles and len(current_user.roles) == 1:
+        # Pure employees can only see their own requisitions
         requisitions = await db.asset_requisitions.find({"requested_by": current_user.id}).to_list(1000)
-    elif current_user.role == UserRole.MANAGER:
+    elif UserRole.MANAGER in current_user.roles:
         # Managers can see requisitions pending their approval
         requisitions = await db.asset_requisitions.find({
             "$or": [
