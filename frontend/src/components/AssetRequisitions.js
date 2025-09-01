@@ -315,32 +315,57 @@ const AssetRequisitions = () => {
                       <TableCell>
                         {new Date(requisition.created_at).toLocaleDateString()}
                       </TableCell>
-                      {user?.role !== 'Employee' && (
-                        <TableCell>
-                          <div className="flex gap-2">
-                            {requisition.status === 'Pending' && user?.role === 'Manager' && (
-                              <>
-                                <Button size="sm" variant="outline" className="text-green-600 hover:text-green-800">
-                                  Approve
-                                </Button>
-                                <Button size="sm" variant="outline" className="text-red-600 hover:text-red-800">
-                                  Reject
-                                </Button>
-                              </>
-                            )}
-                            {requisition.status === 'Manager Approved' && user?.role === 'HR Manager' && (
-                              <>
-                                <Button size="sm" variant="outline" className="text-green-600 hover:text-green-800">
-                                  Approve
-                                </Button>
-                                <Button size="sm" variant="outline" className="text-red-600 hover:text-red-800">
-                                  Reject
-                                </Button>
-                              </>
-                            )}
-                          </div>
-                        </TableCell>
-                      )}
+                      <TableCell>
+                        <div className="flex gap-2">
+                          {/* Employee withdraw option for their own pending requests */}
+                          {canCreateRequisition() && 
+                           requisition.requested_by === user?.id && 
+                           requisition.status === 'Pending' && (
+                            <Button 
+                              size="sm" 
+                              variant="outline" 
+                              className="text-red-600 hover:text-red-800"
+                              onClick={() => handleWithdrawRequisition(requisition.id)}
+                            >
+                              <XCircle className="h-3 w-3 mr-1" />
+                              Withdraw
+                            </Button>
+                          )}
+                          
+                          {/* Manager approval options */}
+                          {requisition.status === 'Pending' && hasRole('Manager') && (
+                            <>
+                              <Button size="sm" variant="outline" className="text-green-600 hover:text-green-800">
+                                <CheckCircle className="h-3 w-3 mr-1" />
+                                Approve
+                              </Button>
+                              <Button size="sm" variant="outline" className="text-red-600 hover:text-red-800">
+                                <XCircle className="h-3 w-3 mr-1" />
+                                Reject
+                              </Button>
+                            </>
+                          )}
+                          
+                          {/* HR Manager approval options */}
+                          {requisition.status === 'Manager Approved' && hasRole('HR Manager') && (
+                            <>
+                              <Button size="sm" variant="outline" className="text-green-600 hover:text-green-800">
+                                <CheckCircle className="h-3 w-3 mr-1" />
+                                Approve
+                              </Button>
+                              <Button size="sm" variant="outline" className="text-red-600 hover:text-red-800">
+                                <XCircle className="h-3 w-3 mr-1" />
+                                Reject
+                              </Button>
+                            </>
+                          )}
+                          
+                          {/* Show no actions if none apply */}
+                          {!canCreateRequisition() && !canManageRequisitions() && (
+                            <span className="text-gray-400 text-sm">No actions available</span>
+                          )}
+                        </div>
+                      </TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
