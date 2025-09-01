@@ -391,7 +391,7 @@ async def emergent_auth_callback(session_id: str):
                 "id": str(uuid.uuid4()),
                 "email": session_data.email,
                 "name": session_data.name,
-                "role": UserRole.EMPLOYEE,  # Default role
+                "roles": [UserRole.EMPLOYEE],  # Default roles
                 "picture": session_data.picture,
                 "session_token": session_data.session_token,
                 "created_at": datetime.now(timezone.utc),
