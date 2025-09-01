@@ -389,10 +389,9 @@ const UserForm = ({ initialData, onSubmit, managers = [], isEdit = false }) => {
         name: '',
         email: '',
         designation: '',
-        role: 'Employee',
+        roles: ['Employee'],
         password: '',
         date_of_joining: '',
-        is_manager: false,
         reporting_manager_id: 'none',
         is_active: true
       });
