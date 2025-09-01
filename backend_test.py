@@ -701,11 +701,11 @@ class AssetInventoryAPITester:
             print(f"   Found {len(response)} users")
             if response:
                 user = response[0]
-                new_fields = ['designation', 'date_of_joining', 'is_manager', 'reporting_manager_id', 'reporting_manager_name']
+                new_fields = ['designation', 'date_of_joining', 'roles', 'reporting_manager_id', 'reporting_manager_name']
                 present_fields = [field for field in new_fields if field in user]
                 print(f"   New fields present in user data: {present_fields}")
         
-        # Test 11: Get Single User and verify all fields
+        # Test 12: Get Single User and verify all fields
         if 'employee_user_id' in self.test_data:
             success, response = self.run_test(
                 "Get Single User - Verify All Fields",
