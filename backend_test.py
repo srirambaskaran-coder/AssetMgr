@@ -735,7 +735,7 @@ class AssetInventoryAPITester:
         if success:
             print("   ✅ Employee correctly denied access to user management")
         
-        # Test 13: Employee trying to access managers endpoint (should fail)
+        # Test 14: Employee trying to access managers endpoint (should fail)
         success, response = self.run_test(
             "Employee Get Managers (Should Fail)",
             "GET",
