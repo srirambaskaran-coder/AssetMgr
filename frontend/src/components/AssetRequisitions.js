@@ -387,27 +387,65 @@ const AssetRequisitions = () => {
                           {/* Manager approval options */}
                           {requisition.status === 'Pending' && hasRole('Manager') && (
                             <>
-                              <Button size="sm" variant="outline" className="text-green-600 hover:text-green-800">
+                              <Button 
+                                size="sm" 
+                                variant="outline" 
+                                className="text-green-600 hover:text-green-800"
+                                onClick={() => handleManagerAction(requisition.id, 'approve')}
+                              >
                                 <CheckCircle className="h-3 w-3 mr-1" />
                                 Approve
                               </Button>
-                              <Button size="sm" variant="outline" className="text-red-600 hover:text-red-800">
+                              <Button 
+                                size="sm" 
+                                variant="outline" 
+                                className="text-red-600 hover:text-red-800"
+                                onClick={() => handleManagerAction(requisition.id, 'reject')}
+                              >
                                 <XCircle className="h-3 w-3 mr-1" />
                                 Reject
+                              </Button>
+                              <Button 
+                                size="sm" 
+                                variant="outline" 
+                                className="text-yellow-600 hover:text-yellow-800"
+                                onClick={() => handleManagerAction(requisition.id, 'hold')}
+                              >
+                                <Clock className="h-3 w-3 mr-1" />
+                                Hold
                               </Button>
                             </>
                           )}
                           
                           {/* HR Manager approval options */}
-                          {requisition.status === 'Manager Approved' && hasRole('HR Manager') && (
+                          {(requisition.status === 'Manager Approved' || requisition.status === 'On Hold') && hasRole('HR Manager') && (
                             <>
-                              <Button size="sm" variant="outline" className="text-green-600 hover:text-green-800">
+                              <Button 
+                                size="sm" 
+                                variant="outline" 
+                                className="text-green-600 hover:text-green-800"
+                                onClick={() => handleHRAction(requisition.id, 'approve')}
+                              >
                                 <CheckCircle className="h-3 w-3 mr-1" />
                                 Approve
                               </Button>
-                              <Button size="sm" variant="outline" className="text-red-600 hover:text-red-800">
+                              <Button 
+                                size="sm" 
+                                variant="outline" 
+                                className="text-red-600 hover:text-red-800"
+                                onClick={() => handleHRAction(requisition.id, 'reject')}
+                              >
                                 <XCircle className="h-3 w-3 mr-1" />
                                 Reject
+                              </Button>
+                              <Button 
+                                size="sm" 
+                                variant="outline" 
+                                className="text-yellow-600 hover:text-yellow-800"
+                                onClick={() => handleHRAction(requisition.id, 'hold')}
+                              >
+                                <Clock className="h-3 w-3 mr-1" />
+                                Hold
                               </Button>
                             </>
                           )}
