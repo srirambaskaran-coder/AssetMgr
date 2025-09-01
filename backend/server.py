@@ -170,8 +170,24 @@ class AssetRequisition(BaseModel):
     justification: str  # This serves as general remarks
     required_by_date: Optional[datetime] = None
     status: RequisitionStatus = RequisitionStatus.PENDING
+    
+    # Manager approval fields
     manager_approval_date: Optional[datetime] = None
+    manager_approval_reason: Optional[str] = None
+    manager_rejection_reason: Optional[str] = None
+    manager_hold_reason: Optional[str] = None
+    manager_action_by: Optional[str] = None  # Manager user ID who took action
+    manager_action_by_name: Optional[str] = None  # Manager name who took action
+    
+    # HR approval fields  
     hr_approval_date: Optional[datetime] = None
+    hr_approval_reason: Optional[str] = None
+    hr_rejection_reason: Optional[str] = None
+    hr_hold_reason: Optional[str] = None
+    hr_action_by: Optional[str] = None  # HR Manager user ID who took action
+    hr_action_by_name: Optional[str] = None  # HR Manager name who took action
+    
+    # Asset allocation fields
     allocated_asset_id: Optional[str] = None
     allocated_asset_code: Optional[str] = None
     comments: Optional[str] = None
