@@ -310,6 +310,7 @@ class UserUpdate(BaseModel):
     date_of_joining: Optional[datetime] = None
     reporting_manager_id: Optional[str] = None
     is_active: Optional[bool] = None
+    password: Optional[str] = None
 
 class PasswordChange(BaseModel):
     current_password: str
