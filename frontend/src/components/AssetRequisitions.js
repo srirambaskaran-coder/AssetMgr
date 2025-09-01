@@ -111,7 +111,9 @@ const AssetRequisitions = () => {
   };
 
   const canCreateRequisition = () => {
-    return ['Employee', 'Manager'].includes(user?.role);
+    // Handle both old single role structure and new multi-role structure
+    const userRoles = user?.roles || (user?.role ? [user.role] : []);
+    return userRoles.some(role => ['Employee', 'Manager'].includes(role));
   };
 
   if (loading) {
