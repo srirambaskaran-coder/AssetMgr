@@ -297,19 +297,17 @@ class CompanyProfileUpdate(BaseModel):
 class UserCreate(BaseModel):
     email: str
     name: str
-    role: UserRole
+    roles: List[UserRole] = Field(default=[UserRole.EMPLOYEE])
     designation: Optional[str] = None
     date_of_joining: Optional[datetime] = None
-    is_manager: bool = False
     reporting_manager_id: Optional[str] = None
     password: str
 
 class UserUpdate(BaseModel):
     name: Optional[str] = None
-    role: Optional[UserRole] = None
+    roles: Optional[List[UserRole]] = None
     designation: Optional[str] = None
     date_of_joining: Optional[datetime] = None
-    is_manager: Optional[bool] = None
     reporting_manager_id: Optional[str] = None
     is_active: Optional[bool] = None
 
