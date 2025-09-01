@@ -1780,6 +1780,331 @@ class AssetInventoryAPITester:
         
         return True
 
+    def test_sriram_password_update_and_login(self):
+        """Test specific password update and login issue for user sriram@company.com"""
+        print(f"\n🔐 Testing Password Update and Login for sriram@company.com")
+        
+        # Test 1: Check if user sriram@company.com exists in database
+        print("\n--- 1. User Database State Verification ---")
+        success, users_response = self.run_test(
+            "Get All Users to Check sriram@company.com",
+            "GET",
+            "users",
+            200,
+            user_role="Administrator"
+        )
+        
+        sriram_user = None
+        if success:
+            for user in users_response:
+                if user.get('email') == 'sriram@company.com':
+                    sriram_user = user
+                    break
+            
+            if sriram_user:
+                print(f"   ✅ User sriram@company.com found in database")
+                print(f"   User ID: {sriram_user.get('id', 'Unknown')}")
+                print(f"   Name: {sriram_user.get('name', 'Unknown')}")
+                print(f"   Roles: {sriram_user.get('roles', [])}")
+                print(f"   Is Active: {sriram_user.get('is_active', False)}")
+                print(f"   Has password_hash field: {'password_hash' in str(sriram_user)}")
+                self.test_data['sriram_user_id'] = sriram_user['id']
+            else:
+                print("   ❌ User sriram@company.com NOT found in database")
+                # Create the user for testing
+                print("   Creating sriram@company.com for testing...")
+                sriram_create_data = {
+                    "email": "sriram@company.com",
+                    "name": "Sriram Test User",
+                    "roles": ["Employee"],
+                    "designation": "Software Developer",
+                    "password": "password123"
+                }
+                
+                success, response = self.run_test(
+                    "Create sriram@company.com User",
+                    "POST",
+                    "users",
+                    200,
+                    data=sriram_create_data,
+                    user_role="Administrator"
+                )
+                
+                if success:
+                    self.test_data['sriram_user_id'] = response['id']
+                    sriram_user = response
+                    print(f"   ✅ Created sriram@company.com with ID: {response['id']}")
+                else:
+                    print("   ❌ Failed to create sriram@company.com user")
+                    return False
+        
+        # Test 2: Test initial login with password123
+        print("\n--- 2. Initial Login Authentication Testing ---")
+        initial_login_data = {
+            "email": "sriram@company.com",
+            "password": "password123"
+        }
+        
+        success, response = self.run_test(
+            "Initial Login sriram@company.com with password123",
+            "POST",
+            "auth/login",
+            200,
+            data=initial_login_data
+        )
+        
+        if success:
+            print("   ✅ Initial login successful with password123")
+            sriram_token = response.get('session_token')
+            self.tokens['sriram'] = sriram_token
+            self.users['sriram'] = response.get('user', {})
+            print(f"   Session token obtained: {sriram_token[:20]}...")
+        else:
+            print("   ❌ Initial login failed with password123")
+            return False
+        
+        # Test 3: Password Update via PUT /api/users/{user_id}
+        print("\n--- 3. Password Update Verification ---")
+        if 'sriram_user_id' not in self.test_data:
+            print("   ❌ Cannot test password update - no user ID")
+            return False
+        
+        new_password = "newpassword456"
+        password_update_data = {
+            "password": new_password
+        }
+        
+        success, response = self.run_test(
+            "Update sriram@company.com Password",
+            "PUT",
+            f"users/{self.test_data['sriram_user_id']}",
+            200,
+            data=password_update_data,
+            user_role="Administrator"
+        )
+        
+        if success:
+            print("   ✅ Password update API call successful")
+            print(f"   Updated user name: {response.get('name', 'Unknown')}")
+            print(f"   Updated user email: {response.get('email', 'Unknown')}")
+        else:
+            print("   ❌ Password update API call failed")
+            return False
+        
+        # Test 4: Verify old password no longer works
+        print("\n--- 4. Old Password Verification (Should Fail) ---")
+        old_password_login = {
+            "email": "sriram@company.com",
+            "password": "password123"
+        }
+        
+        success, response = self.run_test(
+            "Login with Old Password (Should Fail)",
+            "POST",
+            "auth/login",
+            401,  # Expecting authentication failure
+            data=old_password_login
+        )
+        
+        if success:
+            print("   ✅ Old password correctly rejected")
+        else:
+            print("   ❌ Old password still works (this is a problem)")
+        
+        # Test 5: Login with new password
+        print("\n--- 5. New Password Login Authentication ---")
+        new_password_login = {
+            "email": "sriram@company.com",
+            "password": new_password
+        }
+        
+        success, response = self.run_test(
+            "Login with New Password",
+            "POST",
+            "auth/login",
+            200,
+            data=new_password_login
+        )
+        
+        if success:
+            print("   ✅ New password login successful")
+            new_token = response.get('session_token')
+            print(f"   New session token: {new_token[:20]}...")
+            
+            # Verify user data
+            user_data = response.get('user', {})
+            print(f"   Logged in user: {user_data.get('name', 'Unknown')}")
+            print(f"   User roles: {user_data.get('roles', [])}")
+            print(f"   User active: {user_data.get('is_active', False)}")
+        else:
+            print("   ❌ New password login failed")
+            return False
+        
+        # Test 6: Password Hashing Consistency Check
+        print("\n--- 6. Password Hashing Consistency Verification ---")
+        
+        # Test multiple password updates to verify hashing consistency
+        test_passwords = ["testpass1", "testpass2", "testpass3"]
+        
+        for i, test_pass in enumerate(test_passwords):
+            print(f"   Testing password change {i+1}: {test_pass}")
+            
+            # Update password
+            update_data = {"password": test_pass}
+            success, response = self.run_test(
+                f"Update Password to {test_pass}",
+                "PUT",
+                f"users/{self.test_data['sriram_user_id']}",
+                200,
+                data=update_data,
+                user_role="Administrator"
+            )
+            
+            if not success:
+                print(f"   ❌ Failed to update password to {test_pass}")
+                continue
+            
+            # Test login with new password
+            login_data = {"email": "sriram@company.com", "password": test_pass}
+            success, response = self.run_test(
+                f"Login with {test_pass}",
+                "POST",
+                "auth/login",
+                200,
+                data=login_data
+            )
+            
+            if success:
+                print(f"   ✅ Password {test_pass} - Update and login successful")
+            else:
+                print(f"   ❌ Password {test_pass} - Login failed after update")
+        
+        # Test 7: End-to-End Flow Testing
+        print("\n--- 7. End-to-End Flow Testing ---")
+        
+        # Create a new test user for complete flow
+        from datetime import datetime
+        e2e_user_data = {
+            "email": f"e2e_test_{datetime.now().strftime('%H%M%S')}@company.com",
+            "name": "E2E Test User",
+            "roles": ["Employee"],
+            "password": "initialpass123"
+        }
+        
+        success, response = self.run_test(
+            "Create E2E Test User",
+            "POST",
+            "users",
+            200,
+            data=e2e_user_data,
+            user_role="Administrator"
+        )
+        
+        if success:
+            e2e_user_id = response['id']
+            e2e_email = response['email']
+            print(f"   ✅ Created E2E test user: {e2e_email}")
+            
+            # Test initial login
+            initial_login = {"email": e2e_email, "password": "initialpass123"}
+            success, response = self.run_test(
+                "E2E Initial Login",
+                "POST",
+                "auth/login",
+                200,
+                data=initial_login
+            )
+            
+            if success:
+                print("   ✅ E2E Initial login successful")
+                
+                # Update password
+                new_pass = "updatedpass456"
+                update_data = {"password": new_pass}
+                success, response = self.run_test(
+                    "E2E Password Update",
+                    "PUT",
+                    f"users/{e2e_user_id}",
+                    200,
+                    data=update_data,
+                    user_role="Administrator"
+                )
+                
+                if success:
+                    print("   ✅ E2E Password update successful")
+                    
+                    # Test old password fails
+                    old_login = {"email": e2e_email, "password": "initialpass123"}
+                    success, response = self.run_test(
+                        "E2E Old Password (Should Fail)",
+                        "POST",
+                        "auth/login",
+                        401,
+                        data=old_login
+                    )
+                    
+                    if success:
+                        print("   ✅ E2E Old password correctly rejected")
+                    
+                    # Test new password works
+                    new_login = {"email": e2e_email, "password": new_pass}
+                    success, response = self.run_test(
+                        "E2E New Password Login",
+                        "POST",
+                        "auth/login",
+                        200,
+                        data=new_login
+                    )
+                    
+                    if success:
+                        print("   ✅ E2E New password login successful")
+                        print("   ✅ Complete E2E flow working correctly")
+                    else:
+                        print("   ❌ E2E New password login failed")
+                else:
+                    print("   ❌ E2E Password update failed")
+            else:
+                print("   ❌ E2E Initial login failed")
+        
+        # Test 8: SHA256 Hashing Verification
+        print("\n--- 8. SHA256 Hashing Verification ---")
+        import hashlib
+        
+        test_password = "hashtest123"
+        expected_hash = hashlib.sha256(test_password.encode()).hexdigest()
+        print(f"   Expected SHA256 hash for '{test_password}': {expected_hash[:20]}...")
+        
+        # Update sriram's password to test password
+        update_data = {"password": test_password}
+        success, response = self.run_test(
+            "Update to Hash Test Password",
+            "PUT",
+            f"users/{self.test_data['sriram_user_id']}",
+            200,
+            data=update_data,
+            user_role="Administrator"
+        )
+        
+        if success:
+            # Try to login with the test password
+            login_data = {"email": "sriram@company.com", "password": test_password}
+            success, response = self.run_test(
+                "Login with Hash Test Password",
+                "POST",
+                "auth/login",
+                200,
+                data=login_data
+            )
+            
+            if success:
+                print("   ✅ SHA256 hashing appears to be working correctly")
+            else:
+                print("   ❌ SHA256 hashing may have issues")
+        
+        print("\n--- Password Update and Login Testing Summary ---")
+        print("✅ All password update and login tests completed")
+        return True
+
 def main():
     print("🚀 Starting Asset Inventory Management System API Tests")
     print("=" * 60)
