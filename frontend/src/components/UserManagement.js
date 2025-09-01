@@ -106,7 +106,8 @@ const UserManagement = () => {
   const filteredUsers = users.filter(user => {
     const matchesSearch = user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          user.email.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesRole = roleFilter === 'all' || user.role === roleFilter;
+    const userRoles = user.roles || [user.role]; // Handle both new and old data structure
+    const matchesRole = roleFilter === 'all' || userRoles.includes(roleFilter);
     const matchesStatus = statusFilter === 'all' || 
                          (statusFilter === 'active' && user.is_active) ||
                          (statusFilter === 'inactive' && !user.is_active);
