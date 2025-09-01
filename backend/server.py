@@ -919,6 +919,14 @@ async def update_user(
     
     update_data = user_update.dict(exclude_unset=True)
     
+    # Handle password update if provided
+    if "password" in update_data and update_data["password"]:
+        # Hash the new password
+        password_hash = hashlib.sha256(update_data["password"].encode()).hexdigest()
+        update_data["password_hash"] = password_hash
+        # Remove the plain password from update data
+        del update_data["password"]
+    
     # Validate and update reporting manager if provided
     if "reporting_manager_id" in update_data:
         if update_data["reporting_manager_id"]:
