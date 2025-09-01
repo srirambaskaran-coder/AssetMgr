@@ -568,9 +568,9 @@ class AssetInventoryAPITester:
         if success:
             self.test_data['basic_user_id'] = response['id']
             print(f"   Created basic user with ID: {response['id']}")
-            print(f"   Is Manager (default): {response.get('is_manager', 'Not set')}")
+            print(f"   Default roles: {response.get('roles', [])}")
         
-        # Test 4: Get Managers API
+        # Test 5: Get Managers API
         success, response = self.run_test(
             "Get All Managers",
             "GET",
