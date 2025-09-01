@@ -452,7 +452,7 @@ async def login(user_data: UserLogin):
                 "id": str(uuid.uuid4()),
                 "email": demo_user["email"],
                 "name": demo_user["name"],
-                "role": demo_user["role"],
+                "roles": demo_user["roles"],
                 "session_token": session_token,
                 "created_at": datetime.now(timezone.utc),
                 "is_active": True
