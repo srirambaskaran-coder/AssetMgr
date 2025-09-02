@@ -70,6 +70,12 @@ const Navigation = () => {
       roles: ['Asset Manager', 'Administrator', 'Manager']
     },
     {
+      name: 'My Assets',
+      href: '/my-assets',
+      icon: Package,
+      roles: ['Employee', 'Manager', 'HR Manager', 'Administrator']
+    },
+    {
       name: 'User Management',
       href: '/users',
       icon: User,
