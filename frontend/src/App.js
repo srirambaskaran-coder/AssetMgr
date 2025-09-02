@@ -291,7 +291,7 @@ function App() {
               <Route 
                 path="/asset-retrievals" 
                 element={
-                  <ProtectedRoute requiredRoles={['Asset Manager', 'Administrator']}>
+                  <ProtectedRoute requiredRoles={['Asset Manager', 'Administrator', 'Manager']}>
                     <AssetRetrievals />
                   </ProtectedRoute>
                 } 
