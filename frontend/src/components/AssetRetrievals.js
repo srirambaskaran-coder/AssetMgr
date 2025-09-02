@@ -31,6 +31,8 @@ const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
 
 const AssetRetrievals = () => {
+  const { user } = useAuth();
+  const { activeRole, accessibleRoles } = useRole();
   const [retrievals, setRetrievals] = useState([]);
   const [allocatedAssets, setAllocatedAssets] = useState([]);
   const [users, setUsers] = useState([]);
@@ -40,6 +42,11 @@ const AssetRetrievals = () => {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [selectedRetrieval, setSelectedRetrieval] = useState(null);
+
+  // Check if user can edit (read-only for Manager)
+  const canEdit = () => {
+    return accessibleRoles.includes('Asset Manager') || accessibleRoles.includes('Administrator');
+  };
 
   useEffect(() => {
     fetchRetrievals();
