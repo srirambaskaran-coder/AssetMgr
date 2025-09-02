@@ -43,13 +43,13 @@ const Navigation = () => {
       name: 'Asset Types',
       href: '/asset-types',
       icon: Package,
-      roles: ['Administrator', 'HR Manager']
+      roles: ['Administrator', 'HR Manager', 'Manager']
     },
     {
       name: 'Asset Definitions',
       href: '/asset-definitions',
       icon: FileText,
-      roles: ['Administrator', 'HR Manager']
+      roles: ['Administrator', 'HR Manager', 'Manager']
     },
     {
       name: 'Asset Requisitions',
