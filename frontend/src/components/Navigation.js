@@ -34,6 +34,15 @@ const Navigation = () => {
   const userRoles = user?.roles || (user?.role ? [user.role] : ['Employee']);
   const [activeRole, setActiveRole] = useState(userRoles[0] || 'Employee');
   
+  // Sync activeRole when user changes or roles change
+  useEffect(() => {
+    const currentUserRoles = user?.roles || (user?.role ? [user.role] : ['Employee']);
+    // If activeRole is not in user's current roles, reset to first role
+    if (!currentUserRoles.includes(activeRole)) {
+      setActiveRole(currentUserRoles[0] || 'Employee');
+    }
+  }, [user, activeRole]);
+  
   // Role hierarchy for determining accessible features
   const getRoleHierarchy = (role) => {
     switch (role) {
