@@ -299,6 +299,15 @@ function App() {
               />
               
               <Route 
+                path="/my-assets" 
+                element={
+                  <ProtectedRoute requiredRoles={['Employee', 'Manager', 'HR Manager', 'Administrator']}>
+                    <MyAssets />
+                  </ProtectedRoute>
+                } 
+              />
+              
+              <Route 
                 path="/users" 
                 element={
                   <ProtectedRoute requiredRoles={['Administrator']}>
