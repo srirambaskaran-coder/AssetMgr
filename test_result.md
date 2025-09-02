@@ -390,6 +390,96 @@ test_plan:
   test_all: false
   test_priority: "high_first"
 
+  - task: "Asset Acknowledgment API - POST /api/asset-definitions/{id}/acknowledge"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Asset acknowledgment endpoint implemented allowing employees to acknowledge receipt of allocated assets with optional notes. Includes validation for asset allocation and prevents double acknowledgment."
+      - working: true
+        agent: "testing"
+        comment: "✅ ASSET ACKNOWLEDGMENT API FULLY WORKING: Comprehensive testing completed successfully. Employee can acknowledge allocated assets with notes (200 status). Asset acknowledgment data properly stored with acknowledgment_date, acknowledged=true, and acknowledgment_notes fields. Double acknowledgment correctly prevented (400 status with proper error message). Cross-user acknowledgment properly denied (403 status). Unauthenticated access denied (403 status). Non-existent asset returns 404. Acknowledgment without notes works correctly (notes set to null). All security validations working perfectly."
+
+  - task: "My Allocated Assets API - GET /api/my-allocated-assets"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "My allocated assets endpoint implemented to return assets allocated to current user, filtered by allocated_to and status=Allocated. Supports all user roles with proper access control."
+      - working: true
+        agent: "testing"
+        comment: "✅ MY ALLOCATED ASSETS API FULLY WORKING: Comprehensive testing completed successfully. Endpoint returns only assets allocated to current user (proper filtering by allocated_to and status). All user roles (Employee, Manager, Administrator, Asset Manager) can access endpoint with 200 status. New acknowledgment fields (allocation_date, acknowledged, acknowledgment_date, acknowledgment_notes) properly included in response. Security validation working - users only see their own allocated assets. Empty results correctly returned when user has no allocated assets."
+
+  - task: "Asset Allocation Enhancement - allocation_date Field"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Asset allocation process enhanced to properly set allocation_date when assets are allocated to employees. Updated AssetDefinition model with new acknowledgment fields."
+      - working: true
+        agent: "testing"
+        comment: "✅ ASSET ALLOCATION ENHANCEMENT WORKING: Asset allocation process properly sets allocation_date field during allocation. New AssetDefinition fields (allocation_date, acknowledged, acknowledgment_date, acknowledgment_notes) properly implemented and stored. Datetime handling working correctly with proper ISO format and timezone storage. Asset status correctly updated to 'Allocated' during allocation process. All allocation enhancement features working as expected."
+
+  - task: "Asset Acknowledgment Data Model Validation"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "New acknowledgment fields added to AssetDefinition model: allocation_date, acknowledged, acknowledgment_date, acknowledgment_notes. Proper datetime handling and data persistence implemented."
+      - working: true
+        agent: "testing"
+        comment: "✅ DATA MODEL VALIDATION WORKING: All new acknowledgment fields properly stored and retrieved from database. allocation_date: properly set during allocation with correct datetime format. acknowledged: boolean field working correctly (false initially, true after acknowledgment). acknowledgment_date: properly set during acknowledgment with correct datetime format. acknowledgment_notes: optional text field working correctly (null when not provided, stores notes when provided). Data persistence verified across multiple requests. Datetime format validation successful with proper timezone handling."
+
+  - task: "Asset Acknowledgment Security and Access Control"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Security controls implemented for asset acknowledgment: users can only acknowledge assets allocated to them, proper authentication required, prevents double acknowledgment."
+      - working: true
+        agent: "testing"
+        comment: "✅ SECURITY AND ACCESS CONTROL WORKING: Comprehensive security testing completed successfully. Users can only acknowledge assets allocated to them (403 error for cross-user attempts). Proper authentication required (403 error for unauthenticated requests). Double acknowledgment prevention working (400 error with clear message). Non-existent asset handling (404 error). Role-based access to my-allocated-assets endpoint working correctly. All security validations properly implemented and tested."
+
+  - task: "Asset Acknowledgment Error Handling"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Comprehensive error handling implemented for asset acknowledgment functionality including proper HTTP status codes and error messages."
+      - working: true
+        agent: "testing"
+        comment: "✅ ERROR HANDLING WORKING: All error scenarios properly handled. Non-existent asset: 404 status with appropriate error. Asset not allocated to user: 403 status with clear message 'You can only acknowledge assets allocated to you'. Already acknowledged asset: 400 status with message 'Asset has already been acknowledged'. Unauthenticated access: 403 status with authentication error. Invalid asset ID format: 404 status. All error messages clear and appropriate for each scenario."
+
   - task: "Manager Approval Workflow - Login and Access"
     implemented: true
     working: true
