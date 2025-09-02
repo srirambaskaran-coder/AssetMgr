@@ -149,27 +149,34 @@ const AssetRetrievals = () => {
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Asset Retrievals</h1>
-          <p className="text-gray-600 mt-1">Manage asset recovery from employees on separation</p>
+          <p className="text-gray-600 mt-1">
+            {canEdit() 
+              ? 'Manage asset recovery from employees on separation'
+              : 'View asset retrieval status and records'
+            }
+          </p>
         </div>
 
-        <Dialog open={isCreateModalOpen} onOpenChange={setIsCreateModalOpen}>
-          <DialogTrigger asChild>
-            <Button className="bg-blue-600 hover:bg-blue-700">
-              <Plus className="mr-2 h-4 w-4" />
-              Create Retrieval Record
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="max-w-md">
-            <DialogHeader>
-              <DialogTitle>Create Asset Retrieval Record</DialogTitle>
-            </DialogHeader>
-            <RetrievalForm 
-              allocatedAssets={allocatedAssets}
-              users={users}
-              onSubmit={handleCreateRetrieval}
-            />
-          </DialogContent>
-        </Dialog>
+        {canEdit() && (
+          <Dialog open={isCreateModalOpen} onOpenChange={setIsCreateModalOpen}>
+            <DialogTrigger asChild>
+              <Button className="bg-blue-600 hover:bg-blue-700">
+                <Plus className="mr-2 h-4 w-4" />
+                Create Retrieval Record
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-md">
+              <DialogHeader>
+                <DialogTitle>Create Asset Retrieval Record</DialogTitle>
+              </DialogHeader>
+              <RetrievalForm 
+                allocatedAssets={allocatedAssets}
+                users={users}
+                onSubmit={handleCreateRetrieval}
+              />
+            </DialogContent>
+          </Dialog>
+        )}
       </div>
 
       {/* Stats Cards */}
