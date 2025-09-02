@@ -367,20 +367,22 @@ const AssetRetrievals = () => {
         </CardContent>
       </Card>
 
-      {/* Edit Modal */}
-      <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>Update Asset Retrieval</DialogTitle>
-          </DialogHeader>
-          {selectedRetrieval && (
-            <RetrievalUpdateForm 
-              retrieval={selectedRetrieval}
-              onSubmit={(formData) => handleUpdateRetrieval(selectedRetrieval.id, formData)}
-            />
-          )}
-        </DialogContent>
-      </Dialog>
+      {/* Edit Modal - Only for Asset Manager/Administrator */}
+      {canEdit() && (
+        <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle>Update Asset Retrieval</DialogTitle>
+            </DialogHeader>
+            {selectedRetrieval && (
+              <RetrievalUpdateForm 
+                retrieval={selectedRetrieval}
+                onSubmit={(formData) => handleUpdateRetrieval(selectedRetrieval.id, formData)}
+              />
+            )}
+          </DialogContent>
+        </Dialog>
+      )}
     </div>
   );
 };
