@@ -224,6 +224,14 @@ const Navigation = () => {
                     </DropdownMenuItem>
                   </>
                 )}
+                {accessibleRoles.includes('Manager') && !accessibleRoles.includes('Administrator') && (
+                  <DropdownMenuItem asChild>
+                    <Link to="/company-profile" className="flex items-center cursor-pointer">
+                      <Building className="mr-2 h-4 w-4" />
+                      Company Profile
+                    </Link>
+                  </DropdownMenuItem>
+                )}
                 <DropdownMenuSeparator />
                 <DropdownMenuItem 
                   onClick={logout}
