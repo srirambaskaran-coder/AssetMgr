@@ -19,6 +19,7 @@ import CompanyProfile from './components/CompanyProfile';
 import Navigation from './components/Navigation';
 import { Button } from './components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from './components/ui/card';
+import { RoleProvider } from './contexts/RoleContext';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
