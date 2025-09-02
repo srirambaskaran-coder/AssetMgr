@@ -30,6 +30,7 @@ const API = `${BACKEND_URL}/api`;
 
 const AssetRequisitions = () => {
   const { user } = useAuth();
+  const { activeRole, accessibleRoles } = useRole();
   const [requisitions, setRequisitions] = useState([]);
   const [assetTypes, setAssetTypes] = useState([]);
   const [loading, setLoading] = useState(true);
