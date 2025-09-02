@@ -155,6 +155,11 @@ class AssetDefinitionUpdate(BaseModel):
     asset_value: Optional[float] = None
     asset_depreciation_value_per_year: Optional[float] = None
     status: Optional[AssetStatus] = None
+    allocated_to: Optional[str] = None
+    allocated_to_name: Optional[str] = None
+
+class AssetAcknowledgmentRequest(BaseModel):
+    acknowledgment_notes: Optional[str] = None
 
 class AssetRequisition(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
