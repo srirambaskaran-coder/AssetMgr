@@ -717,6 +717,65 @@ async def delete_asset_definition(
     
     return {"message": "Asset definition deleted successfully"}
 
+@api_router.post("/asset-definitions/{asset_def_id}/acknowledge")
+async def acknowledge_asset_allocation(
+    asset_def_id: str,
+    acknowledgment: AssetAcknowledgmentRequest,
+    current_user: User = Depends(get_current_user)
+):
+    """Employee acknowledges receipt of allocated asset"""
+    # Get the asset definition
+    asset = await db.asset_definitions.find_one({"id": asset_def_id})
+    if not asset:
+        raise HTTPException(status_code=404, detail="Asset not found")
+    
+    # Check if asset is allocated to the current user
+    if asset.get("allocated_to") != current_user.id:
+        raise HTTPException(
+            status_code=403, 
+            detail="You can only acknowledge assets allocated to you"
+        )
+    
+    # Check if asset is already acknowledged
+    if asset.get("acknowledged", False):
+        raise HTTPException(
+            status_code=400, 
+            detail="Asset has already been acknowledged"
+        )
+    
+    # Update asset with acknowledgment details
+    update_data = {
+        "acknowledged": True,
+        "acknowledgment_date": datetime.now(timezone.utc),
+        "acknowledgment_notes": acknowledgment.acknowledgment_notes
+    }
+    
+    await db.asset_definitions.update_one(
+        {"id": asset_def_id}, 
+        {"$set": update_data}
+    )
+    
+    # Get updated asset to return
+    updated_asset = await db.asset_definitions.find_one({"id": asset_def_id})
+    
+    return {
+        "message": "Asset allocation acknowledged successfully",
+        "asset": AssetDefinition(**updated_asset).dict(),
+        "acknowledged_at": update_data["acknowledgment_date"]
+    }
+
+@api_router.get("/my-allocated-assets", response_model=List[AssetDefinition])
+async def get_my_allocated_assets(
+    current_user: User = Depends(get_current_user)
+):
+    """Get assets allocated to the current user"""
+    assets = await db.asset_definitions.find({
+        "allocated_to": current_user.id,
+        "status": AssetStatus.ALLOCATED
+    }).to_list(1000)
+    
+    return [AssetDefinition(**asset) for asset in assets]
+
 # Asset Requisition Routes
 @api_router.post("/asset-requisitions", response_model=AssetRequisition)
 async def create_asset_requisition(
