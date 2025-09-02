@@ -836,9 +836,6 @@ async def manager_action_on_requisition(
     # Check if requisition is in pending status
     req_status = requisition.get("status", "Pending")  # Default to Pending if status is missing
     pending_status = RequisitionStatus.PENDING.value  # Use the string value for comparison
-    print(f"DEBUG: req_status = {repr(req_status)}, pending_status = {repr(pending_status)}")
-    print(f"DEBUG: req_status == pending_status: {req_status == pending_status}")
-    print(f"DEBUG: req_status != pending_status: {req_status != pending_status}")
     
     if req_status != pending_status:
         raise HTTPException(
