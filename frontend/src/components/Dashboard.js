@@ -15,7 +15,9 @@ import {
   Activity,
   DollarSign,
   Target,
-  BarChart3
+  BarChart3,
+  ClipboardList,
+  XCircle
 } from 'lucide-react';
 import { toast } from 'sonner';
 
