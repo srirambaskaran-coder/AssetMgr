@@ -959,10 +959,34 @@ async def get_dashboard_stats(current_user: User = Depends(get_current_user)):
         stats["pending_requisitions"] = pending_requisitions
     
     if UserRole.MANAGER in current_user.roles:
-        pending_approvals = await db.asset_requisitions.count_documents({
-            "status": RequisitionStatus.PENDING
+        # Manager-specific statistics: requests from their direct reports
+        # Get all requisitions from the manager's direct reports
+        total_requisitions = await db.asset_requisitions.count_documents({
+            "manager_id": current_user.id
         })
-        stats["pending_approvals"] = pending_approvals
+        
+        approved_requests = await db.asset_requisitions.count_documents({
+            "manager_id": current_user.id,
+            "status": RequisitionStatus.MANAGER_APPROVED
+        })
+        
+        rejected_requests = await db.asset_requisitions.count_documents({
+            "manager_id": current_user.id, 
+            "status": RequisitionStatus.REJECTED,
+            "manager_rejection_reason": {"$exists": True}
+        })
+        
+        held_requests = await db.asset_requisitions.count_documents({
+            "manager_id": current_user.id,
+            "status": RequisitionStatus.ON_HOLD
+        })
+        
+        stats.update({
+            "total_requisitions": total_requisitions,
+            "approved_requests": approved_requests,
+            "rejected_requests": rejected_requests,
+            "held_requests": held_requests
+        })
     
     if UserRole.EMPLOYEE in current_user.roles:
         my_requisitions = await db.asset_requisitions.count_documents({"requested_by": current_user.id})
