@@ -1461,7 +1461,8 @@ async def create_asset_allocation(
             "$set": {
                 "status": AssetStatus.ALLOCATED,
                 "allocated_to": requisition["requested_by"],
-                "allocated_to_name": requested_user["name"] if requested_user else None
+                "allocated_to_name": requested_user["name"] if requested_user else None,
+                "allocation_date": datetime.now(timezone.utc)
             }
         }
     )
