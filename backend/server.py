@@ -755,6 +755,11 @@ async def create_asset_requisition(
     requisition_dict["team_member_name"] = team_member_name
     requisition_dict["created_at"] = datetime.now(timezone.utc)
     
+    # Set manager ID and name from the requesting user's reporting manager
+    if current_user.reporting_manager_id:
+        requisition_dict["manager_id"] = current_user.reporting_manager_id
+        requisition_dict["manager_name"] = current_user.reporting_manager_name
+    
     # Convert required_by_date to datetime if provided as string
     if requisition_dict.get("required_by_date") and isinstance(requisition_dict["required_by_date"], str):
         requisition_dict["required_by_date"] = datetime.fromisoformat(requisition_dict["required_by_date"])
