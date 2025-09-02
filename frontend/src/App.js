@@ -12,6 +12,7 @@ import AssetDefinitions from './components/AssetDefinitions';
 import AssetRequisitions from './components/AssetRequisitions';
 import AssetAllocations from './components/AssetAllocations';
 import AssetRetrievals from './components/AssetRetrievals';
+import MyAssets from './components/MyAssets';
 import UserManagement from './components/UserManagement';
 import BulkImport from './components/BulkImport';
 import Settings from './components/Settings';
