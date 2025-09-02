@@ -131,6 +131,10 @@ class AssetDefinition(BaseModel):
     current_depreciation_value: Optional[float] = None
     allocated_to: Optional[str] = None  # User ID
     allocated_to_name: Optional[str] = None  # User name for display
+    allocation_date: Optional[datetime] = None  # When asset was allocated
+    acknowledged: bool = False  # Whether employee has acknowledged receipt
+    acknowledgment_date: Optional[datetime] = None  # When acknowledgment was made
+    acknowledgment_notes: Optional[str] = None  # Employee notes during acknowledgment
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     created_by: Optional[str] = None
 
