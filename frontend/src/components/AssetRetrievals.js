@@ -298,7 +298,7 @@ const AssetRetrievals = () => {
                     <TableHead>Condition</TableHead>
                     <TableHead>Returned On</TableHead>
                     <TableHead>Recovery Value</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
+                    {canEdit() && <TableHead className="text-right">Actions</TableHead>}
                   </TableRow>
                 </TableHeader>
                 <TableBody>
