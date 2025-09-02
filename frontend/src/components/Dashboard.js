@@ -66,7 +66,7 @@ const Dashboard = () => {
   };
 
   const getRoleDashboard = () => {
-    switch (effectiveRole) {
+    switch (activeRole) {
       case 'Administrator':
         return <AdminDashboard stats={stats} />;
       case 'HR Manager':
