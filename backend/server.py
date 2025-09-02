@@ -774,12 +774,9 @@ async def get_asset_requisitions(current_user: User = Depends(get_current_user))
         # Pure employees can only see their own requisitions
         requisitions = await db.asset_requisitions.find({"requested_by": current_user.id}).to_list(1000)
     elif UserRole.MANAGER in current_user.roles:
-        # Managers can see requisitions pending their approval
+        # Managers can see requisitions from their direct reports
         requisitions = await db.asset_requisitions.find({
-            "$or": [
-                {"status": RequisitionStatus.PENDING},
-                {"manager_id": current_user.id}
-            ]
+            "manager_id": current_user.id
         }).to_list(1000)
     else:
         # HR Managers and Administrators can see all requisitions
