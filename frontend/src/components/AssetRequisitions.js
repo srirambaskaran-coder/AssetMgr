@@ -180,21 +180,16 @@ const AssetRequisitions = () => {
   };
 
   const canCreateRequisition = () => {
-    // Handle both old single role structure and new multi-role structure
-    const userRoles = user?.roles || (user?.role ? [user.role] : []);
-    return userRoles.some(role => ['Employee', 'Manager'].includes(role));
+    return accessibleRoles.includes('Employee') || accessibleRoles.includes('Manager');
   };
 
   const canManageRequisitions = () => {
-    // Handle both old single role structure and new multi-role structure
-    const userRoles = user?.roles || (user?.role ? [user.role] : []);
-    return userRoles.some(role => ['Manager', 'HR Manager', 'Administrator', 'Asset Manager'].includes(role));
+    return accessibleRoles.includes('Manager') || accessibleRoles.includes('HR Manager') || 
+           accessibleRoles.includes('Administrator') || accessibleRoles.includes('Asset Manager');
   };
 
   const hasRole = (roleName) => {
-    // Handle both old single role structure and new multi-role structure
-    const userRoles = user?.roles || (user?.role ? [user.role] : []);
-    return userRoles.includes(roleName);
+    return accessibleRoles.includes(roleName);
   };
 
   if (loading) {
