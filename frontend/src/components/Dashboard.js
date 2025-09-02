@@ -24,32 +24,18 @@ const API = `${BACKEND_URL}/api`;
 
 const Dashboard = () => {
   const { user } = useAuth();
+  const { activeRole } = useRole();
   const [stats, setStats] = useState({});
   const [loading, setLoading] = useState(true);
-  
-  // Handle both old single role structure and new multi-role structure
-  const userRoles = user?.roles || (user?.role ? [user.role] : ['Employee']);
-  const primaryRole = userRoles[0] || 'Employee';
-  
-  // Determine which dashboard to show based on role hierarchy
-  const getEffectiveRole = () => {
-    if (userRoles.includes('Administrator')) return 'Administrator';
-    if (userRoles.includes('Asset Manager')) return 'Asset Manager';
-    if (userRoles.includes('HR Manager')) return 'HR Manager';
-    if (userRoles.includes('Manager')) return 'Manager';
-    return 'Employee';
-  };
-  
-  const effectiveRole = getEffectiveRole();
 
   useEffect(() => {
     fetchDashboardStats();
-  }, [effectiveRole]);
+  }, [activeRole]);
 
   const fetchDashboardStats = async () => {
     try {
       let endpoint = `${API}/dashboard/stats`;
-      if (effectiveRole === 'Asset Manager') {
+      if (activeRole === 'Asset Manager') {
         endpoint = `${API}/dashboard/asset-manager-stats`;
       }
       const response = await axios.get(endpoint);
