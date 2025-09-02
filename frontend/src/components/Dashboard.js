@@ -182,27 +182,34 @@ const HRManagerDashboard = ({ stats }) => (
 );
 
 const ManagerDashboard = ({ stats }) => (
-  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
     <StatCard
-      title="Available Assets"
-      value={stats.available_assets || 0}
+      title="Asset Requisitions"
+      value={stats.total_requisitions || 0}
+      icon={ClipboardList}
+      color="text-blue-600"
+      bgColor="bg-blue-100"
+    />
+    <StatCard
+      title="Requests Approved"
+      value={stats.approved_requests || 0}
       icon={CheckCircle}
       color="text-green-600"
       bgColor="bg-green-100"
     />
     <StatCard
-      title="Pending Approvals"
-      value={stats.pending_approvals || 0}
+      title="Requests Rejected"
+      value={stats.rejected_requests || 0}
+      icon={XCircle}
+      color="text-red-600"
+      bgColor="bg-red-100"
+    />
+    <StatCard
+      title="Requests On Hold"
+      value={stats.held_requests || 0}
       icon={Clock}
       color="text-yellow-600"
       bgColor="bg-yellow-100"
-    />
-    <StatCard
-      title="Total Assets"
-      value={stats.total_assets || 0}
-      icon={TrendingUp}
-      color="text-blue-600"
-      bgColor="bg-blue-100"
     />
   </div>
 );
