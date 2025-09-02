@@ -43,13 +43,13 @@ const Navigation = () => {
       name: 'Asset Types',
       href: '/asset-types',
       icon: Package,
-      roles: ['Administrator', 'HR Manager', 'Manager']
+      roles: ['Administrator', 'HR Manager']
     },
     {
       name: 'Asset Definitions',
       href: '/asset-definitions',
       icon: FileText,
-      roles: ['Administrator', 'HR Manager', 'Manager']
+      roles: ['Administrator', 'HR Manager']
     },
     {
       name: 'Asset Requisitions',
@@ -67,7 +67,7 @@ const Navigation = () => {
       name: 'Asset Retrievals',
       href: '/asset-retrievals',
       icon: ClipboardList,
-      roles: ['Asset Manager', 'Administrator']
+      roles: ['Asset Manager', 'Administrator', 'Manager']
     },
     {
       name: 'User Management',
