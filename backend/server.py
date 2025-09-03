@@ -1687,6 +1687,14 @@ async def create_user(
             raise HTTPException(status_code=400, detail="Selected reporting manager must have Manager role")
         reporting_manager_name = reporting_manager["name"]
     
+    # Validate location if provided
+    location_name = None
+    if user_data.location_id:
+        location = await db.locations.find_one({"id": user_data.location_id})
+        if not location:
+            raise HTTPException(status_code=400, detail="Location not found")
+        location_name = location["name"]
+    
     # Hash password (simple hash for demo)
     password_hash = hashlib.sha256(user_data.password.encode()).hexdigest()
     
@@ -1699,6 +1707,8 @@ async def create_user(
         "date_of_joining": user_data.date_of_joining,
         "reporting_manager_id": user_data.reporting_manager_id,
         "reporting_manager_name": reporting_manager_name,
+        "location_id": user_data.location_id,
+        "location_name": location_name,
         "password_hash": password_hash,
         "created_at": datetime.now(timezone.utc),
         "is_active": True
