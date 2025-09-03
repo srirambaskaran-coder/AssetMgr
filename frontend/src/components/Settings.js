@@ -65,20 +65,30 @@ const Settings = () => {
 
   const fetchEmailConfiguration = async () => {
     try {
+      console.log('🔍 Fetching Email Config:');
+      console.log('API URL:', `${API}/email-config`);
+      console.log('Token:', localStorage.getItem('token'));
+
       const response = await axios.get(`${API}/email-config`, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`
         }
       });
       
+      console.log('✅ Fetch Success:', response.data);
       setEmailConfig(response.data);
       setEmailConfigExists(true);
       setEmailConfigId(response.data.id);
     } catch (error) {
+      console.error('🚨 Fetch Email Config Error:', error);
+      console.error('Response Status:', error.response?.status);
+      console.error('Response Data:', error.response?.data);
+      
       if (error.response?.status === 404) {
         setEmailConfigExists(false);
+        console.log('ℹ️ No email configuration found (expected)');
       } else {
-        console.error('Error fetching email configuration:', error);
+        console.error('❌ Unexpected error fetching email configuration:', error);
       }
     }
   };
