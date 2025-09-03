@@ -98,6 +98,13 @@ const Settings = () => {
         delete submitData.smtp_password;
       }
 
+      console.log('🔍 Frontend Debug Info:');
+      console.log('API URL:', API);
+      console.log('Token:', localStorage.getItem('token'));
+      console.log('Submit Data:', submitData);
+      console.log('Email Config Exists:', emailConfigExists);
+      console.log('Email Config ID:', emailConfigId);
+
       const response = emailConfigExists 
         ? await axios.put(`${API}/email-config/${emailConfigId}`, submitData, {
             headers: {
@@ -115,7 +122,11 @@ const Settings = () => {
       setEmailConfigId(response.data.id);
       toast.success(emailConfigExists ? 'Email configuration updated successfully' : 'Email configuration created successfully');
     } catch (error) {
-      console.error('Error saving email configuration:', error);
+      console.error('🚨 Email Configuration Error:', error);
+      console.error('Response:', error.response);
+      console.error('Response Data:', error.response?.data);
+      console.error('Response Status:', error.response?.status);
+      console.error('Response Headers:', error.response?.headers);
       toast.error(error.response?.data?.detail || 'Failed to save email configuration');
     } finally {
       setEmailLoading(false);
