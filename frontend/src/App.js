@@ -14,6 +14,7 @@ import AssetAllocations from './components/AssetAllocations';
 import AssetRetrievals from './components/AssetRetrievals';
 import MyAssets from './components/MyAssets';
 import UserManagement from './components/UserManagement';
+import LocationManagement from './components/LocationManagement';
 import BulkImport from './components/BulkImport';
 import Settings from './components/Settings';
 import CompanyProfile from './components/CompanyProfile';
