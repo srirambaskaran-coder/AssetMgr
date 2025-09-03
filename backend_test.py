@@ -3540,6 +3540,11 @@ def main():
     print("-" * 35)
     tester.test_email_notification_system()
     
+    # Test LOCATION-BASED ASSET MANAGEMENT SYSTEM
+    print("\n🌍 LOCATION-BASED ASSET MANAGEMENT SYSTEM TESTS")
+    print("-" * 50)
+    tester.test_location_based_asset_management_system()
+    
     # Print final results
     print("\n" + "=" * 60)
     print(f"📊 FINAL RESULTS")
