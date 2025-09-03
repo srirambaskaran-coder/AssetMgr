@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '../App';
 import axios from 'axios';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
@@ -6,6 +6,7 @@ import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
 import { Alert, AlertDescription } from './ui/alert';
+import { Switch } from './ui/switch';
 import { toast } from 'sonner';
 import { 
   Settings as SettingsIcon, 
@@ -13,7 +14,11 @@ import {
   User, 
   Eye, 
   EyeOff,
-  CheckCircle
+  CheckCircle,
+  Mail,
+  Server,
+  Send,
+  AlertCircle
 } from 'lucide-react';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
