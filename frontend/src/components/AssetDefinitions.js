@@ -111,6 +111,22 @@ const AssetDefinitions = () => {
     return matchesSearch && matchesStatus && matchesType;
   });
 
+  // Pagination logic
+  const totalItems = filteredAssetDefinitions.length;
+  const totalPages = Math.ceil(totalItems / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const paginatedAssetDefinitions = filteredAssetDefinitions.slice(startIndex, endIndex);
+
+  const handlePageChange = (page) => {
+    setCurrentPage(page);
+  };
+
+  // Reset to page 1 when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, statusFilter, typeFilter]);
+
   const getStatusBadgeColor = (status) => {
     const colors = {
       'Available': 'bg-green-100 text-green-800',
