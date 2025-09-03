@@ -402,6 +402,7 @@ const UserManagement = () => {
               initialData={selectedUser}
               onSubmit={(formData) => handleUpdateUser(selectedUser.id, formData)}
               managers={managers}
+              locations={locations}
               isEdit={true}
             />
           )}
