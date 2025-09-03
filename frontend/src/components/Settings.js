@@ -110,7 +110,8 @@ const Settings = () => {
 
       console.log('🔍 Frontend Debug Info:');
       console.log('API URL:', API);
-      console.log('Token:', localStorage.getItem('token'));
+      console.log('Session Token:', localStorage.getItem('session_token'));
+      console.log('Token (legacy):', localStorage.getItem('token'));
       console.log('Submit Data:', submitData);
       console.log('Email Config Exists:', emailConfigExists);
       console.log('Email Config ID:', emailConfigId);
@@ -118,12 +119,12 @@ const Settings = () => {
       const response = emailConfigExists 
         ? await axios.put(`${API}/email-config/${emailConfigId}`, submitData, {
             headers: {
-              'Authorization': `Bearer ${localStorage.getItem('token')}`
+              'Authorization': `Bearer ${localStorage.getItem('session_token')}`
             }
           })
         : await axios.post(`${API}/email-config`, submitData, {
             headers: {
-              'Authorization': `Bearer ${localStorage.getItem('token')}`
+              'Authorization': `Bearer ${localStorage.getItem('session_token')}`
             }
           });
 
