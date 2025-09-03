@@ -33,6 +33,10 @@ const MyAssets = () => {
   const [isAckModalOpen, setIsAckModalOpen] = useState(false);
   const [acknowledgmentNotes, setAcknowledgmentNotes] = useState('');
   const [acknowledging, setAcknowledging] = useState(false);
+  
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(10);
 
   useEffect(() => {
     fetchMyAssets();
