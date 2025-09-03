@@ -1131,6 +1131,14 @@ async def get_managers(
     managers = await db.users.find({"roles": UserRole.MANAGER, "is_active": True}, {"password_hash": 0}).to_list(1000)
     return [User(**manager) for manager in managers]
 
+@api_router.get("/users/asset-managers", response_model=List[User])
+async def get_asset_managers(
+    current_user: User = Depends(require_role([UserRole.ADMINISTRATOR, UserRole.HR_MANAGER]))
+):
+    """Get all users with Asset Manager role"""
+    asset_managers = await db.users.find({"roles": UserRole.ASSET_MANAGER, "is_active": True}, {"password_hash": 0}).to_list(1000)
+    return [User(**asset_manager) for asset_manager in asset_managers]
+
 @api_router.get("/users/{user_id}", response_model=User)
 async def get_user(
     user_id: str,
