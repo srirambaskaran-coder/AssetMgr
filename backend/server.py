@@ -2297,7 +2297,7 @@ async def create_email_configuration(
         
         email_config_dict = email_config.dict()
         email_config_dict["id"] = str(uuid.uuid4())
-        email_config_dict["is_active"] = True  # Explicitly set active
+        email_config_dict["is_active"] = True  # Explicitly set active - this is the critical fix!
         email_config_dict["created_at"] = datetime.now(timezone.utc)
         email_config_dict["updated_at"] = datetime.now(timezone.utc)
         logging.info(f"DEBUG: Prepared config dict with ID: {email_config_dict['id']}")
