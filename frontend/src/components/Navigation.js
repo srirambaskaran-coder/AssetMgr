@@ -83,6 +83,12 @@ const Navigation = () => {
       roles: ['Administrator']
     },
     {
+      name: 'Location Management',
+      href: '/locations',
+      icon: MapPin,
+      roles: ['Administrator']
+    },
+    {
       name: 'Bulk Import',
       href: '/bulk-import',
       icon: FileText,
