@@ -148,7 +148,7 @@ const UserManagement = () => {
   // Reset to page 1 when filters change
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchTerm, roleFilter, statusFilter]);
+  }, [searchTerm, roleFilter, statusFilter, locationFilter]);
 
   const getRoleBadgeColor = (role) => {
     const colors = {
