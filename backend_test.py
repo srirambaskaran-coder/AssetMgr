@@ -1780,6 +1780,345 @@ class AssetInventoryAPITester:
         
         return True
 
+    def test_asset_type_manager_assignment(self):
+        """Test Asset Type Manager Assignment feature"""
+        print(f"\n👨‍💼 Testing Asset Type Manager Assignment Feature")
+        
+        # Test 1: Get Asset Managers Endpoint
+        print("\n--- 1. Asset Managers Endpoint Testing ---")
+        success, response = self.run_test(
+            "Get Asset Managers",
+            "GET",
+            "users/asset-managers",
+            200,
+            user_role="Administrator"
+        )
+        
+        asset_managers = []
+        if success:
+            asset_managers = response
+            print(f"   ✅ Found {len(asset_managers)} Asset Managers")
+            for manager in asset_managers:
+                print(f"     - {manager.get('name', 'Unknown')} ({manager.get('email', 'Unknown')})")
+                print(f"       ID: {manager.get('id', 'Unknown')}")
+                print(f"       Roles: {manager.get('roles', [])}")
+        else:
+            print("   ❌ Failed to get Asset Managers")
+            return False
+        
+        # Test 2: Create Asset Type without Asset Manager Assignment
+        print("\n--- 2. Asset Type Creation without Asset Manager ---")
+        asset_type_no_manager = {
+            "code": "TESTAM01",
+            "name": "Test Asset Type No Manager",
+            "depreciation_applicable": True,
+            "asset_life": 3,
+            "to_be_recovered_on_separation": True,
+            "status": "Active",
+            "assigned_asset_manager_id": None
+        }
+        
+        success, response = self.run_test(
+            "Create Asset Type without Asset Manager",
+            "POST",
+            "asset-types",
+            200,
+            data=asset_type_no_manager,
+            user_role="Administrator"
+        )
+        
+        if success:
+            self.test_data['asset_type_no_manager_id'] = response['id']
+            print(f"   ✅ Created asset type without manager: {response['id']}")
+            print(f"   Assigned Asset Manager ID: {response.get('assigned_asset_manager_id', 'None')}")
+            print(f"   Assigned Asset Manager Name: {response.get('assigned_asset_manager_name', 'None')}")
+        else:
+            print("   ❌ Failed to create asset type without manager")
+        
+        # Test 3: Create Asset Type with valid Asset Manager Assignment
+        print("\n--- 3. Asset Type Creation with Asset Manager Assignment ---")
+        if asset_managers:
+            selected_manager = asset_managers[0]  # Use first available Asset Manager
+            asset_type_with_manager = {
+                "code": "TESTAM02",
+                "name": "Test Asset Type With Manager",
+                "depreciation_applicable": True,
+                "asset_life": 5,
+                "to_be_recovered_on_separation": True,
+                "status": "Active",
+                "assigned_asset_manager_id": selected_manager['id']
+            }
+            
+            success, response = self.run_test(
+                "Create Asset Type with Asset Manager",
+                "POST",
+                "asset-types",
+                200,
+                data=asset_type_with_manager,
+                user_role="Administrator"
+            )
+            
+            if success:
+                self.test_data['asset_type_with_manager_id'] = response['id']
+                print(f"   ✅ Created asset type with manager: {response['id']}")
+                print(f"   Assigned Asset Manager ID: {response.get('assigned_asset_manager_id', 'None')}")
+                print(f"   Assigned Asset Manager Name: {response.get('assigned_asset_manager_name', 'None')}")
+                
+                # Verify the manager name was populated correctly
+                if response.get('assigned_asset_manager_name') == selected_manager['name']:
+                    print("   ✅ Asset Manager name populated correctly")
+                else:
+                    print(f"   ❌ Asset Manager name mismatch: expected {selected_manager['name']}, got {response.get('assigned_asset_manager_name')}")
+            else:
+                print("   ❌ Failed to create asset type with manager")
+        else:
+            print("   ⚠️ No Asset Managers available for assignment test")
+        
+        # Test 4: Create Asset Type with invalid Asset Manager ID (should fail)
+        print("\n--- 4. Asset Type Creation with Invalid Asset Manager ---")
+        asset_type_invalid_manager = {
+            "code": "TESTAM03",
+            "name": "Test Asset Type Invalid Manager",
+            "depreciation_applicable": False,
+            "status": "Active",
+            "assigned_asset_manager_id": "invalid-manager-id"
+        }
+        
+        success, response = self.run_test(
+            "Create Asset Type with Invalid Asset Manager (Should Fail)",
+            "POST",
+            "asset-types",
+            400,
+            data=asset_type_invalid_manager,
+            user_role="Administrator"
+        )
+        
+        if success:
+            print("   ✅ Invalid Asset Manager ID correctly rejected")
+        else:
+            print("   ❌ Invalid Asset Manager ID was not rejected")
+        
+        # Test 5: Create Asset Type with non-Asset Manager user (should fail)
+        print("\n--- 5. Asset Type Creation with Non-Asset Manager User ---")
+        # Get a non-Asset Manager user (Employee)
+        success, users_response = self.run_test(
+            "Get Users for Non-Asset Manager Test",
+            "GET",
+            "users",
+            200,
+            user_role="Administrator"
+        )
+        
+        non_asset_manager = None
+        if success:
+            for user in users_response:
+                user_roles = user.get('roles', [])
+                if 'Asset Manager' not in user_roles and 'Employee' in user_roles:
+                    non_asset_manager = user
+                    break
+        
+        if non_asset_manager:
+            asset_type_non_manager = {
+                "code": "TESTAM04",
+                "name": "Test Asset Type Non Manager",
+                "depreciation_applicable": False,
+                "status": "Active",
+                "assigned_asset_manager_id": non_asset_manager['id']
+            }
+            
+            success, response = self.run_test(
+                "Create Asset Type with Non-Asset Manager (Should Fail)",
+                "POST",
+                "asset-types",
+                400,
+                data=asset_type_non_manager,
+                user_role="Administrator"
+            )
+            
+            if success:
+                print("   ✅ Non-Asset Manager user correctly rejected")
+            else:
+                print("   ❌ Non-Asset Manager user was not rejected")
+        else:
+            print("   ⚠️ No non-Asset Manager user found for validation test")
+        
+        # Test 6: Update Asset Type to assign Asset Manager
+        print("\n--- 6. Asset Type Update - Assign Asset Manager ---")
+        if 'asset_type_no_manager_id' in self.test_data and asset_managers:
+            selected_manager = asset_managers[0]
+            update_assign_manager = {
+                "assigned_asset_manager_id": selected_manager['id']
+            }
+            
+            success, response = self.run_test(
+                "Update Asset Type - Assign Manager",
+                "PUT",
+                f"asset-types/{self.test_data['asset_type_no_manager_id']}",
+                200,
+                data=update_assign_manager,
+                user_role="Administrator"
+            )
+            
+            if success:
+                print(f"   ✅ Asset Manager assigned via update")
+                print(f"   Assigned Asset Manager ID: {response.get('assigned_asset_manager_id', 'None')}")
+                print(f"   Assigned Asset Manager Name: {response.get('assigned_asset_manager_name', 'None')}")
+                
+                # Verify the manager name was populated correctly
+                if response.get('assigned_asset_manager_name') == selected_manager['name']:
+                    print("   ✅ Asset Manager name populated correctly on update")
+                else:
+                    print(f"   ❌ Asset Manager name mismatch on update")
+            else:
+                print("   ❌ Failed to assign Asset Manager via update")
+        
+        # Test 7: Update Asset Type to unassign Asset Manager
+        print("\n--- 7. Asset Type Update - Unassign Asset Manager ---")
+        if 'asset_type_with_manager_id' in self.test_data:
+            update_unassign_manager = {
+                "assigned_asset_manager_id": None
+            }
+            
+            success, response = self.run_test(
+                "Update Asset Type - Unassign Manager",
+                "PUT",
+                f"asset-types/{self.test_data['asset_type_with_manager_id']}",
+                200,
+                data=update_unassign_manager,
+                user_role="Administrator"
+            )
+            
+            if success:
+                print(f"   ✅ Asset Manager unassigned via update")
+                print(f"   Assigned Asset Manager ID: {response.get('assigned_asset_manager_id', 'None')}")
+                print(f"   Assigned Asset Manager Name: {response.get('assigned_asset_manager_name', 'None')}")
+                
+                # Verify both ID and name are cleared
+                if response.get('assigned_asset_manager_id') is None and response.get('assigned_asset_manager_name') is None:
+                    print("   ✅ Asset Manager assignment properly cleared")
+                else:
+                    print("   ❌ Asset Manager assignment not properly cleared")
+            else:
+                print("   ❌ Failed to unassign Asset Manager via update")
+        
+        # Test 8: Update Asset Type with invalid Asset Manager (should fail)
+        print("\n--- 8. Asset Type Update with Invalid Asset Manager ---")
+        if 'asset_type_no_manager_id' in self.test_data:
+            update_invalid_manager = {
+                "assigned_asset_manager_id": "invalid-update-manager-id"
+            }
+            
+            success, response = self.run_test(
+                "Update Asset Type with Invalid Manager (Should Fail)",
+                "PUT",
+                f"asset-types/{self.test_data['asset_type_no_manager_id']}",
+                400,
+                data=update_invalid_manager,
+                user_role="Administrator"
+            )
+            
+            if success:
+                print("   ✅ Invalid Asset Manager ID correctly rejected on update")
+            else:
+                print("   ❌ Invalid Asset Manager ID was not rejected on update")
+        
+        # Test 9: Verify Asset Manager assignment persists in retrieval
+        print("\n--- 9. Asset Manager Assignment Data Persistence ---")
+        if 'asset_type_no_manager_id' in self.test_data:
+            success, response = self.run_test(
+                "Get Asset Type - Verify Manager Assignment",
+                "GET",
+                f"asset-types/{self.test_data['asset_type_no_manager_id']}",
+                200,
+                user_role="Administrator"
+            )
+            
+            if success:
+                print(f"   ✅ Asset type retrieved successfully")
+                print(f"   Assigned Asset Manager ID: {response.get('assigned_asset_manager_id', 'None')}")
+                print(f"   Assigned Asset Manager Name: {response.get('assigned_asset_manager_name', 'None')}")
+                
+                # Check if assignment persisted from previous update
+                if response.get('assigned_asset_manager_id') is not None:
+                    print("   ✅ Asset Manager assignment persisted correctly")
+                else:
+                    print("   ⚠️ Asset Manager assignment not persisted (may be expected if cleared)")
+            else:
+                print("   ❌ Failed to retrieve asset type for persistence check")
+        
+        # Test 10: Get all Asset Types and verify manager assignments are included
+        print("\n--- 10. Asset Types List - Manager Assignment Display ---")
+        success, response = self.run_test(
+            "Get All Asset Types - Check Manager Assignments",
+            "GET",
+            "asset-types",
+            200,
+            user_role="Administrator"
+        )
+        
+        if success:
+            print(f"   ✅ Retrieved {len(response)} asset types")
+            manager_assigned_count = 0
+            for asset_type in response:
+                if asset_type.get('assigned_asset_manager_id'):
+                    manager_assigned_count += 1
+                    print(f"     - {asset_type.get('name', 'Unknown')} assigned to {asset_type.get('assigned_asset_manager_name', 'Unknown')}")
+            
+            print(f"   Asset types with managers assigned: {manager_assigned_count}")
+            if manager_assigned_count > 0:
+                print("   ✅ Asset Manager assignments visible in list")
+            else:
+                print("   ⚠️ No Asset Manager assignments found in list")
+        else:
+            print("   ❌ Failed to retrieve asset types list")
+        
+        # Test 11: Access Control - HR Manager can assign Asset Managers
+        print("\n--- 11. Access Control - HR Manager Asset Manager Assignment ---")
+        if "HR Manager" in self.tokens and asset_managers:
+            hr_asset_type = {
+                "code": "TESTAM05",
+                "name": "HR Manager Test Asset Type",
+                "depreciation_applicable": False,
+                "status": "Active",
+                "assigned_asset_manager_id": asset_managers[0]['id']
+            }
+            
+            success, response = self.run_test(
+                "HR Manager Create Asset Type with Manager",
+                "POST",
+                "asset-types",
+                200,
+                data=hr_asset_type,
+                user_role="HR Manager"
+            )
+            
+            if success:
+                print("   ✅ HR Manager can assign Asset Managers")
+                print(f"   Assigned Manager: {response.get('assigned_asset_manager_name', 'None')}")
+            else:
+                print("   ❌ HR Manager cannot assign Asset Managers")
+        else:
+            print("   ⚠️ HR Manager not available or no Asset Managers for access control test")
+        
+        # Test 12: Access Control - Employee cannot access Asset Managers endpoint
+        print("\n--- 12. Access Control - Employee Asset Managers Access ---")
+        success, response = self.run_test(
+            "Employee Get Asset Managers (Should Fail)",
+            "GET",
+            "users/asset-managers",
+            403,
+            user_role="Employee"
+        )
+        
+        if success:
+            print("   ✅ Employee correctly denied access to Asset Managers endpoint")
+        else:
+            print("   ❌ Employee was not denied access to Asset Managers endpoint")
+        
+        print("\n--- Asset Type Manager Assignment Testing Summary ---")
+        print("✅ Asset Type Manager Assignment feature testing completed")
+        return True
+
     def test_sriram_password_update_and_login(self):
         """Test specific password update and login issue for user sriram@company.com"""
         print(f"\n🔐 Testing Password Update and Login for sriram@company.com")
