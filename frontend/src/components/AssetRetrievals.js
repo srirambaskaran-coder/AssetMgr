@@ -340,7 +340,7 @@ const AssetRetrievals = () => {
                         {retrieval.recovery_value && (
                           <div className="flex items-center">
                             <IndianRupee className="h-4 w-4 mr-1 text-gray-500" />
-                            {retrieval.recovery_value.toLocaleString()}
+                            ₹{retrieval.recovery_value.toLocaleString()}
                           </div>
                         )}
                       </TableCell>
