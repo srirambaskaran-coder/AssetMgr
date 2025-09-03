@@ -347,6 +347,7 @@ class UserCreate(BaseModel):
     designation: Optional[str] = None
     date_of_joining: Optional[datetime] = None
     reporting_manager_id: Optional[str] = None
+    location_id: Optional[str] = None
     password: str
 
 class UserUpdate(BaseModel):
@@ -355,6 +356,7 @@ class UserUpdate(BaseModel):
     designation: Optional[str] = None
     date_of_joining: Optional[datetime] = None
     reporting_manager_id: Optional[str] = None
+    location_id: Optional[str] = None
     is_active: Optional[bool] = None
     password: Optional[str] = None
 
