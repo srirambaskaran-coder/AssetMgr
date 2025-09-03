@@ -481,6 +481,17 @@ const AssetRequisitions = () => {
             </div>
           )}
         </CardContent>
+        
+        {/* Pagination */}
+        {totalPages > 1 && (
+          <DataPagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            totalItems={totalItems}
+            itemsPerPage={itemsPerPage}
+            onPageChange={handlePageChange}
+          />
+        )}
       </Card>
 
       {/* Statistics Cards for Managers */}
