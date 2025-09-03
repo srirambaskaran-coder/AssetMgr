@@ -2,7 +2,7 @@ import requests
 import json
 
 def simple_manager_test():
-    base_url = "https://inventoryhub-8.preview.emergentagent.com"
+    base_url = "https://asset-flow-app.preview.emergentagent.com"
     api_url = f"{base_url}/api"
     
     # Login as test manager

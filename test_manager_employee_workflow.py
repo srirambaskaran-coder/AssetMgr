@@ -3,7 +3,7 @@ import json
 from datetime import datetime, timedelta
 
 class ManagerEmployeeWorkflowTester:
-    def __init__(self, base_url="https://inventoryhub-8.preview.emergentagent.com"):
+    def __init__(self, base_url="https://asset-flow-app.preview.emergentagent.com"):
         self.base_url = base_url
         self.api_url = f"{base_url}/api"
         self.tokens = {}

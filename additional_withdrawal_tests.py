@@ -10,7 +10,7 @@ from datetime import datetime, timedelta
 
 class AdditionalWithdrawalTester:
     def __init__(self):
-        self.base_url = "https://inventoryhub-8.preview.emergentagent.com"
+        self.base_url = "https://asset-flow-app.preview.emergentagent.com"
         self.api_url = f"{self.base_url}/api"
         self.tokens = {}
         self.users = {}
