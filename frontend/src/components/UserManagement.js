@@ -119,6 +119,22 @@ const UserManagement = () => {
     return matchesSearch && matchesRole && matchesStatus;
   });
 
+  // Pagination logic
+  const totalItems = filteredUsers.length;
+  const totalPages = Math.ceil(totalItems / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const paginatedUsers = filteredUsers.slice(startIndex, endIndex);
+
+  const handlePageChange = (page) => {
+    setCurrentPage(page);
+  };
+
+  // Reset to page 1 when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, roleFilter, statusFilter]);
+
   const getRoleBadgeColor = (role) => {
     const colors = {
       'Administrator': 'bg-purple-100 text-purple-800',
