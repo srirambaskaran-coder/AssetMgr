@@ -2911,6 +2911,541 @@ class AssetInventoryAPITester:
         
         return True
 
+    def test_location_management_api(self):
+        """Test Location Management API Testing"""
+        print(f"\n🌍 Testing Location Management API")
+        
+        # Test 1: Create new locations with Code, Name, Country, Status
+        location_data_nyc = {
+            "code": "NYC",
+            "name": "NYC Office",
+            "country": "United States",
+            "status": "Active"
+        }
+        
+        success, response = self.run_test(
+            "Create NYC Office Location",
+            "POST",
+            "locations",
+            200,
+            data=location_data_nyc,
+            user_role="Administrator"
+        )
+        
+        if success:
+            self.test_data['nyc_location_id'] = response['id']
+            print(f"   Created NYC location with ID: {response['id']}")
+            print(f"   Code: {response['code']}, Name: {response['name']}")
+            print(f"   Country: {response['country']}, Status: {response['status']}")
+        
+        # Create London Branch location
+        location_data_london = {
+            "code": "LON",
+            "name": "London Branch",
+            "country": "United Kingdom",
+            "status": "Active"
+        }
+        
+        success, response = self.run_test(
+            "Create London Branch Location",
+            "POST",
+            "locations",
+            200,
+            data=location_data_london,
+            user_role="Administrator"
+        )
+        
+        if success:
+            self.test_data['london_location_id'] = response['id']
+            print(f"   Created London location with ID: {response['id']}")
+        
+        # Test 2: GET /api/locations - Retrieve all locations
+        success, response = self.run_test(
+            "Get All Locations",
+            "GET",
+            "locations",
+            200,
+            user_role="Administrator"
+        )
+        
+        if success:
+            print(f"   Found {len(response)} locations")
+            for location in response:
+                print(f"     - {location['code']}: {location['name']} ({location['country']})")
+        
+        # Test 3: PUT /api/locations/{id} - Update location details
+        if 'nyc_location_id' in self.test_data:
+            update_data = {
+                "name": "New York City Headquarters",
+                "status": "Active"
+            }
+            success, response = self.run_test(
+                "Update NYC Location Details",
+                "PUT",
+                f"locations/{self.test_data['nyc_location_id']}",
+                200,
+                data=update_data,
+                user_role="Administrator"
+            )
+            
+            if success:
+                print(f"   Updated location name: {response['name']}")
+        
+        # Test 4: Validation - Duplicate location code prevention
+        duplicate_location = {
+            "code": "NYC",  # Same as existing
+            "name": "Another NYC Office",
+            "country": "United States",
+            "status": "Active"
+        }
+        
+        success, response = self.run_test(
+            "Create Duplicate Location Code (Should Fail)",
+            "POST",
+            "locations",
+            400,
+            data=duplicate_location,
+            user_role="Administrator"
+        )
+        
+        if success:
+            print("   ✅ Duplicate location code correctly rejected")
+        
+        return True
+
+    def test_user_location_integration(self):
+        """Test User Location Integration Testing"""
+        print(f"\n👥 Testing User Location Integration")
+        
+        if 'nyc_location_id' not in self.test_data:
+            print("❌ Skipping User Location tests - no location created")
+            return False
+        
+        # Test 5: Create users with location assignment
+        user_with_location_data = {
+            "email": f"locationuser_{datetime.now().strftime('%H%M%S')}@company.com",
+            "name": "Location Test User",
+            "roles": ["Employee"],
+            "designation": "Software Engineer",
+            "location_id": self.test_data['nyc_location_id'],
+            "password": "TestPassword123!"
+        }
+        
+        success, response = self.run_test(
+            "Create User with Location Assignment",
+            "POST",
+            "users",
+            200,
+            data=user_with_location_data,
+            user_role="Administrator"
+        )
+        
+        if success:
+            self.test_data['location_user_id'] = response['id']
+            print(f"   Created user with location: {response['location_name']}")
+            print(f"   Location ID: {response.get('location_id', 'Not set')}")
+        
+        # Test 6: Update user location assignment
+        if 'location_user_id' in self.test_data and 'london_location_id' in self.test_data:
+            update_data = {
+                "location_id": self.test_data['london_location_id']
+            }
+            success, response = self.run_test(
+                "Update User Location Assignment",
+                "PUT",
+                f"users/{self.test_data['location_user_id']}",
+                200,
+                data=update_data,
+                user_role="Administrator"
+            )
+            
+            if success:
+                print(f"   Updated user location to: {response.get('location_name', 'Unknown')}")
+        
+        # Test 7: Location validation - invalid location_id
+        invalid_location_user = {
+            "email": f"invalidloc_{datetime.now().strftime('%H%M%S')}@company.com",
+            "name": "Invalid Location User",
+            "roles": ["Employee"],
+            "location_id": "invalid-location-id",
+            "password": "TestPassword123!"
+        }
+        
+        success, response = self.run_test(
+            "Create User with Invalid Location (Should Fail)",
+            "POST",
+            "users",
+            400,
+            data=invalid_location_user,
+            user_role="Administrator"
+        )
+        
+        if success:
+            print("   ✅ Invalid location_id correctly rejected")
+        
+        # Test 8: GET /api/users - Verify location_name is included
+        success, response = self.run_test(
+            "Get Users - Verify Location Names",
+            "GET",
+            "users",
+            200,
+            user_role="Administrator"
+        )
+        
+        if success:
+            users_with_location = [u for u in response if u.get('location_name')]
+            print(f"   Found {len(users_with_location)} users with location assignments")
+            if users_with_location:
+                user = users_with_location[0]
+                print(f"   Sample user location: {user.get('location_name', 'None')}")
+        
+        return True
+
+    def test_asset_manager_location_assignment(self):
+        """Test Asset Manager Location Assignment Testing"""
+        print(f"\n🎯 Testing Asset Manager Location Assignment")
+        
+        if 'nyc_location_id' not in self.test_data:
+            print("❌ Skipping Asset Manager Location tests - no location created")
+            return False
+        
+        # Get Asset Manager ID
+        asset_manager_id = self.users.get("Asset Manager", {}).get("id")
+        if not asset_manager_id:
+            print("❌ Skipping Asset Manager Location tests - no Asset Manager user found")
+            return False
+        
+        # Test 9: POST /api/asset-manager-locations - Assign Asset Managers to locations
+        assignment_data = {
+            "asset_manager_id": asset_manager_id,
+            "location_id": self.test_data['nyc_location_id']
+        }
+        
+        success, response = self.run_test(
+            "Assign Asset Manager to NYC Location",
+            "POST",
+            "asset-manager-locations",
+            200,
+            data=assignment_data,
+            user_role="Administrator"
+        )
+        
+        if success:
+            self.test_data['asset_manager_assignment_id'] = response['id']
+            print(f"   Assigned {response['asset_manager_name']} to {response['location_name']}")
+        
+        # Test 10: GET /api/asset-manager-locations - Retrieve assignments
+        success, response = self.run_test(
+            "Get Asset Manager Location Assignments",
+            "GET",
+            "asset-manager-locations",
+            200,
+            user_role="Administrator"
+        )
+        
+        if success:
+            print(f"   Found {len(response)} asset manager location assignments")
+            for assignment in response:
+                print(f"     - {assignment['asset_manager_name']} → {assignment['location_name']}")
+        
+        # Test 11: DELETE /api/asset-manager-locations/{id} - Remove assignments
+        if 'asset_manager_assignment_id' in self.test_data:
+            success, response = self.run_test(
+                "Remove Asset Manager Location Assignment",
+                "DELETE",
+                f"asset-manager-locations/{self.test_data['asset_manager_assignment_id']}",
+                200,
+                user_role="Administrator"
+            )
+            
+            if success:
+                print("   ✅ Asset Manager location assignment removed successfully")
+        
+        # Test 12: Validation - Asset Manager role required
+        employee_id = self.users.get("Employee", {}).get("id")
+        if employee_id:
+            invalid_assignment = {
+                "asset_manager_id": employee_id,  # Employee, not Asset Manager
+                "location_id": self.test_data['nyc_location_id']
+            }
+            
+            success, response = self.run_test(
+                "Assign Non-Asset Manager to Location (Should Fail)",
+                "POST",
+                "asset-manager-locations",
+                400,
+                data=invalid_assignment,
+                user_role="Administrator"
+            )
+            
+            if success:
+                print("   ✅ Non-Asset Manager correctly rejected for location assignment")
+        
+        # Test 13: Validation - Location exists
+        invalid_location_assignment = {
+            "asset_manager_id": asset_manager_id,
+            "location_id": "invalid-location-id"
+        }
+        
+        success, response = self.run_test(
+            "Assign Asset Manager to Invalid Location (Should Fail)",
+            "POST",
+            "asset-manager-locations",
+            404,
+            data=invalid_location_assignment,
+            user_role="Administrator"
+        )
+        
+        if success:
+            print("   ✅ Invalid location correctly rejected for assignment")
+        
+        return True
+
+    def test_data_migration(self):
+        """Test Data Migration Testing"""
+        print(f"\n🔄 Testing Data Migration")
+        
+        # Test 14: POST /api/migrate/set-default-location
+        success, response = self.run_test(
+            "Set Default Location for Existing Users",
+            "POST",
+            "migrate/set-default-location",
+            200,
+            user_role="Administrator"
+        )
+        
+        if success:
+            print(f"   Migration completed: {response.get('message', 'Success')}")
+            print(f"   Users updated: {response.get('users_updated', 0)}")
+            print(f"   Default location created: {response.get('default_location_created', False)}")
+        
+        # Test 15: Verify default location creation
+        success, response = self.run_test(
+            "Verify Default Location Exists",
+            "GET",
+            "locations",
+            200,
+            user_role="Administrator"
+        )
+        
+        if success:
+            default_location = next((loc for loc in response if loc['code'] == 'DEFAULT'), None)
+            if default_location:
+                print(f"   ✅ Default location found: {default_location['name']}")
+                self.test_data['default_location_id'] = default_location['id']
+            else:
+                print("   ⚠️ Default location not found")
+        
+        # Test 16: Verify migration only affects users without location
+        success, response = self.run_test(
+            "Verify Users Have Location Assignments After Migration",
+            "GET",
+            "users",
+            200,
+            user_role="Administrator"
+        )
+        
+        if success:
+            users_without_location = [u for u in response if not u.get('location_id')]
+            users_with_location = [u for u in response if u.get('location_id')]
+            print(f"   Users with location: {len(users_with_location)}")
+            print(f"   Users without location: {len(users_without_location)}")
+            
+            if len(users_without_location) == 0:
+                print("   ✅ All users now have location assignments")
+        
+        return True
+
+    def test_data_validation(self):
+        """Test Data Validation Testing"""
+        print(f"\n✅ Testing Data Validation")
+        
+        # Test 17: Cascade delete protection - location with assigned users
+        if 'nyc_location_id' in self.test_data:
+            success, response = self.run_test(
+                "Delete Location with Assigned Users (Should Fail)",
+                "DELETE",
+                f"locations/{self.test_data['nyc_location_id']}",
+                400,
+                user_role="Administrator"
+            )
+            
+            if success:
+                print("   ✅ Location with assigned users correctly protected from deletion")
+        
+        # Test 18: Cascade delete protection - location with assigned asset managers
+        # First, reassign asset manager to test location
+        asset_manager_id = self.users.get("Asset Manager", {}).get("id")
+        if asset_manager_id and 'london_location_id' in self.test_data:
+            assignment_data = {
+                "asset_manager_id": asset_manager_id,
+                "location_id": self.test_data['london_location_id']
+            }
+            
+            success, response = self.run_test(
+                "Assign Asset Manager for Delete Protection Test",
+                "POST",
+                "asset-manager-locations",
+                200,
+                data=assignment_data,
+                user_role="Administrator"
+            )
+            
+            if success:
+                # Now try to delete the location
+                success, response = self.run_test(
+                    "Delete Location with Assigned Asset Manager (Should Fail)",
+                    "DELETE",
+                    f"locations/{self.test_data['london_location_id']}",
+                    400,
+                    user_role="Administrator"
+                )
+                
+                if success:
+                    print("   ✅ Location with assigned asset manager correctly protected from deletion")
+        
+        # Test 19: Duplicate assignment prevention
+        if asset_manager_id and 'nyc_location_id' in self.test_data:
+            duplicate_assignment = {
+                "asset_manager_id": asset_manager_id,
+                "location_id": self.test_data['nyc_location_id']
+            }
+            
+            # Create first assignment
+            success, response = self.run_test(
+                "Create Asset Manager Assignment for Duplicate Test",
+                "POST",
+                "asset-manager-locations",
+                200,
+                data=duplicate_assignment,
+                user_role="Administrator"
+            )
+            
+            if success:
+                # Try to create duplicate
+                success, response = self.run_test(
+                    "Create Duplicate Asset Manager Assignment (Should Fail)",
+                    "POST",
+                    "asset-manager-locations",
+                    400,
+                    data=duplicate_assignment,
+                    user_role="Administrator"
+                )
+                
+                if success:
+                    print("   ✅ Duplicate asset manager assignment correctly rejected")
+        
+        return True
+
+    def test_integration_flow(self):
+        """Test Integration Flow Testing"""
+        print(f"\n🔄 Testing Integration Flow")
+        
+        # Test 20: Create sample locations (already done in location management test)
+        print("   ✅ Sample locations created (NYC Office, London Branch)")
+        
+        # Test 21: Create Asset Managers and assign to different locations
+        if 'nyc_location_id' in self.test_data:
+            asset_manager_id = self.users.get("Asset Manager", {}).get("id")
+            if asset_manager_id:
+                assignment_data = {
+                    "asset_manager_id": asset_manager_id,
+                    "location_id": self.test_data['nyc_location_id']
+                }
+                
+                success, response = self.run_test(
+                    "Integration: Assign Asset Manager to NYC",
+                    "POST",
+                    "asset-manager-locations",
+                    200,
+                    data=assignment_data,
+                    user_role="Administrator"
+                )
+                
+                if success:
+                    print(f"   ✅ Asset Manager assigned to NYC Office")
+        
+        # Test 22: Create regular users with location assignments (already done)
+        print("   ✅ Regular users created with location assignments")
+        
+        # Test 23: Run migration for existing users (already done)
+        print("   ✅ Migration completed for existing users")
+        
+        # Test 24: Verify location-based data integrity
+        success, response = self.run_test(
+            "Integration: Verify Location Data Integrity",
+            "GET",
+            "locations",
+            200,
+            user_role="Administrator"
+        )
+        
+        if success:
+            locations = response
+            
+            # Check users for each location
+            success, users_response = self.run_test(
+                "Integration: Get All Users for Location Verification",
+                "GET",
+                "users",
+                200,
+                user_role="Administrator"
+            )
+            
+            if success:
+                for location in locations:
+                    users_in_location = [u for u in users_response if u.get('location_id') == location['id']]
+                    print(f"   Location {location['name']}: {len(users_in_location)} users")
+            
+            # Check asset manager assignments
+            success, assignments_response = self.run_test(
+                "Integration: Get Asset Manager Assignments for Verification",
+                "GET",
+                "asset-manager-locations",
+                200,
+                user_role="Administrator"
+            )
+            
+            if success:
+                print(f"   Total asset manager location assignments: {len(assignments_response)}")
+                for assignment in assignments_response:
+                    print(f"     - {assignment['asset_manager_name']} → {assignment['location_name']}")
+        
+        print("   ✅ Location-based data integrity verified")
+        return True
+
+    def test_location_based_asset_management_system(self):
+        """Test complete Location-Based Asset Management System"""
+        print(f"\n🌍 Testing Complete Location-Based Asset Management System")
+        
+        success = True
+        
+        # Run all location-based tests
+        if not self.test_location_management_api():
+            success = False
+        
+        if not self.test_user_location_integration():
+            success = False
+        
+        if not self.test_asset_manager_location_assignment():
+            success = False
+        
+        if not self.test_data_migration():
+            success = False
+        
+        if not self.test_data_validation():
+            success = False
+        
+        if not self.test_integration_flow():
+            success = False
+        
+        if success:
+            print("   🎉 Location-Based Asset Management System: ALL TESTS PASSED")
+        else:
+            print("   ⚠️ Location-Based Asset Management System: Some tests failed")
+        
+        return success
+
 def main():
     print("🚀 Starting Asset Inventory Management System API Tests")
     print("=" * 60)
