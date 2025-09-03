@@ -249,7 +249,7 @@ const AssetDefinitions = () => {
                       <TableCell className="font-medium">
                         <div className="flex items-center">
                           <IndianRupee className="h-4 w-4 text-gray-500 mr-1" />
-                          {assetDef.asset_value?.toLocaleString()}
+                          ₹{assetDef.asset_value?.toLocaleString()}
                         </div>
                       </TableCell>
                       <TableCell className="font-medium">
