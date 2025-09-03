@@ -17,6 +17,12 @@ import io
 import csv
 from pathlib import Path
 from dotenv import load_dotenv
+# Email imports
+import aiosmtplib
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
+from jinja2 import Template
+import asyncio
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
