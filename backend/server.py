@@ -421,11 +421,12 @@ class EmailService:
     
     async def get_email_config(self):
         """Get active email configuration"""
-        if not self.email_config:
-            config = await db.email_configurations.find_one({"is_active": True})
-            if config:
-                self.email_config = EmailConfiguration(**config)
-        return self.email_config
+        # Always fetch fresh config to avoid cache issues
+        config = await db.email_configurations.find_one({"is_active": True})
+        if config:
+            self.email_config = EmailConfiguration(**config)
+            return self.email_config
+        return None
     
     async def send_email(self, to_emails: List[str], cc_emails: List[str], subject: str, html_content: str, text_content: str = None):
         """Send email using SMTP configuration"""
