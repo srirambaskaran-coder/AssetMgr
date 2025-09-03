@@ -339,7 +339,7 @@ const AssetRetrievals = () => {
                       <TableCell>
                         {retrieval.recovery_value && (
                           <div className="flex items-center">
-                            <DollarSign className="h-4 w-4 mr-1 text-gray-500" />
+                            <IndianRupee className="h-4 w-4 mr-1 text-gray-500" />
                             {retrieval.recovery_value.toLocaleString()}
                           </div>
                         )}
