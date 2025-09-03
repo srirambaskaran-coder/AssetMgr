@@ -380,6 +380,29 @@ const AssetTypeForm = ({ initialData, onSubmit, assetManagers = [] }) => {
         </div>
       )}
 
+      <div>
+        <Label htmlFor="assigned_asset_manager">Assigned Asset Manager</Label>
+        <Select 
+          value={formData.assigned_asset_manager_id} 
+          onValueChange={(value) => setFormData({ ...formData, assigned_asset_manager_id: value })}
+        >
+          <SelectTrigger>
+            <SelectValue placeholder="Select an Asset Manager (Optional)" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="">No Asset Manager Assigned</SelectItem>
+            {assetManagers.map(manager => (
+              <SelectItem key={manager.id} value={manager.id}>
+                {manager.name} ({manager.email})
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <p className="text-sm text-gray-500 mt-1">
+          Asset requests for this type will be routed to the selected Asset Manager
+        </p>
+      </div>
+
       <div className="flex items-center space-x-2">
         <Switch
           id="recovery"
