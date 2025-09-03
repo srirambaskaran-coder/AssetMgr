@@ -39,6 +39,7 @@ const AssetTypes = () => {
 
   useEffect(() => {
     fetchAssetTypes();
+    fetchAssetManagers();
   }, []);
 
   const fetchAssetTypes = async () => {
@@ -50,6 +51,16 @@ const AssetTypes = () => {
       toast.error('Failed to load asset types');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchAssetManagers = async () => {
+    try {
+      const response = await axios.get(`${API}/users/asset-managers`);
+      setAssetManagers(response.data);
+    } catch (error) {
+      console.error('Error fetching asset managers:', error);
+      toast.error('Failed to load asset managers');
     }
   };
 
