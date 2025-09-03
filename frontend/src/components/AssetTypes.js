@@ -427,7 +427,7 @@ const AssetTypeForm = ({ initialData, onSubmit, assetManagers = [] }) => {
             <SelectValue placeholder="Select an Asset Manager (Optional)" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="">No Asset Manager Assigned</SelectItem>
+            <SelectItem value="none">No Asset Manager Assigned</SelectItem>
             {assetManagers.map(manager => (
               <SelectItem key={manager.id} value={manager.id}>
                 {manager.name} ({manager.email})
