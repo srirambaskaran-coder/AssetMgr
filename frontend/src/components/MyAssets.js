@@ -199,8 +199,8 @@ const MyAssets = () => {
                       <TableCell>
                         {asset.asset_value && (
                           <div className="flex items-center">
-                            <DollarSign className="h-4 w-4 mr-1 text-gray-500" />
-                            {asset.asset_value.toLocaleString()}
+                            <IndianRupee className="h-4 w-4 mr-1 text-gray-500" />
+                            ₹{asset.asset_value.toLocaleString()}
                           </div>
                         )}
                       </TableCell>
