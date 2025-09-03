@@ -40,6 +40,113 @@ const Settings = () => {
     feedback: ''
   });
 
+  // Email configuration state
+  const [emailConfig, setEmailConfig] = useState({
+    smtp_server: '',
+    smtp_port: 587,
+    smtp_username: '',
+    smtp_password: '',
+    use_tls: true,
+    use_ssl: false,
+    from_email: '',
+    from_name: ''
+  });
+  const [emailConfigExists, setEmailConfigExists] = useState(false);
+  const [emailConfigId, setEmailConfigId] = useState(null);
+  const [emailLoading, setEmailLoading] = useState(false);
+  const [testEmailLoading, setTestEmailLoading] = useState(false);
+  const [showEmailPassword, setShowEmailPassword] = useState(false);
+
+  useEffect(() => {
+    if (user?.roles?.includes('Administrator')) {
+      fetchEmailConfiguration();
+    }
+  }, [user]);
+
+  const fetchEmailConfiguration = async () => {
+    try {
+      const response = await axios.get(`${API}/email-config`, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+      
+      setEmailConfig(response.data);
+      setEmailConfigExists(true);
+      setEmailConfigId(response.data.id);
+    } catch (error) {
+      if (error.response?.status === 404) {
+        setEmailConfigExists(false);
+      } else {
+        console.error('Error fetching email configuration:', error);
+      }
+    }
+  };
+
+  const handleEmailConfigChange = (field, value) => {
+    setEmailConfig({ ...emailConfig, [field]: value });
+  };
+
+  const handleEmailConfigSubmit = async (e) => {
+    e.preventDefault();
+    setEmailLoading(true);
+
+    try {
+      const submitData = { ...emailConfig };
+      // If password is masked, don't send it
+      if (submitData.smtp_password === '***masked***') {
+        delete submitData.smtp_password;
+      }
+
+      const response = emailConfigExists 
+        ? await axios.put(`${API}/email-config/${emailConfigId}`, submitData, {
+            headers: {
+              'Authorization': `Bearer ${localStorage.getItem('token')}`
+            }
+          })
+        : await axios.post(`${API}/email-config`, submitData, {
+            headers: {
+              'Authorization': `Bearer ${localStorage.getItem('token')}`
+            }
+          });
+
+      setEmailConfig(response.data);
+      setEmailConfigExists(true);
+      setEmailConfigId(response.data.id);
+      toast.success(emailConfigExists ? 'Email configuration updated successfully' : 'Email configuration created successfully');
+    } catch (error) {
+      console.error('Error saving email configuration:', error);
+      toast.error(error.response?.data?.detail || 'Failed to save email configuration');
+    } finally {
+      setEmailLoading(false);
+    }
+  };
+
+  const handleTestEmail = async () => {
+    if (!emailConfigExists) {
+      toast.error('Please save email configuration first');
+      return;
+    }
+
+    setTestEmailLoading(true);
+    try {
+      await axios.post(`${API}/email-config/test`, {
+        test_email: user.email
+      }, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+
+      toast.success(`Test email sent successfully to ${user.email}`);
+    } catch (error) {
+      console.error('Error sending test email:', error);
+      toast.error(error.response?.data?.detail || 'Failed to send test email');
+    } finally {
+      setTestEmailLoading(false);
+    }
+  };
+
   const calculatePasswordStrength = (password) => {
     let score = 0;
     let feedback = [];
