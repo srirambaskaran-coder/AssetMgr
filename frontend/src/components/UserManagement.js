@@ -412,7 +412,7 @@ const UserManagement = () => {
   );
 };
 
-const UserForm = ({ initialData, onSubmit, managers = [], isEdit = false }) => {
+const UserForm = ({ initialData, onSubmit, managers = [], locations = [], isEdit = false }) => {
   const [formData, setFormData] = useState({
     name: initialData?.name || '',
     email: initialData?.email || '',
@@ -421,6 +421,7 @@ const UserForm = ({ initialData, onSubmit, managers = [], isEdit = false }) => {
     password: '',
     date_of_joining: initialData?.date_of_joining ? new Date(initialData.date_of_joining).toISOString().split('T')[0] : '',
     reporting_manager_id: initialData?.reporting_manager_id || 'none',
+    location_id: initialData?.location_id || '',
     is_active: initialData?.is_active ?? true
   });
   const [loading, setLoading] = useState(false);
