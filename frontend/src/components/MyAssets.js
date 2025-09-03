@@ -255,6 +255,17 @@ const MyAssets = () => {
             </div>
           )}
         </CardContent>
+        
+        {/* Pagination */}
+        {totalPages > 1 && (
+          <DataPagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            totalItems={totalItems}
+            itemsPerPage={itemsPerPage}
+            onPageChange={handlePageChange}
+          />
+        )}
       </Card>
 
       {/* Acknowledgment Modal */}
