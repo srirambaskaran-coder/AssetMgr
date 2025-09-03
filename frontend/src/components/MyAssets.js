@@ -108,6 +108,17 @@ const MyAssets = () => {
     );
   }
 
+  // Pagination logic
+  const totalItems = assets.length;
+  const totalPages = Math.ceil(totalItems / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const paginatedAssets = assets.slice(startIndex, endIndex);
+
+  const handlePageChange = (page) => {
+    setCurrentPage(page);
+  };
+
   return (
     <div className="space-y-6">
       {/* Header */}
