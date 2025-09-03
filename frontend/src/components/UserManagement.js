@@ -310,6 +310,15 @@ const UserManagement = () => {
                         </div>
                       </TableCell>
                       <TableCell>
+                        {user.location_name ? (
+                          <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
+                            {user.location_name}
+                          </Badge>
+                        ) : (
+                          <span className="text-gray-500 text-sm">Not Assigned</span>
+                        )}
+                      </TableCell>
+                      <TableCell>
                         {user.reporting_manager_name && (
                           <div className="flex items-center">
                             <User className="h-4 w-4 mr-1 text-gray-500" />
