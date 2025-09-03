@@ -330,7 +330,7 @@ const AssetRequisitions = () => {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filteredRequisitions.map((requisition) => (
+                  {paginatedRequisitions.map((requisition) => (
                     <TableRow key={requisition.id}>
                       <TableCell className="font-medium">
                         <div className="text-xs text-gray-500">
