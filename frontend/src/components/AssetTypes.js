@@ -231,6 +231,15 @@ const AssetTypes = () => {
                         </Badge>
                       </TableCell>
                       <TableCell>
+                        {assetType.assigned_asset_manager_name ? (
+                          <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
+                            {assetType.assigned_asset_manager_name}
+                          </Badge>
+                        ) : (
+                          <span className="text-gray-500 text-sm">Not Assigned</span>
+                        )}
+                      </TableCell>
+                      <TableCell>
                         <Badge 
                           variant={assetType.status === 'Active' ? "default" : "secondary"}
                           className={assetType.status === 'Active' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}
