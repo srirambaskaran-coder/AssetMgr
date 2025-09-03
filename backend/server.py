@@ -421,12 +421,27 @@ class EmailService:
     
     async def get_email_config(self):
         """Get active email configuration"""
-        # Always fetch fresh config to avoid cache issues
-        config = await db.email_configurations.find_one({"is_active": True})
-        if config:
-            self.email_config = EmailConfiguration(**config)
-            return self.email_config
-        return None
+        try:
+            # Debug: Check all email configurations
+            all_configs = await db.email_configurations.find().to_list(10)
+            logging.info(f"DEBUG: Found {len(all_configs)} email configurations total")
+            for i, config in enumerate(all_configs):
+                logging.info(f"DEBUG: Config {i+1}: active={config.get('is_active')}, id={config.get('id')}")
+            
+            # Find active configuration
+            config = await db.email_configurations.find_one({"is_active": True})
+            logging.info(f"DEBUG: Active config query result: {config}")
+            
+            if config:
+                self.email_config = EmailConfiguration(**config)
+                logging.info(f"DEBUG: Successfully loaded email config for {config.get('smtp_username')}")
+                return self.email_config
+            else:
+                logging.error("DEBUG: No active email configuration found in database")
+                return None
+        except Exception as e:
+            logging.error(f"DEBUG: Error in get_email_config: {str(e)}")
+            return None
     
     async def send_email(self, to_emails: List[str], cc_emails: List[str], subject: str, html_content: str, text_content: str = None):
         """Send email using SMTP configuration"""
