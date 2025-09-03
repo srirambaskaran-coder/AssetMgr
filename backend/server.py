@@ -2454,8 +2454,33 @@ Asset Management System
         html_part = MIMEText(html_content, 'html', 'utf-8')
         message.attach(html_part)
         
-        # Send email directly
+        # Send email directly with correct TLS configuration
+        logging.info(f"DEBUG: Sending email with config: server={config['smtp_server']}, port={config['smtp_port']}, use_tls={config.get('use_tls')}, use_ssl={config.get('use_ssl')}")
+        
         if config.get('use_ssl'):
+            # SSL connection (usually port 465)
+            await aiosmtplib.send(
+                message,
+                hostname=config['smtp_server'],
+                port=config['smtp_port'],
+                username=config['smtp_username'],
+                password=config['smtp_password'],
+                use_tls=True,
+                start_tls=False
+            )
+        elif config.get('use_tls'):
+            # STARTTLS connection (usually port 587)
+            await aiosmtplib.send(
+                message,
+                hostname=config['smtp_server'],
+                port=config['smtp_port'],
+                username=config['smtp_username'],
+                password=config['smtp_password'],
+                use_tls=False,
+                start_tls=True
+            )
+        else:
+            # Plain connection (not recommended)
             await aiosmtplib.send(
                 message,
                 hostname=config['smtp_server'],
@@ -2464,16 +2489,6 @@ Asset Management System
                 password=config['smtp_password'],
                 use_tls=False,
                 start_tls=False
-            )
-        else:
-            await aiosmtplib.send(
-                message,
-                hostname=config['smtp_server'],
-                port=config['smtp_port'],
-                username=config['smtp_username'],
-                password=config['smtp_password'],
-                use_tls=config.get('use_tls', True),
-                start_tls=config.get('use_tls', True)
             )
         
         logging.info("DEBUG: Email sent successfully")
