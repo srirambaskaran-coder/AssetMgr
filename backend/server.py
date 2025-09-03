@@ -2358,10 +2358,35 @@ async def test_email_configuration(
 ):
     """Test email configuration by sending a test email"""
     try:
-        # Force fresh database query instead of using email service cache
+        logging.info("DEBUG: Starting email test...")
+        
+        # Check all email configurations in database
+        all_configs = await db.email_configurations.find().to_list(100)
+        logging.info(f"DEBUG: Found {len(all_configs)} total email configurations")
+        
+        for i, config in enumerate(all_configs):
+            logging.info(f"DEBUG: Config {i+1}: id={config.get('id')}, is_active={config.get('is_active')}, smtp_username={config.get('smtp_username')}")
+        
+        # Try to find active configuration
         config = await db.email_configurations.find_one({"is_active": True})
+        logging.info(f"DEBUG: Active config query result: {config}")
+        
+        # If no active config found, try to find any config
         if not config:
-            raise HTTPException(status_code=500, detail="No email configuration found. Please save configuration first.")
+            config = await db.email_configurations.find_one({})
+            logging.info(f"DEBUG: Any config query result: {config}")
+        
+        if not config:
+            # Let's also check the database and collection names
+            logging.info(f"DEBUG: Database name: {db.name}")
+            collections = await db.list_collection_names()
+            logging.info(f"DEBUG: Available collections: {collections}")
+            
+            raise HTTPException(status_code=500, detail=f"No email configuration found in database. Found {len(all_configs)} configs total. Please save configuration first.")
+        
+        # Force use the first available config if no active one
+        if not config.get('is_active'):
+            logging.info("DEBUG: Using first available config since no active config found")
         
         # Create email service instance with fresh config
         from email.mime.text import MIMEText
@@ -2395,6 +2420,8 @@ Best regards,
 Asset Management System
         """
         
+        logging.info(f"DEBUG: Using config with SMTP server: {config.get('smtp_server')}, username: {config.get('smtp_username')}")
+        
         # Create message
         message = MIMEMultipart('alternative')
         message['Subject'] = subject
@@ -2410,7 +2437,7 @@ Asset Management System
         message.attach(html_part)
         
         # Send email directly
-        if config['use_ssl']:
+        if config.get('use_ssl'):
             await aiosmtplib.send(
                 message,
                 hostname=config['smtp_server'],
@@ -2427,13 +2454,14 @@ Asset Management System
                 port=config['smtp_port'],
                 username=config['smtp_username'],
                 password=config['smtp_password'],
-                use_tls=config['use_tls'],
-                start_tls=config['use_tls']
+                use_tls=config.get('use_tls', True),
+                start_tls=config.get('use_tls', True)
             )
         
+        logging.info("DEBUG: Email sent successfully")
         return {"message": "Test email sent successfully", "sent_to": test_request.test_email}
     except Exception as e:
-        logging.error(f"Failed to send test email: {str(e)}")
+        logging.error(f"DEBUG: Failed to send test email: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Failed to send test email: {str(e)}")
 
 # Include the router in the main app
