@@ -546,6 +546,22 @@ async def create_asset_type(
     asset_type_dict["created_at"] = datetime.now(timezone.utc)
     asset_type_dict["created_by"] = current_user.id
     
+    # Get asset manager name if assigned
+    assigned_asset_manager_name = None
+    if asset_type.assigned_asset_manager_id:
+        asset_manager = await db.users.find_one({"id": asset_type.assigned_asset_manager_id})
+        if not asset_manager:
+            raise HTTPException(status_code=400, detail="Assigned asset manager not found")
+        
+        # Verify the user has Asset Manager role
+        user_roles = asset_manager.get("roles", [])
+        if UserRole.ASSET_MANAGER not in user_roles:
+            raise HTTPException(status_code=400, detail="Selected user is not an Asset Manager")
+        
+        assigned_asset_manager_name = asset_manager["name"]
+    
+    asset_type_dict["assigned_asset_manager_name"] = assigned_asset_manager_name
+    
     await db.asset_types.insert_one(asset_type_dict)
     return AssetType(**asset_type_dict)
 
