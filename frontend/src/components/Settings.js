@@ -256,12 +256,12 @@ const Settings = () => {
               <p className="text-gray-600">{user?.email}</p>
               <div className="mt-2">
                 <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                  user?.role === 'Administrator' ? 'bg-purple-100 text-purple-800' :
-                  user?.role === 'HR Manager' ? 'bg-blue-100 text-blue-800' :
-                  user?.role === 'Manager' ? 'bg-green-100 text-green-800' :
+                  user?.roles?.includes('Administrator') ? 'bg-purple-100 text-purple-800' :
+                  user?.roles?.includes('HR Manager') ? 'bg-blue-100 text-blue-800' :
+                  user?.roles?.includes('Manager') ? 'bg-green-100 text-green-800' :
                   'bg-gray-100 text-gray-800'
                 }`}>
-                  {user?.role}
+                  {user?.roles?.[0] || user?.role}
                 </span>
               </div>
             </div>
@@ -424,6 +424,171 @@ const Settings = () => {
           </CardContent>
         </Card>
       </div>
+
+      {/* Email Configuration - Administrator Only */}
+      {user?.roles?.includes('Administrator') && (
+        <Card>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center">
+                <Mail className="mr-2 h-5 w-5 text-blue-600" />
+                <CardTitle>Email Configuration</CardTitle>
+              </div>
+              <div className="flex items-center gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={handleTestEmail}
+                  disabled={!emailConfigExists || testEmailLoading}
+                >
+                  <Send className="mr-2 h-4 w-4" />
+                  {testEmailLoading ? 'Sending...' : 'Send Test Email'}
+                </Button>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleEmailConfigSubmit} className="space-y-4">
+              <Alert>
+                <Server className="h-4 w-4" />
+                <AlertDescription>
+                  Configure SMTP server settings to enable email notifications for asset management activities.
+                </AlertDescription>
+              </Alert>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="smtp_server">SMTP Server *</Label>
+                  <Input
+                    id="smtp_server"
+                    type="text"
+                    value={emailConfig.smtp_server}
+                    onChange={(e) => handleEmailConfigChange('smtp_server', e.target.value)}
+                    placeholder="smtp.gmail.com"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="smtp_port">SMTP Port *</Label>
+                  <Input
+                    id="smtp_port"
+                    type="number"
+                    value={emailConfig.smtp_port}
+                    onChange={(e) => handleEmailConfigChange('smtp_port', parseInt(e.target.value))}
+                    placeholder="587"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="smtp_username">SMTP Username *</Label>
+                  <Input
+                    id="smtp_username"
+                    type="text"
+                    value={emailConfig.smtp_username}
+                    onChange={(e) => handleEmailConfigChange('smtp_username', e.target.value)}
+                    placeholder="your-email@domain.com"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="smtp_password">SMTP Password *</Label>
+                  <div className="relative">
+                    <Input
+                      id="smtp_password"
+                      type={showEmailPassword ? 'text' : 'password'}
+                      value={emailConfig.smtp_password}
+                      onChange={(e) => handleEmailConfigChange('smtp_password', e.target.value)}
+                      placeholder="Enter SMTP password"
+                      required={!emailConfigExists}
+                    />
+                    <button
+                      type="button"
+                      className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                      onClick={() => setShowEmailPassword(!showEmailPassword)}
+                    >
+                      {showEmailPassword ? (
+                        <EyeOff className="h-4 w-4 text-gray-400" />
+                      ) : (
+                        <Eye className="h-4 w-4 text-gray-400" />
+                      )}
+                    </button>
+                  </div>
+                </div>
+
+                <div>
+                  <Label htmlFor="from_email">From Email *</Label>
+                  <Input
+                    id="from_email"
+                    type="email"
+                    value={emailConfig.from_email}
+                    onChange={(e) => handleEmailConfigChange('from_email', e.target.value)}
+                    placeholder="noreply@company.com"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="from_name">From Name *</Label>
+                  <Input
+                    id="from_name"
+                    type="text"
+                    value={emailConfig.from_name}
+                    onChange={(e) => handleEmailConfigChange('from_name', e.target.value)}
+                    placeholder="Asset Management System"
+                    required
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="flex items-center space-x-2">
+                  <Switch
+                    id="use_tls"
+                    checked={emailConfig.use_tls}
+                    onCheckedChange={(checked) => handleEmailConfigChange('use_tls', checked)}
+                  />
+                  <Label htmlFor="use_tls">Use TLS (Port 587)</Label>
+                </div>
+
+                <div className="flex items-center space-x-2">
+                  <Switch
+                    id="use_ssl"
+                    checked={emailConfig.use_ssl}
+                    onCheckedChange={(checked) => handleEmailConfigChange('use_ssl', checked)}
+                  />
+                  <Label htmlFor="use_ssl">Use SSL (Port 465)</Label>
+                </div>
+              </div>
+
+              <Alert>
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription>
+                  <strong>Common SMTP Settings:</strong>
+                  <ul className="mt-2 text-sm list-disc list-inside space-y-1">
+                    <li><strong>Gmail:</strong> smtp.gmail.com, Port 587 (TLS) or 465 (SSL)</li>
+                    <li><strong>Outlook:</strong> smtp-mail.outlook.com, Port 587 (TLS)</li>
+                    <li><strong>Yahoo:</strong> smtp.mail.yahoo.com, Port 587 (TLS) or 465 (SSL)</li>
+                  </ul>
+                </AlertDescription>
+              </Alert>
+
+              <div className="flex justify-end pt-4">
+                <Button 
+                  type="submit" 
+                  disabled={emailLoading}
+                  className="bg-blue-600 hover:bg-blue-700"
+                >
+                  {emailLoading ? 'Saving...' : (emailConfigExists ? 'Update Configuration' : 'Save Configuration')}
+                </Button>
+              </div>
+            </form>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 };
