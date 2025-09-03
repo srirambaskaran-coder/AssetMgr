@@ -448,7 +448,7 @@ const AllocationForm = ({ pendingAllocations, availableAssets, onSubmit, selecte
           <SelectContent>
             {compatibleAssets.map(asset => (
               <SelectItem key={asset.id} value={asset.id}>
-                {asset.asset_code} - {asset.asset_description} (${asset.asset_value?.toLocaleString()})
+                {asset.asset_code} - {asset.asset_description} (₹{asset.asset_value?.toLocaleString()})
               </SelectItem>
             ))}
           </SelectContent>
