@@ -2358,6 +2358,16 @@ async def test_email_configuration(
 ):
     """Test email configuration by sending a test email"""
     try:
+        # Force fresh database query instead of using email service cache
+        config = await db.email_configurations.find_one({"is_active": True})
+        if not config:
+            raise HTTPException(status_code=500, detail="No email configuration found. Please save configuration first.")
+        
+        # Create email service instance with fresh config
+        from email.mime.text import MIMEText
+        from email.mime.multipart import MIMEMultipart
+        import aiosmtplib
+        
         subject = "Asset Management System - Email Test"
         html_content = """
         <html>
@@ -2385,16 +2395,45 @@ Best regards,
 Asset Management System
         """
         
-        await email_service.send_email(
-            to_emails=[test_request.test_email],
-            cc_emails=[],
-            subject=subject,
-            html_content=html_content,
-            text_content=text_content
-        )
+        # Create message
+        message = MIMEMultipart('alternative')
+        message['Subject'] = subject
+        message['From'] = f"{config['from_name']} <{config['from_email']}>"
+        message['To'] = test_request.test_email
+        
+        # Add text content
+        text_part = MIMEText(text_content, 'plain', 'utf-8')
+        message.attach(text_part)
+        
+        # Add HTML content
+        html_part = MIMEText(html_content, 'html', 'utf-8')
+        message.attach(html_part)
+        
+        # Send email directly
+        if config['use_ssl']:
+            await aiosmtplib.send(
+                message,
+                hostname=config['smtp_server'],
+                port=config['smtp_port'],
+                username=config['smtp_username'],
+                password=config['smtp_password'],
+                use_tls=False,
+                start_tls=False
+            )
+        else:
+            await aiosmtplib.send(
+                message,
+                hostname=config['smtp_server'],
+                port=config['smtp_port'],
+                username=config['smtp_username'],
+                password=config['smtp_password'],
+                use_tls=config['use_tls'],
+                start_tls=config['use_tls']
+            )
         
         return {"message": "Test email sent successfully", "sent_to": test_request.test_email}
     except Exception as e:
+        logging.error(f"Failed to send test email: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Failed to send test email: {str(e)}")
 
 # Include the router in the main app
