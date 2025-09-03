@@ -702,8 +702,21 @@ test_plan:
         agent: "main"
         comment: "FULLY IMPLEMENTED: Backend testing completed successfully (86.4% success rate, 19/22 tests passed). All email API endpoints working, 5 email triggers integrated, templates rendering correctly. Frontend Settings page updated with comprehensive Email Configuration section for administrators. SMTP configuration form with all required fields, test email functionality, TLS/SSL toggles, and helpful guidance. Email notification system is production-ready and fully functional."
 
+  - task: "Location-Based Asset Management System"
+    implemented: false
+    working: false
+    file: "/app/backend/server.py, /app/frontend/src/components/"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "User requested location-based asset management system. Requirements: 1) Location Management (Admin CRUD with Code, Name, Country, Status), 2) User location assignment via dropdown, 3) Enhanced asset allocation routing (same location + asset type → Asset Manager, fallback to Administrator). Asset Managers can handle multiple locations. Set default location for existing users."
+
 test_plan:
-  current_focus: []
+  current_focus:
+    - "Location-Based Asset Management System"
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
