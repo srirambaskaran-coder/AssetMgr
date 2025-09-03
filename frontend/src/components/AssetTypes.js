@@ -210,85 +210,96 @@ const AssetTypes = () => {
               </p>
             </div>
           ) : (
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Code</TableHead>
-                    <TableHead>Name</TableHead>
-                    <TableHead>Depreciation</TableHead>
-                    <TableHead>Asset Life</TableHead>
-                    <TableHead>Recovery Required</TableHead>
-                    <TableHead>Assigned Asset Manager</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filteredAssetTypes.map((assetType) => (
-                    <TableRow key={assetType.id}>
-                      <TableCell className="font-medium">{assetType.code}</TableCell>
-                      <TableCell>{assetType.name}</TableCell>
-                      <TableCell>
-                        <Badge variant={assetType.depreciation_applicable ? "default" : "secondary"}>
-                          {assetType.depreciation_applicable ? 'Yes' : 'No'}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        {assetType.depreciation_applicable 
-                          ? `${assetType.asset_life} years` 
-                          : 'N/A'
-                        }
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant={assetType.to_be_recovered_on_separation ? "default" : "secondary"}>
-                          {assetType.to_be_recovered_on_separation ? 'Yes' : 'No'}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        {assetType.assigned_asset_manager_name ? (
-                          <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
-                            {assetType.assigned_asset_manager_name}
-                          </Badge>
-                        ) : (
-                          <span className="text-gray-500 text-sm">Not Assigned</span>
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        <Badge 
-                          variant={assetType.status === 'Active' ? "default" : "secondary"}
-                          className={assetType.status === 'Active' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}
-                        >
-                          {assetType.status}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex justify-end gap-2">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => {
-                              setSelectedAssetType(assetType);
-                              setIsEditModalOpen(true);
-                            }}
-                          >
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleDeleteAssetType(assetType.id)}
-                            className="text-red-600 hover:text-red-800"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </TableCell>
+            <>
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Code</TableHead>
+                      <TableHead>Name</TableHead>
+                      <TableHead>Depreciation</TableHead>
+                      <TableHead>Asset Life</TableHead>
+                      <TableHead>Recovery Required</TableHead>
+                      <TableHead>Assigned Asset Manager</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead className="text-right">Actions</TableHead>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
+                  </TableHeader>
+                  <TableBody>
+                    {paginatedAssetTypes.map((assetType) => (
+                      <TableRow key={assetType.id}>
+                        <TableCell className="font-medium">{assetType.code}</TableCell>
+                        <TableCell>{assetType.name}</TableCell>
+                        <TableCell>
+                          <Badge variant={assetType.depreciation_applicable ? "default" : "secondary"}>
+                            {assetType.depreciation_applicable ? 'Yes' : 'No'}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          {assetType.depreciation_applicable 
+                            ? `${assetType.asset_life} years` 
+                            : 'N/A'
+                          }
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant={assetType.to_be_recovered_on_separation ? "default" : "secondary"}>
+                            {assetType.to_be_recovered_on_separation ? 'Yes' : 'No'}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          {assetType.assigned_asset_manager_name ? (
+                            <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
+                              {assetType.assigned_asset_manager_name}
+                            </Badge>
+                          ) : (
+                            <span className="text-gray-500 text-sm">Not Assigned</span>
+                          )}
+                        </TableCell>
+                        <TableCell>
+                          <Badge 
+                            variant={assetType.status === 'Active' ? "default" : "secondary"}
+                            className={assetType.status === 'Active' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}
+                          >
+                            {assetType.status}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <div className="flex justify-end gap-2">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => {
+                                setSelectedAssetType(assetType);
+                                setIsEditModalOpen(true);
+                              }}
+                            >
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleDeleteAssetType(assetType.id)}
+                              className="text-red-600 hover:text-red-800"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+              
+              {/* Pagination */}
+              <DataPagination
+                currentPage={currentPage}
+                totalPages={Math.ceil(filteredAssetTypes.length / itemsPerPage)}
+                totalItems={filteredAssetTypes.length}
+                itemsPerPage={itemsPerPage}
+                onPageChange={handlePageChange}
+              />
+            </>
           )}
         </CardContent>
       </Card>
