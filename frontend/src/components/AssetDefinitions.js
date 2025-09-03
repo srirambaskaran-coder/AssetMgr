@@ -431,7 +431,7 @@ const AssetDefinitionForm = ({ assetTypes, initialData, onSubmit }) => {
 
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <Label htmlFor="asset_value">Asset Value ($) *</Label>
+          <Label htmlFor="asset_value">Asset Value (₹) *</Label>
           <Input
             id="asset_value"
             type="number"
