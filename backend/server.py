@@ -2067,6 +2067,112 @@ async def get_asset_manager_stats(
         "availability_rate": round((available_assets / total_assets * 100) if total_assets > 0 else 0, 1)
     }
 
+# Email Configuration Routes
+@api_router.post("/email-config", response_model=EmailConfiguration)
+async def create_email_configuration(
+    email_config: EmailConfigurationCreate,
+    current_user: User = Depends(require_role([UserRole.ADMINISTRATOR]))
+):
+    """Create or update email configuration"""
+    # Deactivate any existing configurations
+    await db.email_configurations.update_many({}, {"$set": {"is_active": False}})
+    
+    email_config_dict = email_config.dict()
+    email_config_dict["id"] = str(uuid.uuid4())
+    email_config_dict["created_at"] = datetime.now(timezone.utc)
+    email_config_dict["updated_at"] = datetime.now(timezone.utc)
+    
+    await db.email_configurations.insert_one(email_config_dict)
+    
+    # Reset email service config cache
+    email_service.email_config = None
+    
+    return EmailConfiguration(**email_config_dict)
+
+@api_router.get("/email-config", response_model=EmailConfiguration)
+async def get_email_configuration(
+    current_user: User = Depends(require_role([UserRole.ADMINISTRATOR]))
+):
+    """Get active email configuration"""
+    config = await db.email_configurations.find_one({"is_active": True})
+    if not config:
+        raise HTTPException(status_code=404, detail="No email configuration found")
+    
+    # Don't return password in response
+    config_response = config.copy()
+    config_response["smtp_password"] = "***masked***"
+    return EmailConfiguration(**config_response)
+
+@api_router.put("/email-config/{config_id}", response_model=EmailConfiguration)
+async def update_email_configuration(
+    config_id: str,
+    email_config_update: EmailConfigurationUpdate,
+    current_user: User = Depends(require_role([UserRole.ADMINISTRATOR]))
+):
+    """Update email configuration"""
+    existing = await db.email_configurations.find_one({"id": config_id})
+    if not existing:
+        raise HTTPException(status_code=404, detail="Email configuration not found")
+    
+    update_data = email_config_update.dict(exclude_unset=True)
+    update_data["updated_at"] = datetime.now(timezone.utc)
+    
+    await db.email_configurations.update_one({"id": config_id}, {"$set": update_data})
+    
+    # Reset email service config cache
+    email_service.email_config = None
+    
+    updated = await db.email_configurations.find_one({"id": config_id})
+    # Don't return password in response
+    updated["smtp_password"] = "***masked***"
+    return EmailConfiguration(**updated)
+
+@api_router.post("/email-config/test")
+async def test_email_configuration(
+    test_request: EmailTestRequest,
+    current_user: User = Depends(require_role([UserRole.ADMINISTRATOR]))
+):
+    """Test email configuration by sending a test email"""
+    try:
+        subject = "Asset Management System - Email Test"
+        html_content = """
+        <html>
+        <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
+            <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
+                <h2 style="color: #2563eb;">Email Configuration Test</h2>
+                <p>Dear Administrator,</p>
+                <p>This is a test email to verify your SMTP configuration is working correctly.</p>
+                <p>If you received this email, your email configuration is set up properly!</p>
+                <p>Best regards,<br>Asset Management System</p>
+            </div>
+        </body>
+        </html>
+        """
+        text_content = """
+Asset Management System - Email Configuration Test
+
+Dear Administrator,
+
+This is a test email to verify your SMTP configuration is working correctly.
+
+If you received this email, your email configuration is set up properly!
+
+Best regards,
+Asset Management System
+        """
+        
+        await email_service.send_email(
+            to_emails=[test_request.test_email],
+            cc_emails=[],
+            subject=subject,
+            html_content=html_content,
+            text_content=text_content
+        )
+        
+        return {"message": "Test email sent successfully", "sent_to": test_request.test_email}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to send test email: {str(e)}")
+
 # Include the router in the main app
 app.include_router(api_router)
 
