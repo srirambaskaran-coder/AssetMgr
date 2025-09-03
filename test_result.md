@@ -651,6 +651,21 @@ test_plan:
         agent: "testing"
         comment: "✅ DATAPAGINATION COMPONENT FULLY WORKING: Comprehensive testing verified all pagination functionality. Component correctly displays 'Showing X to Y of Z results' text (e.g., 'Showing 1 to 10 of 42 results'). Previous/Next buttons working with proper disabled states. Page numbers (1, 2, 3, 4, 5) with active page highlighting. Ellipsis handling for large page counts. Responsive design working on desktop (1920x1080), tablet (768x1024), and mobile (390x844) viewports. Component properly handles edge cases (single page, no items). Integration with all listing pages successful. Consistent styling across all implementations."
 
+  - task: "Asset Type Manager Assignment - Backend API Implementation"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Backend API implementation for Asset Type Manager Assignment feature including POST /api/asset-types with assigned_asset_manager_id field, PUT /api/asset-types/{id} for updates, GET /api/users/asset-managers endpoint, and proper validation."
+      - working: true
+        agent: "testing"
+        comment: "✅ ASSET TYPE MANAGER ASSIGNMENT BACKEND FULLY WORKING: Comprehensive testing completed successfully. ✅ ASSET MANAGERS ENDPOINT: GET /api/users/asset-managers returns 1 Asset Manager correctly with proper role validation. ✅ ASSET TYPE CREATION: Successfully creates asset types without manager (assigned_asset_manager_id: null) and with valid Asset Manager assignment. Asset Manager name automatically populated from user data. ✅ DATA VALIDATION: Correctly rejects invalid Asset Manager IDs (400 status) and non-Asset Manager users (400 status). Validates that assigned user has Asset Manager role. ✅ ASSET TYPE UPDATES: PUT /api/asset-types/{id} successfully assigns Asset Manager (populates both ID and name), unassigns Asset Manager (clears both ID and name), and rejects invalid Manager IDs. ✅ DATA STORAGE & RETRIEVAL: Both assigned_asset_manager_id and assigned_asset_manager_name properly stored and retrieved. Assignment persists correctly across requests. ✅ ACCESS CONTROL: Administrator and HR Manager can assign Asset Managers. Employee correctly denied access to Asset Managers endpoint (403 status). All 12 test scenarios passed successfully."
+
   - task: "Asset Type Manager Assignment - Frontend Form Integration"
     implemented: true
     working: "NA"
