@@ -2282,20 +2282,36 @@ async def create_email_configuration(
     current_user: User = Depends(require_role([UserRole.ADMINISTRATOR]))
 ):
     """Create or update email configuration"""
-    # Deactivate any existing configurations
-    await db.email_configurations.update_many({}, {"$set": {"is_active": False}})
-    
-    email_config_dict = email_config.dict()
-    email_config_dict["id"] = str(uuid.uuid4())
-    email_config_dict["created_at"] = datetime.now(timezone.utc)
-    email_config_dict["updated_at"] = datetime.now(timezone.utc)
-    
-    await db.email_configurations.insert_one(email_config_dict)
-    
-    # Reset email service config cache
-    email_service.email_config = None
-    
-    return EmailConfiguration(**email_config_dict)
+    try:
+        logging.info(f"DEBUG: Creating email config for user {current_user.email}")
+        logging.info(f"DEBUG: Email config data: {email_config.dict()}")
+        
+        # Deactivate any existing configurations
+        update_result = await db.email_configurations.update_many({}, {"$set": {"is_active": False}})
+        logging.info(f"DEBUG: Deactivated {update_result.modified_count} existing configurations")
+        
+        email_config_dict = email_config.dict()
+        email_config_dict["id"] = str(uuid.uuid4())
+        email_config_dict["created_at"] = datetime.now(timezone.utc)
+        email_config_dict["updated_at"] = datetime.now(timezone.utc)
+        logging.info(f"DEBUG: Prepared config dict with ID: {email_config_dict['id']}")
+        
+        # Insert new configuration
+        insert_result = await db.email_configurations.insert_one(email_config_dict)
+        logging.info(f"DEBUG: Inserted config, result: {insert_result.inserted_id}")
+        
+        # Verify insertion
+        verification = await db.email_configurations.find_one({"id": email_config_dict["id"]})
+        logging.info(f"DEBUG: Verification query result: {verification}")
+        
+        # Reset email service config cache
+        email_service.email_config = None
+        logging.info("DEBUG: Reset email service cache")
+        
+        return EmailConfiguration(**email_config_dict)
+    except Exception as e:
+        logging.error(f"DEBUG: Error creating email configuration: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to create email configuration: {str(e)}")
 
 @api_router.get("/email-config", response_model=EmailConfiguration)
 async def get_email_configuration(
