@@ -3000,6 +3000,11 @@ def main():
     print("-" * 40)
     tester.test_sriram_password_update_and_login()
     
+    # Test EMAIL NOTIFICATION SYSTEM
+    print("\n📧 EMAIL NOTIFICATION SYSTEM TESTS")
+    print("-" * 35)
+    tester.test_email_notification_system()
+    
     # Print final results
     print("\n" + "=" * 60)
     print(f"📊 FINAL RESULTS")
