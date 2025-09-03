@@ -1227,6 +1227,41 @@ async def create_asset_requisition(
         requisition_dict["required_by_date"] = datetime.fromisoformat(requisition_dict["required_by_date"])
     
     await db.asset_requisitions.insert_one(requisition_dict)
+    
+    # Send email notification for asset request
+    try:
+        if current_user.reporting_manager_id:
+            # Trigger 1: When employee requests for an asset
+            # To: Manager, CC: Employee, HR Manager
+            
+            # Get manager details
+            manager = await db.users.find_one({"id": current_user.reporting_manager_id})
+            # Get HR managers
+            hr_managers = await db.users.find({"roles": UserRole.HR_MANAGER, "is_active": True}).to_list(100)
+            
+            to_emails = [manager["email"]] if manager else []
+            cc_emails = [current_user.email] + [hr["email"] for hr in hr_managers]
+            
+            # Prepare email context
+            context = {
+                "manager_name": manager["name"] if manager else "Manager",
+                "employee_name": current_user.name,
+                "asset_type_name": asset_type["name"],
+                "request_type": requisition.request_type.value,
+                "required_by_date": requisition_dict.get("required_by_date", "Not specified"),
+                "reason": requisition.justification
+            }
+            
+            await email_service.send_notification(
+                notification_type="asset_request",
+                to_emails=to_emails,
+                cc_emails=cc_emails,
+                context=context
+            )
+    except Exception as e:
+        # Log error but don't fail the request
+        logging.error(f"Failed to send asset request notification: {str(e)}")
+    
     return AssetRequisition(**requisition_dict)
 
 @api_router.get("/asset-requisitions", response_model=List[AssetRequisition])
