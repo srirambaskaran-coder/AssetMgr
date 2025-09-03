@@ -414,6 +414,311 @@ class NotificationRequest(BaseModel):
     message: str
     notification_type: str
 
+# Email Service
+class EmailService:
+    def __init__(self):
+        self.email_config = None
+    
+    async def get_email_config(self):
+        """Get active email configuration"""
+        if not self.email_config:
+            config = await db.email_configurations.find_one({"is_active": True})
+            if config:
+                self.email_config = EmailConfiguration(**config)
+        return self.email_config
+    
+    async def send_email(self, to_emails: List[str], cc_emails: List[str], subject: str, html_content: str, text_content: str = None):
+        """Send email using SMTP configuration"""
+        config = await self.get_email_config()
+        if not config:
+            raise HTTPException(status_code=500, detail="No active email configuration found")
+        
+        try:
+            # Create message
+            message = MIMEMultipart('alternative')
+            message['Subject'] = subject
+            message['From'] = f"{config.from_name} <{config.from_email}>"
+            message['To'] = ', '.join(to_emails)
+            if cc_emails:
+                message['CC'] = ', '.join(cc_emails)
+            
+            # Add text content
+            if text_content:
+                text_part = MIMEText(text_content, 'plain', 'utf-8')
+                message.attach(text_part)
+            
+            # Add HTML content
+            html_part = MIMEText(html_content, 'html', 'utf-8')
+            message.attach(html_part)
+            
+            # Send email
+            all_recipients = to_emails + (cc_emails or [])
+            
+            if config.use_ssl:
+                await aiosmtplib.send(
+                    message,
+                    hostname=config.smtp_server,
+                    port=config.smtp_port,
+                    username=config.smtp_username,
+                    password=config.smtp_password,
+                    use_tls=False,
+                    start_tls=False
+                )
+            else:
+                await aiosmtplib.send(
+                    message,
+                    hostname=config.smtp_server,
+                    port=config.smtp_port,
+                    username=config.smtp_username,
+                    password=config.smtp_password,
+                    use_tls=config.use_tls,
+                    start_tls=config.use_tls
+                )
+            
+            return True
+        except Exception as e:
+            logging.error(f"Failed to send email: {str(e)}")
+            raise HTTPException(status_code=500, detail=f"Failed to send email: {str(e)}")
+    
+    async def send_notification(self, notification_type: str, to_emails: List[str], cc_emails: List[str], context: Dict[str, Any]):
+        """Send notification email using templates"""
+        subject = self.get_email_subject(notification_type, context)
+        html_content = self.get_email_template(notification_type, context)
+        text_content = self.get_text_template(notification_type, context)
+        
+        await self.send_email(to_emails, cc_emails, subject, html_content, text_content)
+    
+    def get_email_subject(self, notification_type: str, context: Dict[str, Any]) -> str:
+        """Get email subject based on notification type"""
+        subjects = {
+            "asset_request": "New Asset Request - {{asset_type_name}} by {{employee_name}}",
+            "request_approved": "Asset Request Approved - {{asset_type_name}}",
+            "request_rejected": "Asset Request Rejected - {{asset_type_name}}",
+            "asset_allocated": "Asset Allocated - {{asset_type_name}} ({{asset_code}})",
+            "asset_acknowledged": "Asset Acknowledgment Received - {{asset_type_name}} ({{asset_code}})"
+        }
+        
+        subject_template = subjects.get(notification_type, "Asset Management Notification")
+        template = Template(subject_template)
+        return template.render(**context)
+    
+    def get_email_template(self, notification_type: str, context: Dict[str, Any]) -> str:
+        """Get HTML email template based on notification type"""
+        templates = {
+            "asset_request": """
+            <html>
+            <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
+                <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
+                    <h2 style="color: #2563eb;">New Asset Request</h2>
+                    <p>Dear {{manager_name}},</p>
+                    <p>A new asset request has been submitted and requires your approval:</p>
+                    <div style="background-color: #f8fafc; padding: 15px; border-radius: 5px; margin: 20px 0;">
+                        <strong>Request Details:</strong><br>
+                        Employee: {{employee_name}}<br>
+                        Asset Type: {{asset_type_name}}<br>
+                        Request Type: {{request_type}}<br>
+                        Required By: {{required_by_date}}<br>
+                        Reason: {{reason}}
+                    </div>
+                    <p>Please log in to the Asset Management System to review and approve this request.</p>
+                    <p>Best regards,<br>Asset Management System</p>
+                </div>
+            </body>
+            </html>
+            """,
+            "request_approved": """
+            <html>
+            <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
+                <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
+                    <h2 style="color: #16a34a;">Asset Request Approved</h2>
+                    <p>Dear {{employee_name}},</p>
+                    <p>Good news! Your asset request has been approved:</p>
+                    <div style="background-color: #f0fdf4; padding: 15px; border-radius: 5px; margin: 20px 0;">
+                        <strong>Request Details:</strong><br>
+                        Asset Type: {{asset_type_name}}<br>
+                        Request Type: {{request_type}}<br>
+                        Approved By: {{manager_name}}<br>
+                        Approval Reason: {{approval_reason}}
+                    </div>
+                    <p>The Asset Manager will now process your request and allocate the asset soon.</p>
+                    <p>Best regards,<br>Asset Management System</p>
+                </div>
+            </body>
+            </html>
+            """,
+            "request_rejected": """
+            <html>
+            <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
+                <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
+                    <h2 style="color: #dc2626;">Asset Request Rejected</h2>
+                    <p>Dear {{employee_name}},</p>
+                    <p>We regret to inform you that your asset request has been rejected:</p>
+                    <div style="background-color: #fef2f2; padding: 15px; border-radius: 5px; margin: 20px 0;">
+                        <strong>Request Details:</strong><br>
+                        Asset Type: {{asset_type_name}}<br>
+                        Request Type: {{request_type}}<br>
+                        Rejected By: {{manager_name}}<br>
+                        Rejection Reason: {{rejection_reason}}
+                    </div>
+                    <p>If you have any questions, please contact your manager or HR department.</p>
+                    <p>Best regards,<br>Asset Management System</p>
+                </div>
+            </body>
+            </html>
+            """,
+            "asset_allocated": """
+            <html>
+            <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
+                <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
+                    <h2 style="color: #2563eb;">Asset Allocated</h2>
+                    <p>Dear {{employee_name}},</p>
+                    <p>Your asset has been allocated and is ready for collection:</p>
+                    <div style="background-color: #eff6ff; padding: 15px; border-radius: 5px; margin: 20px 0;">
+                        <strong>Asset Details:</strong><br>
+                        Asset Type: {{asset_type_name}}<br>
+                        Asset Code: {{asset_code}}<br>
+                        Asset Value: ₹{{asset_value}}<br>
+                        Allocated By: {{asset_manager_name}}<br>
+                        Allocation Date: {{allocation_date}}
+                    </div>
+                    <p>Please log in to the system to acknowledge receipt of this asset.</p>
+                    <p>Best regards,<br>Asset Management System</p>
+                </div>
+            </body>
+            </html>
+            """,
+            "asset_acknowledged": """
+            <html>
+            <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
+                <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
+                    <h2 style="color: #16a34a;">Asset Acknowledgment Received</h2>
+                    <p>Dear {{asset_manager_name}},</p>
+                    <p>The employee has acknowledged receipt of the allocated asset:</p>
+                    <div style="background-color: #f0fdf4; padding: 15px; border-radius: 5px; margin: 20px 0;">
+                        <strong>Asset Details:</strong><br>
+                        Employee: {{employee_name}}<br>
+                        Asset Type: {{asset_type_name}}<br>
+                        Asset Code: {{asset_code}}<br>
+                        Acknowledgment Date: {{acknowledgment_date}}<br>
+                        Notes: {{acknowledgment_notes}}
+                    </div>
+                    <p>The asset allocation process has been completed successfully.</p>
+                    <p>Best regards,<br>Asset Management System</p>
+                </div>
+            </body>
+            </html>
+            """
+        }
+        
+        template_html = templates.get(notification_type, "<p>{{message}}</p>")
+        template = Template(template_html)
+        return template.render(**context)
+    
+    def get_text_template(self, notification_type: str, context: Dict[str, Any]) -> str:
+        """Get plain text email template based on notification type"""
+        templates = {
+            "asset_request": """
+New Asset Request
+
+Dear {{manager_name}},
+
+A new asset request has been submitted and requires your approval:
+
+Request Details:
+Employee: {{employee_name}}
+Asset Type: {{asset_type_name}}
+Request Type: {{request_type}}
+Required By: {{required_by_date}}
+Reason: {{reason}}
+
+Please log in to the Asset Management System to review and approve this request.
+
+Best regards,
+Asset Management System
+            """,
+            "request_approved": """
+Asset Request Approved
+
+Dear {{employee_name}},
+
+Good news! Your asset request has been approved:
+
+Request Details:
+Asset Type: {{asset_type_name}}
+Request Type: {{request_type}}
+Approved By: {{manager_name}}
+Approval Reason: {{approval_reason}}
+
+The Asset Manager will now process your request and allocate the asset soon.
+
+Best regards,
+Asset Management System
+            """,
+            "request_rejected": """
+Asset Request Rejected
+
+Dear {{employee_name}},
+
+We regret to inform you that your asset request has been rejected:
+
+Request Details:
+Asset Type: {{asset_type_name}}
+Request Type: {{request_type}}
+Rejected By: {{manager_name}}
+Rejection Reason: {{rejection_reason}}
+
+If you have any questions, please contact your manager or HR department.
+
+Best regards,
+Asset Management System
+            """,
+            "asset_allocated": """
+Asset Allocated
+
+Dear {{employee_name}},
+
+Your asset has been allocated and is ready for collection:
+
+Asset Details:
+Asset Type: {{asset_type_name}}
+Asset Code: {{asset_code}}
+Asset Value: ₹{{asset_value}}
+Allocated By: {{asset_manager_name}}
+Allocation Date: {{allocation_date}}
+
+Please log in to the system to acknowledge receipt of this asset.
+
+Best regards,
+Asset Management System
+            """,
+            "asset_acknowledged": """
+Asset Acknowledgment Received
+
+Dear {{asset_manager_name}},
+
+The employee has acknowledged receipt of the allocated asset:
+
+Asset Details:
+Employee: {{employee_name}}
+Asset Type: {{asset_type_name}}
+Asset Code: {{asset_code}}
+Acknowledgment Date: {{acknowledgment_date}}
+Notes: {{acknowledgment_notes}}
+
+The asset allocation process has been completed successfully.
+
+Best regards,
+Asset Management System
+            """
+        }
+        
+        template_text = templates.get(notification_type, "{{message}}")
+        template = Template(template_text)
+        return template.render(**context)
+
+# Initialize email service
+email_service = EmailService()
+
 # Authentication helpers
 async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(security)) -> User:
     try:
