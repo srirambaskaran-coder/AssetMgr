@@ -281,6 +281,7 @@ const UserManagement = () => {
                     <TableHead>Email</TableHead>
                     <TableHead>Designation</TableHead>
                     <TableHead>Roles</TableHead>
+                    <TableHead>Location</TableHead>
                     <TableHead>Reporting To</TableHead>
                     <TableHead>Joining Date</TableHead>
                     <TableHead>Status</TableHead>
