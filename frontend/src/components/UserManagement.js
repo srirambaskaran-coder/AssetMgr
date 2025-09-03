@@ -189,7 +189,7 @@ const UserManagement = () => {
             <DialogHeader>
               <DialogTitle>Create New User</DialogTitle>
             </DialogHeader>
-            <UserForm onSubmit={handleCreateUser} managers={managers} />
+            <UserForm onSubmit={handleCreateUser} managers={managers} locations={locations} />
           </DialogContent>
         </Dialog>
       </div>
