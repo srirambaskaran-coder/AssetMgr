@@ -30,10 +30,12 @@ const API = `${BACKEND_URL}/api`;
 const UserManagement = () => {
   const [users, setUsers] = useState([]);
   const [managers, setManagers] = useState([]);
+  const [locations, setLocations] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [roleFilter, setRoleFilter] = useState('all');
   const [statusFilter, setStatusFilter] = useState('all');
+  const [locationFilter, setLocationFilter] = useState('all');
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
@@ -45,6 +47,7 @@ const UserManagement = () => {
   useEffect(() => {
     fetchUsers();
     fetchManagers();
+    fetchLocations();
   }, []);
 
   const fetchUsers = async () => {
