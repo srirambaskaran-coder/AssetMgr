@@ -1376,6 +1376,61 @@ async def manager_action_on_requisition(
     # Get updated requisition to return
     updated_requisition = await db.asset_requisitions.find_one({"id": requisition_id})
     
+    # Send email notifications for manager action
+    try:
+        # Get employee details
+        requester = await db.users.find_one({"id": requisition["requested_by"]})
+        # Get HR managers
+        hr_managers = await db.users.find({"roles": UserRole.HR_MANAGER, "is_active": True}).to_list(100)
+        # Get asset manager if assigned to asset type
+        asset_managers = []
+        if requisition.get("asset_type_id"):
+            asset_type = await db.asset_types.find_one({"id": requisition["asset_type_id"]})
+            if asset_type and asset_type.get("assigned_asset_manager_id"):
+                asset_manager = await db.users.find_one({"id": asset_type["assigned_asset_manager_id"]})
+                if asset_manager:
+                    asset_managers.append(asset_manager)
+        
+        if requester:
+            to_emails = [requester["email"]]
+            cc_emails = [current_user.email] + [hr["email"] for hr in hr_managers]
+            
+            # Add asset manager to CC if action is approve and asset manager is assigned
+            if action_request.action.lower() == "approve" and asset_managers:
+                cc_emails.extend([am["email"] for am in asset_managers])
+            
+            # Context for email template
+            context = {
+                "employee_name": requester["name"],
+                "asset_type_name": requisition.get("asset_type_name", "Unknown"),
+                "request_type": requisition.get("request_type", "Unknown"),
+                "manager_name": current_user.name
+            }
+            
+            if action_request.action.lower() == "approve":
+                # Trigger 2: When Manager approves the asset request from employee
+                # To: Employee, CC: Manager, Asset Manager responsible for that Asset, HR Manager
+                context["approval_reason"] = action_request.reason
+                await email_service.send_notification(
+                    notification_type="request_approved",
+                    to_emails=to_emails,
+                    cc_emails=cc_emails,
+                    context=context
+                )
+            elif action_request.action.lower() == "reject":
+                # Trigger 3: When Manager rejects the asset request from employee
+                # To: Employee, CC: Manager, HR Manager
+                context["rejection_reason"] = action_request.reason
+                await email_service.send_notification(
+                    notification_type="request_rejected",
+                    to_emails=to_emails,
+                    cc_emails=cc_emails,
+                    context=context
+                )
+    except Exception as e:
+        # Log error but don't fail the request
+        logging.error(f"Failed to send manager action notification: {str(e)}")
+    
     return {
         "message": f"Requisition {action_request.action.lower()}ed successfully",
         "requisition": AssetRequisition(**updated_requisition).dict()
