@@ -2536,6 +2536,152 @@ Asset Management System
         logging.error(f"DEBUG: Failed to send test email: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Failed to send test email: {str(e)}")
 
+# Location Management Routes
+@api_router.get("/locations", response_model=List[Location])
+async def get_locations(
+    current_user: User = Depends(get_current_user)
+):
+    """Get all locations"""
+    locations = await db.locations.find().to_list(1000)
+    return [Location(**location) for location in locations]
+
+@api_router.post("/locations", response_model=Location)
+async def create_location(
+    location: LocationCreate,
+    current_user: User = Depends(require_role([UserRole.ADMINISTRATOR]))
+):
+    """Create new location"""
+    # Check if location code already exists
+    existing = await db.locations.find_one({"code": location.code})
+    if existing:
+        raise HTTPException(status_code=400, detail="Location code already exists")
+    
+    location_dict = location.dict()
+    location_dict["id"] = str(uuid.uuid4())
+    location_dict["created_at"] = datetime.now(timezone.utc)
+    location_dict["updated_at"] = datetime.now(timezone.utc)
+    
+    await db.locations.insert_one(location_dict)
+    return Location(**location_dict)
+
+@api_router.put("/locations/{location_id}", response_model=Location)
+async def update_location(
+    location_id: str,
+    location_update: LocationUpdate,
+    current_user: User = Depends(require_role([UserRole.ADMINISTRATOR]))
+):
+    """Update location"""
+    existing = await db.locations.find_one({"id": location_id})
+    if not existing:
+        raise HTTPException(status_code=404, detail="Location not found")
+    
+    # Check if new code conflicts with existing locations
+    update_data = location_update.dict(exclude_unset=True)
+    if "code" in update_data:
+        code_conflict = await db.locations.find_one({
+            "code": update_data["code"], 
+            "id": {"$ne": location_id}
+        })
+        if code_conflict:
+            raise HTTPException(status_code=400, detail="Location code already exists")
+    
+    update_data["updated_at"] = datetime.now(timezone.utc)
+    
+    await db.locations.update_one({"id": location_id}, {"$set": update_data})
+    
+    updated = await db.locations.find_one({"id": location_id})
+    return Location(**updated)
+
+@api_router.delete("/locations/{location_id}")
+async def delete_location(
+    location_id: str,
+    current_user: User = Depends(require_role([UserRole.ADMINISTRATOR]))
+):
+    """Delete location"""
+    existing = await db.locations.find_one({"id": location_id})
+    if not existing:
+        raise HTTPException(status_code=404, detail="Location not found")
+    
+    # Check if location is assigned to any users
+    users_with_location = await db.users.find_one({"location_id": location_id})
+    if users_with_location:
+        raise HTTPException(
+            status_code=400, 
+            detail="Cannot delete location that is assigned to users"
+        )
+    
+    # Check if location is assigned to any asset managers
+    asset_managers_with_location = await db.asset_manager_locations.find_one({"location_id": location_id})
+    if asset_managers_with_location:
+        raise HTTPException(
+            status_code=400, 
+            detail="Cannot delete location that is assigned to asset managers"
+        )
+    
+    await db.locations.delete_one({"id": location_id})
+    return {"message": "Location deleted successfully"}
+
+# Asset Manager Location Assignment Routes
+@api_router.get("/asset-manager-locations", response_model=List[AssetManagerLocation])
+async def get_asset_manager_locations(
+    current_user: User = Depends(require_role([UserRole.ADMINISTRATOR]))
+):
+    """Get all asset manager location assignments"""
+    assignments = await db.asset_manager_locations.find().to_list(1000)
+    return [AssetManagerLocation(**assignment) for assignment in assignments]
+
+@api_router.post("/asset-manager-locations", response_model=AssetManagerLocation)
+async def assign_asset_manager_location(
+    assignment: AssetManagerLocationCreate,
+    current_user: User = Depends(require_role([UserRole.ADMINISTRATOR]))
+):
+    """Assign asset manager to location"""
+    # Validate asset manager exists and has Asset Manager role
+    asset_manager = await db.users.find_one({"id": assignment.asset_manager_id})
+    if not asset_manager:
+        raise HTTPException(status_code=404, detail="Asset manager not found")
+    
+    if UserRole.ASSET_MANAGER not in asset_manager.get("roles", []):
+        raise HTTPException(status_code=400, detail="User is not an Asset Manager")
+    
+    # Validate location exists
+    location = await db.locations.find_one({"id": assignment.location_id})
+    if not location:
+        raise HTTPException(status_code=404, detail="Location not found")
+    
+    # Check if assignment already exists
+    existing = await db.asset_manager_locations.find_one({
+        "asset_manager_id": assignment.asset_manager_id,
+        "location_id": assignment.location_id
+    })
+    if existing:
+        raise HTTPException(status_code=400, detail="Asset manager already assigned to this location")
+    
+    assignment_dict = {
+        "id": str(uuid.uuid4()),
+        "asset_manager_id": assignment.asset_manager_id,
+        "asset_manager_name": asset_manager["name"],
+        "location_id": assignment.location_id,
+        "location_name": location["name"],
+        "created_at": datetime.now(timezone.utc)
+    }
+    
+    await db.asset_manager_locations.insert_one(assignment_dict)
+    return AssetManagerLocation(**assignment_dict)
+
+@api_router.delete("/asset-manager-locations/{assignment_id}")
+async def remove_asset_manager_location(
+    assignment_id: str,
+    current_user: User = Depends(require_role([UserRole.ADMINISTRATOR]))
+):
+    """Remove asset manager location assignment"""
+    existing = await db.asset_manager_locations.find_one({"id": assignment_id})
+    if not existing:
+        raise HTTPException(status_code=404, detail="Assignment not found")
+    
+    await db.asset_manager_locations.delete_one({"id": assignment_id})
+    return {"message": "Asset manager location assignment removed successfully"}
+
 # Include the router in the main app
 app.include_router(api_router)
 
