@@ -258,7 +258,7 @@ const AssetDefinitions = () => {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filteredAssetDefinitions.map((assetDef) => (
+                  {paginatedAssetDefinitions.map((assetDef) => (
                     <TableRow key={assetDef.id}>
                       <TableCell className="font-medium">{assetDef.asset_code}</TableCell>
                       <TableCell>
