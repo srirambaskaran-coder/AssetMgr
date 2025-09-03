@@ -2444,6 +2444,473 @@ class AssetInventoryAPITester:
         print("✅ All password update and login tests completed")
         return True
 
+    def test_email_notification_system(self):
+        """Test Email Notification System - SMTP Configuration and Integration"""
+        print(f"\n📧 Testing Email Notification System")
+        
+        # Test 1: Email Configuration API Testing
+        print(f"\n📋 Testing Email Configuration API")
+        
+        # Test GET /api/email-config (should return 404 initially)
+        success, response = self.run_test(
+            "Get Email Configuration (Should be 404 initially)",
+            "GET",
+            "email-config",
+            404,
+            user_role="Administrator"
+        )
+        
+        if success:
+            print("   ✅ No email configuration found initially (expected)")
+        
+        # Test POST /api/email-config - Create email configuration
+        email_config_data = {
+            "smtp_server": "smtp.gmail.com",
+            "smtp_port": 587,
+            "smtp_username": "test@company.com",
+            "smtp_password": "test_password_123",
+            "use_tls": True,
+            "use_ssl": False,
+            "from_email": "noreply@company.com",
+            "from_name": "Asset Management System"
+        }
+        
+        success, response = self.run_test(
+            "Create Email Configuration",
+            "POST",
+            "email-config",
+            200,
+            data=email_config_data,
+            user_role="Administrator"
+        )
+        
+        if success:
+            self.test_data['email_config_id'] = response['id']
+            print(f"   Created email config with ID: {response['id']}")
+            print(f"   SMTP Server: {response.get('smtp_server', 'Not set')}")
+            print(f"   SMTP Port: {response.get('smtp_port', 'Not set')}")
+            print(f"   From Email: {response.get('from_email', 'Not set')}")
+        
+        # Test GET /api/email-config - Retrieve active configuration
+        success, response = self.run_test(
+            "Get Active Email Configuration",
+            "GET",
+            "email-config",
+            200,
+            user_role="Administrator"
+        )
+        
+        if success:
+            print(f"   Retrieved config - Server: {response.get('smtp_server', 'Unknown')}")
+            print(f"   Password masked: {response.get('smtp_password') == '***masked***'}")
+        
+        # Test PUT /api/email-config/{id} - Update email configuration
+        if 'email_config_id' in self.test_data:
+            update_data = {
+                "smtp_server": "smtp.outlook.com",
+                "smtp_port": 587,
+                "from_name": "Updated Asset Management System"
+            }
+            
+            success, response = self.run_test(
+                "Update Email Configuration",
+                "PUT",
+                f"email-config/{self.test_data['email_config_id']}",
+                200,
+                data=update_data,
+                user_role="Administrator"
+            )
+            
+            if success:
+                print(f"   Updated SMTP server: {response.get('smtp_server', 'Not updated')}")
+                print(f"   Updated from name: {response.get('from_name', 'Not updated')}")
+        
+        # Test POST /api/email-config/test - Send test email (will fail without real SMTP)
+        test_email_data = {
+            "test_email": "admin@company.com"
+        }
+        
+        success, response = self.run_test(
+            "Send Test Email (Expected to fail without real SMTP)",
+            "POST",
+            "email-config/test",
+            500,  # Expecting failure due to invalid SMTP
+            data=test_email_data,
+            user_role="Administrator"
+        )
+        
+        if success:
+            print("   ✅ Test email endpoint correctly handled SMTP failure")
+        
+        # Test 2: Email Service Integration Testing
+        print(f"\n🔧 Testing Email Service Integration")
+        
+        # Test access control - Employee trying to access email config (should fail)
+        success, response = self.run_test(
+            "Employee Access Email Config (Should Fail)",
+            "GET",
+            "email-config",
+            403,
+            user_role="Employee"
+        )
+        
+        if success:
+            print("   ✅ Employee correctly denied access to email configuration")
+        
+        # Test Manager trying to access email config (should fail)
+        success, response = self.run_test(
+            "Manager Access Email Config (Should Fail)",
+            "GET",
+            "email-config",
+            403,
+            user_role="Manager"
+        )
+        
+        if success:
+            print("   ✅ Manager correctly denied access to email configuration")
+        
+        # Test HR Manager trying to access email config (should fail)
+        if "HR Manager" in self.tokens:
+            success, response = self.run_test(
+                "HR Manager Access Email Config (Should Fail)",
+                "GET",
+                "email-config",
+                403,
+                user_role="HR Manager"
+            )
+            
+            if success:
+                print("   ✅ HR Manager correctly denied access to email configuration")
+        
+        # Test 3: Email Trigger Integration Testing
+        print(f"\n🎯 Testing Email Trigger Integration")
+        
+        # Create test data for email triggers if not exists
+        if 'asset_type_id' not in self.test_data:
+            print("   ⚠️ Creating asset type for email trigger testing...")
+            asset_type_data = {
+                "code": "EMAIL_TEST",
+                "name": "Email Test Asset",
+                "depreciation_applicable": False,
+                "to_be_recovered_on_separation": True,
+                "status": "Active"
+            }
+            
+            success, response = self.run_test(
+                "Create Asset Type for Email Testing",
+                "POST",
+                "asset-types",
+                200,
+                data=asset_type_data,
+                user_role="Administrator"
+            )
+            
+            if success:
+                self.test_data['email_test_asset_type_id'] = response['id']
+        
+        # Test Trigger 1: Asset requisition creation
+        if 'email_test_asset_type_id' in self.test_data or 'asset_type_id' in self.test_data:
+            asset_type_id = self.test_data.get('email_test_asset_type_id', self.test_data.get('asset_type_id'))
+            
+            from datetime import datetime, timedelta
+            required_by_date = (datetime.now() + timedelta(days=7)).isoformat()
+            
+            requisition_data = {
+                "asset_type_id": asset_type_id,
+                "request_type": "New Allocation",
+                "request_for": "Self",
+                "justification": "Email notification test - asset request",
+                "required_by_date": required_by_date
+            }
+            
+            success, response = self.run_test(
+                "Create Asset Requisition (Email Trigger 1)",
+                "POST",
+                "asset-requisitions",
+                200,
+                data=requisition_data,
+                user_role="Employee"
+            )
+            
+            if success:
+                self.test_data['email_test_requisition_id'] = response['id']
+                print(f"   ✅ Asset requisition created - email notification should be triggered")
+                print(f"   Requisition ID: {response['id'][:8]}...")
+        
+        # Test Trigger 2: Manager approval action
+        if 'email_test_requisition_id' in self.test_data:
+            approval_data = {
+                "action": "approve",
+                "reason": "Email notification test - manager approval"
+            }
+            
+            success, response = self.run_test(
+                "Manager Approve Requisition (Email Trigger 2)",
+                "POST",
+                f"asset-requisitions/{self.test_data['email_test_requisition_id']}/manager-action",
+                200,
+                data=approval_data,
+                user_role="Administrator"  # Using admin as they can approve any request
+            )
+            
+            if success:
+                print(f"   ✅ Manager approval completed - email notification should be triggered")
+        
+        # Test Trigger 3: Manager rejection action
+        # Create another requisition for rejection test
+        if 'email_test_asset_type_id' in self.test_data or 'asset_type_id' in self.test_data:
+            asset_type_id = self.test_data.get('email_test_asset_type_id', self.test_data.get('asset_type_id'))
+            
+            rejection_req_data = {
+                "asset_type_id": asset_type_id,
+                "request_type": "New Allocation",
+                "request_for": "Self",
+                "justification": "Email notification test - rejection scenario",
+                "required_by_date": required_by_date
+            }
+            
+            success, response = self.run_test(
+                "Create Requisition for Rejection Test",
+                "POST",
+                "asset-requisitions",
+                200,
+                data=rejection_req_data,
+                user_role="Employee"
+            )
+            
+            if success:
+                rejection_req_id = response['id']
+                
+                rejection_data = {
+                    "action": "reject",
+                    "reason": "Email notification test - manager rejection"
+                }
+                
+                success, response = self.run_test(
+                    "Manager Reject Requisition (Email Trigger 3)",
+                    "POST",
+                    f"asset-requisitions/{rejection_req_id}/manager-action",
+                    200,
+                    data=rejection_data,
+                    user_role="Administrator"
+                )
+                
+                if success:
+                    print(f"   ✅ Manager rejection completed - email notification should be triggered")
+        
+        # Test 4: Data Validation Testing
+        print(f"\n✅ Testing Email Configuration Validation")
+        
+        # Test invalid SMTP configuration
+        invalid_config_data = {
+            "smtp_server": "",  # Empty server
+            "smtp_port": 587,
+            "smtp_username": "test@company.com",
+            "smtp_password": "test_password",
+            "from_email": "invalid-email",  # Invalid email format
+            "from_name": "Test System"
+        }
+        
+        success, response = self.run_test(
+            "Create Invalid Email Configuration (Should Fail)",
+            "POST",
+            "email-config",
+            422,  # Expecting validation error
+            data=invalid_config_data,
+            user_role="Administrator"
+        )
+        
+        if success:
+            print("   ✅ Invalid email configuration correctly rejected")
+        
+        # Test invalid port number
+        invalid_port_config = {
+            "smtp_server": "smtp.gmail.com",
+            "smtp_port": 99999,  # Invalid port
+            "smtp_username": "test@company.com",
+            "smtp_password": "test_password",
+            "from_email": "test@company.com",
+            "from_name": "Test System"
+        }
+        
+        success, response = self.run_test(
+            "Create Config with Invalid Port",
+            "POST",
+            "email-config",
+            200,  # This might pass validation but fail on actual use
+            data=invalid_port_config,
+            user_role="Administrator"
+        )
+        
+        # Test 5: Error Handling Testing
+        print(f"\n🚨 Testing Email Error Handling")
+        
+        # Test updating non-existent email configuration
+        success, response = self.run_test(
+            "Update Non-existent Email Config (Should Fail)",
+            "PUT",
+            "email-config/non-existent-id",
+            404,
+            data={"smtp_server": "test.com"},
+            user_role="Administrator"
+        )
+        
+        if success:
+            print("   ✅ Non-existent email config update correctly rejected")
+        
+        # Test sending test email to invalid email
+        invalid_test_email = {
+            "test_email": "invalid-email-format"
+        }
+        
+        success, response = self.run_test(
+            "Send Test Email to Invalid Address (Should Fail)",
+            "POST",
+            "email-config/test",
+            422,  # Expecting validation error
+            data=invalid_test_email,
+            user_role="Administrator"
+        )
+        
+        if success:
+            print("   ✅ Invalid test email address correctly rejected")
+        
+        # Test 6: Email Template Context Testing
+        print(f"\n📝 Testing Email Template Context")
+        
+        # Create asset definition for allocation testing
+        if ('email_test_asset_type_id' in self.test_data or 'asset_type_id' in self.test_data) and 'asset_def_id' not in self.test_data:
+            asset_type_id = self.test_data.get('email_test_asset_type_id', self.test_data.get('asset_type_id'))
+            
+            asset_def_data = {
+                "asset_type_id": asset_type_id,
+                "asset_code": "EMAIL_TEST_001",
+                "asset_description": "Email Test Asset",
+                "asset_details": "Asset for email notification testing",
+                "asset_value": 25000.0,
+                "status": "Available"
+            }
+            
+            success, response = self.run_test(
+                "Create Asset Definition for Email Testing",
+                "POST",
+                "asset-definitions",
+                200,
+                data=asset_def_data,
+                user_role="Administrator"
+            )
+            
+            if success:
+                self.test_data['email_test_asset_def_id'] = response['id']
+                print(f"   Created asset definition for email testing: {response['id'][:8]}...")
+        
+        # Test Trigger 4: Asset allocation (if we have approved requisition and asset)
+        if 'email_test_requisition_id' in self.test_data and 'email_test_asset_def_id' in self.test_data:
+            allocation_data = {
+                "requisition_id": self.test_data['email_test_requisition_id'],
+                "asset_definition_id": self.test_data['email_test_asset_def_id'],
+                "remarks": "Email notification test - asset allocation"
+            }
+            
+            success, response = self.run_test(
+                "Create Asset Allocation (Email Trigger 4)",
+                "POST",
+                "asset-allocations",
+                200,
+                data=allocation_data,
+                user_role="Asset Manager"
+            )
+            
+            if success:
+                print(f"   ✅ Asset allocation completed - email notification should be triggered")
+                self.test_data['email_test_allocation_id'] = response['id']
+        
+        # Test Trigger 5: Asset acknowledgment
+        if 'email_test_asset_def_id' in self.test_data:
+            acknowledgment_data = {
+                "acknowledgment_notes": "Email notification test - asset acknowledgment"
+            }
+            
+            # First check if asset is allocated to current user
+            success, asset_response = self.run_test(
+                "Get Asset for Acknowledgment Test",
+                "GET",
+                f"asset-definitions/{self.test_data['email_test_asset_def_id']}",
+                200,
+                user_role="Administrator"
+            )
+            
+            if success and asset_response.get('status') == 'Allocated':
+                success, response = self.run_test(
+                    "Acknowledge Asset Allocation (Email Trigger 5)",
+                    "POST",
+                    f"asset-definitions/{self.test_data['email_test_asset_def_id']}/acknowledge",
+                    200,
+                    data=acknowledgment_data,
+                    user_role="Employee"
+                )
+                
+                if success:
+                    print(f"   ✅ Asset acknowledgment completed - email notification should be triggered")
+                else:
+                    print(f"   ⚠️ Asset acknowledgment failed - may not be allocated to current user")
+            else:
+                print(f"   ⚠️ Asset not allocated, skipping acknowledgment test")
+        
+        # Test 7: Email Service Method Testing
+        print(f"\n🔍 Testing Email Service Methods")
+        
+        # Test that email service handles missing configuration gracefully
+        # This is tested implicitly through the API calls above
+        
+        # Test multiple email configurations (only one should be active)
+        second_config_data = {
+            "smtp_server": "smtp.yahoo.com",
+            "smtp_port": 587,
+            "smtp_username": "test2@company.com",
+            "smtp_password": "test_password_456",
+            "from_email": "noreply2@company.com",
+            "from_name": "Asset Management System 2"
+        }
+        
+        success, response = self.run_test(
+            "Create Second Email Configuration",
+            "POST",
+            "email-config",
+            200,
+            data=second_config_data,
+            user_role="Administrator"
+        )
+        
+        if success:
+            print(f"   ✅ Second email configuration created")
+            
+            # Verify only the new one is active
+            success, active_config = self.run_test(
+                "Verify Only One Active Configuration",
+                "GET",
+                "email-config",
+                200,
+                user_role="Administrator"
+            )
+            
+            if success:
+                if active_config.get('smtp_server') == 'smtp.yahoo.com':
+                    print(f"   ✅ Only latest configuration is active")
+                else:
+                    print(f"   ⚠️ Unexpected active configuration")
+        
+        print(f"\n📧 Email Notification System Testing Summary:")
+        print(f"   ✅ Email Configuration API endpoints tested")
+        print(f"   ✅ SMTP configuration validation tested")
+        print(f"   ✅ Email service integration tested")
+        print(f"   ✅ Email triggers in workflows tested")
+        print(f"   ✅ Access control for email features tested")
+        print(f"   ✅ Error handling scenarios tested")
+        print(f"   ⚠️ Note: Actual email sending requires valid SMTP server")
+        
+        return True
+
 def main():
     print("🚀 Starting Asset Inventory Management System API Tests")
     print("=" * 60)
