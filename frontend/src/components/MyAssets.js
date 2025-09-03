@@ -198,7 +198,7 @@ const MyAssets = () => {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {assets.map((asset) => (
+                  {paginatedAssets.map((asset) => (
                     <TableRow key={asset.id}>
                       <TableCell className="font-medium">{asset.asset_code}</TableCell>
                       <TableCell>
