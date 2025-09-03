@@ -134,10 +134,25 @@ const Settings = () => {
       toast.success(emailConfigExists ? 'Email configuration updated successfully' : 'Email configuration created successfully');
     } catch (error) {
       console.error('🚨 Email Configuration Error:', error);
+      console.error('Error Message:', error.message);
       console.error('Response:', error.response);
       console.error('Response Data:', error.response?.data);
       console.error('Response Status:', error.response?.status);
       console.error('Response Headers:', error.response?.headers);
+      console.error('Request Config:', error.config);
+      
+      // More detailed error analysis
+      if (error.response?.data?.detail) {
+        console.error('Backend Error Detail:', error.response.data.detail);
+      }
+      
+      if (error.response?.status === 422) {
+        console.error('Validation Error - Check your input data');
+        if (error.response.data?.detail) {
+          console.error('Validation Details:', JSON.stringify(error.response.data.detail, null, 2));
+        }
+      }
+      
       toast.error(error.response?.data?.detail || 'Failed to save email configuration');
     } finally {
       setEmailLoading(false);
