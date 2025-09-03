@@ -102,12 +102,27 @@ const AssetTypes = () => {
     }
   };
 
+  // Filter asset types first
   const filteredAssetTypes = assetTypes.filter(assetType => {
     const matchesSearch = assetType.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          assetType.code.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = statusFilter === 'all' || assetType.status === statusFilter;
     return matchesSearch && matchesStatus;
   });
+
+  // Apply pagination to filtered results
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const paginatedAssetTypes = filteredAssetTypes.slice(startIndex, endIndex);
+
+  const handlePageChange = (page) => {
+    setCurrentPage(page);
+  };
+
+  // Reset to first page when search or filter changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, statusFilter]);
 
   if (loading) {
     return (
