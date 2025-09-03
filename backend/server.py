@@ -2703,6 +2703,57 @@ async def remove_asset_manager_location(
     await db.asset_manager_locations.delete_one({"id": assignment_id})
     return {"message": "Asset manager location assignment removed successfully"}
 
+# Data Migration Endpoint - Set Default Location for Existing Users
+@api_router.post("/migrate/set-default-location")
+async def set_default_location_for_users(
+    current_user: User = Depends(require_role([UserRole.ADMINISTRATOR]))
+):
+    """Set default location for existing users without location assignment"""
+    # First, create a default location if it doesn't exist
+    default_location = await db.locations.find_one({"code": "DEFAULT"})
+    if not default_location:
+        default_location_dict = {
+            "id": str(uuid.uuid4()),
+            "code": "DEFAULT",
+            "name": "Default Location",
+            "country": "N/A",
+            "status": "Active",
+            "created_at": datetime.now(timezone.utc),
+            "updated_at": datetime.now(timezone.utc)
+        }
+        await db.locations.insert_one(default_location_dict)
+        default_location_id = default_location_dict["id"]
+        default_location_name = default_location_dict["name"]
+    else:
+        default_location_id = default_location["id"]
+        default_location_name = default_location["name"]
+    
+    # Update users without location assignment
+    result = await db.users.update_many(
+        {"location_id": {"$exists": False}},  # Users without location_id field
+        {"$set": {
+            "location_id": default_location_id,
+            "location_name": default_location_name
+        }}
+    )
+    
+    # Also update users with null location_id
+    result2 = await db.users.update_many(
+        {"location_id": None},  # Users with null location_id
+        {"$set": {
+            "location_id": default_location_id,
+            "location_name": default_location_name
+        }}
+    )
+    
+    total_updated = result.modified_count + result2.modified_count
+    
+    return {
+        "message": f"Default location set for {total_updated} existing users",
+        "default_location": default_location_name,
+        "updated_count": total_updated
+    }
+
 # Include the router in the main app
 app.include_router(api_router)
 
