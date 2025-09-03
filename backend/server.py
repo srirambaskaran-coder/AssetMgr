@@ -596,6 +596,23 @@ async def update_asset_type(
         if update_data["depreciation_applicable"] and not update_data.get("asset_life") and not existing.get("asset_life"):
             raise HTTPException(status_code=400, detail="Asset life is required when depreciation is applicable")
     
+    # Handle asset manager assignment
+    if "assigned_asset_manager_id" in update_data:
+        if update_data["assigned_asset_manager_id"]:
+            asset_manager = await db.users.find_one({"id": update_data["assigned_asset_manager_id"]})
+            if not asset_manager:
+                raise HTTPException(status_code=400, detail="Assigned asset manager not found")
+            
+            # Verify the user has Asset Manager role
+            user_roles = asset_manager.get("roles", [])
+            if UserRole.ASSET_MANAGER not in user_roles:
+                raise HTTPException(status_code=400, detail="Selected user is not an Asset Manager")
+            
+            update_data["assigned_asset_manager_name"] = asset_manager["name"]
+        else:
+            # Clear asset manager assignment
+            update_data["assigned_asset_manager_name"] = None
+    
     if update_data:
         await db.asset_types.update_one({"id": asset_type_id}, {"$set": update_data})
         updated = await db.asset_types.find_one({"id": asset_type_id})
