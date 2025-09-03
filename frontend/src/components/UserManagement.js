@@ -71,6 +71,17 @@ const UserManagement = () => {
     }
   };
 
+  const fetchLocations = async () => {
+    try {
+      const response = await axios.get(`${API}/locations`, {
+        headers: { 'Authorization': `Bearer ${localStorage.getItem('session_token')}` }
+      });
+      setLocations(response.data);
+    } catch (error) {
+      console.error('Error fetching locations:', error);
+    }
+  };
+
   const handleCreateUser = async (formData) => {
     try {
       const response = await axios.post(`${API}/users`, formData);
