@@ -368,6 +368,52 @@ class BulkImportResult(BaseModel):
     failed_imports: int
     errors: List[Dict[str, str]] = []
 
+# Email Configuration Models
+class EmailConfiguration(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    smtp_server: str
+    smtp_port: int
+    smtp_username: str
+    smtp_password: str  # This should be encrypted in production
+    use_tls: bool = True
+    use_ssl: bool = False
+    from_email: str
+    from_name: str
+    is_active: bool = True
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+class EmailConfigurationCreate(BaseModel):
+    smtp_server: str
+    smtp_port: int = 587
+    smtp_username: str
+    smtp_password: str
+    use_tls: bool = True
+    use_ssl: bool = False
+    from_email: EmailStr
+    from_name: str
+
+class EmailConfigurationUpdate(BaseModel):
+    smtp_server: Optional[str] = None
+    smtp_port: Optional[int] = None
+    smtp_username: Optional[str] = None
+    smtp_password: Optional[str] = None
+    use_tls: Optional[bool] = None
+    use_ssl: Optional[bool] = None
+    from_email: Optional[EmailStr] = None
+    from_name: Optional[str] = None
+    is_active: Optional[bool] = None
+
+class EmailTestRequest(BaseModel):
+    test_email: EmailStr
+    
+class NotificationRequest(BaseModel):
+    to_emails: List[EmailStr]
+    cc_emails: Optional[List[EmailStr]] = []
+    subject: str
+    message: str
+    notification_type: str
+
 # Authentication helpers
 async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(security)) -> User:
     try:
