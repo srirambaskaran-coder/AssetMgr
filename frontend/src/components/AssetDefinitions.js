@@ -444,7 +444,7 @@ const AssetDefinitionForm = ({ assetTypes, initialData, onSubmit }) => {
           />
         </div>
         <div>
-          <Label htmlFor="asset_depreciation_value_per_year">Depreciation per Year ($)</Label>
+          <Label htmlFor="asset_depreciation_value_per_year">Depreciation per Year (₹)</Label>
           <Input
             id="asset_depreciation_value_per_year"
             type="number"
