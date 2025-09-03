@@ -368,6 +368,41 @@ class BulkImportResult(BaseModel):
     failed_imports: int
     errors: List[Dict[str, str]] = []
 
+# Location Models
+class Location(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    code: str
+    name: str
+    country: str
+    status: str = "Active"  # Active, Inactive
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+class LocationCreate(BaseModel):
+    code: str
+    name: str
+    country: str
+    status: str = "Active"
+
+class LocationUpdate(BaseModel):
+    code: Optional[str] = None
+    name: Optional[str] = None
+    country: Optional[str] = None
+    status: Optional[str] = None
+
+# Asset Manager Location Assignment Models
+class AssetManagerLocation(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    asset_manager_id: str
+    asset_manager_name: str
+    location_id: str
+    location_name: str
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+class AssetManagerLocationCreate(BaseModel):
+    asset_manager_id: str
+    location_id: str
+
 # Email Configuration Models
 class EmailConfiguration(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
