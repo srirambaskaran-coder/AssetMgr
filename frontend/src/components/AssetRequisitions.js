@@ -156,6 +156,22 @@ const AssetRequisitions = () => {
     return matchesSearch && matchesStatus;
   });
 
+  // Pagination logic
+  const totalItems = filteredRequisitions.length;
+  const totalPages = Math.ceil(totalItems / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const paginatedRequisitions = filteredRequisitions.slice(startIndex, endIndex);
+
+  const handlePageChange = (page) => {
+    setCurrentPage(page);
+  };
+
+  // Reset to page 1 when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, statusFilter]);
+
   const getStatusIcon = (status) => {
     switch (status) {
       case 'Pending':
