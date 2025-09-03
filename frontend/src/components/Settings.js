@@ -156,7 +156,7 @@ const Settings = () => {
         test_email: user.email
       }, {
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
+          'Authorization': `Bearer ${localStorage.getItem('session_token')}`
         }
       });
 
