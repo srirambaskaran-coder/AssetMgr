@@ -344,7 +344,7 @@ const AssetTypeForm = ({ initialData, onSubmit, assetManagers = [] }) => {
       asset_life: formData.depreciation_applicable && formData.asset_life 
         ? parseInt(formData.asset_life) 
         : null,
-      assigned_asset_manager_id: formData.assigned_asset_manager_id || null
+      assigned_asset_manager_id: formData.assigned_asset_manager_id === 'none' ? null : formData.assigned_asset_manager_id
     };
 
     await onSubmit(submitData);
