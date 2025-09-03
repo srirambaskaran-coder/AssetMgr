@@ -577,6 +577,31 @@ const UserForm = ({ initialData, onSubmit, managers = [], locations = [], isEdit
         </div>
       </div>
 
+      <div className="grid grid-cols-2 gap-4">
+        <div>
+          <Label htmlFor="location_id">Location</Label>
+          <Select 
+            value={formData.location_id} 
+            onValueChange={(value) => setFormData({ ...formData, location_id: value })}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Select location" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="">No Location Assigned</SelectItem>
+              {locations.map(location => (
+                <SelectItem key={location.id} value={location.id}>
+                  {location.name} ({location.country})
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <div>
+          {/* Empty div for grid layout balance */}
+        </div>
+      </div>
+
       {/* Password Section */}
       {!isEdit ? (
         <div>
