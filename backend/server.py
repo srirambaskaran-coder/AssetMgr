@@ -1971,6 +1971,50 @@ async def create_asset_allocation(
         }
     )
     
+    # Send email notification for asset allocation
+    try:
+        # Trigger 4: When Asset Manager allocates the asset to employee
+        # To: Employee, CC: Asset Manager, Manager, HR Manager
+        
+        # Get manager details
+        manager = None
+        if requested_user and requested_user.get("reporting_manager_id"):
+            manager = await db.users.find_one({"id": requested_user["reporting_manager_id"]})
+        
+        # Get HR managers
+        hr_managers = await db.users.find({"roles": UserRole.HR_MANAGER, "is_active": True}).to_list(100)
+        
+        if requested_user:
+            to_emails = [requested_user["email"]]
+            cc_emails = [current_user.email]  # Asset Manager
+            
+            # Add manager to CC if exists
+            if manager:
+                cc_emails.append(manager["email"])
+            
+            # Add HR managers to CC
+            cc_emails.extend([hr["email"] for hr in hr_managers])
+            
+            # Context for email template
+            context = {
+                "employee_name": requested_user["name"],
+                "asset_type_name": asset_type["name"] if asset_type else "Unknown",
+                "asset_code": asset_def["asset_code"],
+                "asset_value": asset_def.get("asset_value", 0),
+                "asset_manager_name": current_user.name,
+                "allocation_date": datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S")
+            }
+            
+            await email_service.send_notification(
+                notification_type="asset_allocated",
+                to_emails=to_emails,
+                cc_emails=cc_emails,
+                context=context
+            )
+    except Exception as e:
+        # Log error but don't fail the allocation
+        logging.error(f"Failed to send asset allocation notification: {str(e)}")
+    
     return AssetAllocation(**allocation_dict)
 
 @api_router.get("/pending-allocations")
