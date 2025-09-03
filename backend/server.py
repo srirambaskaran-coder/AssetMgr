@@ -88,6 +88,8 @@ class User(BaseModel):
     date_of_joining: Optional[datetime] = None
     reporting_manager_id: Optional[str] = None
     reporting_manager_name: Optional[str] = None
+    location_id: Optional[str] = None
+    location_name: Optional[str] = None
     picture: Optional[str] = None
     session_token: Optional[str] = None
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
