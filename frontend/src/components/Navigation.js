@@ -23,7 +23,8 @@ import {
   Settings,
   Building,
   Menu,
-  X
+  X,
+  MapPin
 } from 'lucide-react';
 
 const Navigation = () => {
