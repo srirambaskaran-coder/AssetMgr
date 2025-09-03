@@ -13,7 +13,6 @@ import {
   Users,
   TrendingUp,
   Activity,
-  DollarSign,
   Target,
   BarChart3,
   ClipboardList,
