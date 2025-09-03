@@ -1152,6 +1152,64 @@ async def acknowledge_asset_allocation(
     # Get updated asset to return
     updated_asset = await db.asset_definitions.find_one({"id": asset_def_id})
     
+    # Send email notification for asset acknowledgment
+    try:
+        # Trigger 5: When employee acknowledges the allocation
+        # To: Asset Manager, CC: Employee, Manager, HR Manager
+        
+        # Get asset type details
+        asset_type = await db.asset_types.find_one({"id": asset["asset_type_id"]})
+        
+        # Get Asset Manager (either assigned to asset type or the one who allocated)
+        asset_manager = None
+        if asset_type and asset_type.get("assigned_asset_manager_id"):
+            asset_manager = await db.users.find_one({"id": asset_type["assigned_asset_manager_id"]})
+        
+        # If no specific asset manager assigned, find asset managers from allocations
+        if not asset_manager:
+            allocation = await db.asset_allocations.find_one({"asset_definition_id": asset_def_id})
+            if allocation and allocation.get("allocated_by"):
+                asset_manager = await db.users.find_one({"id": allocation["allocated_by"]})
+        
+        # Get manager details
+        manager = None
+        if current_user.reporting_manager_id:
+            manager = await db.users.find_one({"id": current_user.reporting_manager_id})
+        
+        # Get HR managers
+        hr_managers = await db.users.find({"roles": UserRole.HR_MANAGER, "is_active": True}).to_list(100)
+        
+        if asset_manager:
+            to_emails = [asset_manager["email"]]
+            cc_emails = [current_user.email]  # Employee
+            
+            # Add manager to CC if exists
+            if manager:
+                cc_emails.append(manager["email"])
+            
+            # Add HR managers to CC
+            cc_emails.extend([hr["email"] for hr in hr_managers])
+            
+            # Context for email template
+            context = {
+                "asset_manager_name": asset_manager["name"],
+                "employee_name": current_user.name,
+                "asset_type_name": asset_type["name"] if asset_type else "Unknown",
+                "asset_code": asset["asset_code"],
+                "acknowledgment_date": update_data["acknowledgment_date"].strftime("%Y-%m-%d %H:%M:%S"),
+                "acknowledgment_notes": acknowledgment.acknowledgment_notes or "No additional notes"
+            }
+            
+            await email_service.send_notification(
+                notification_type="asset_acknowledged",
+                to_emails=to_emails,
+                cc_emails=cc_emails,
+                context=context
+            )
+    except Exception as e:
+        # Log error but don't fail the acknowledgment
+        logging.error(f"Failed to send asset acknowledgment notification: {str(e)}")
+    
     return {
         "message": "Asset allocation acknowledged successfully",
         "asset": AssetDefinition(**updated_asset).dict(),
