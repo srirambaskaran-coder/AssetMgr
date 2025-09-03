@@ -316,6 +316,14 @@ function App() {
                   </ProtectedRoute>
                 } 
               />
+              <Route 
+                path="/locations" 
+                element={
+                  <ProtectedRoute requiredRoles={['Administrator']}>
+                    <LocationManagement />
+                  </ProtectedRoute>
+                } 
+              />
               
               <Route 
                 path="/bulk-import" 
