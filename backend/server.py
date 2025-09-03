@@ -1790,6 +1790,17 @@ async def update_user(
             # Clear reporting manager
             update_data["reporting_manager_name"] = None
     
+    # Validate and update location if provided
+    if "location_id" in update_data:
+        if update_data["location_id"]:
+            location = await db.locations.find_one({"id": update_data["location_id"]})
+            if not location:
+                raise HTTPException(status_code=400, detail="Location not found")
+            update_data["location_name"] = location["name"]
+        else:
+            # Clear location
+            update_data["location_name"] = None
+    
     if update_data:
         await db.users.update_one({"id": user_id}, {"$set": update_data})
         updated_user = await db.users.find_one({"id": user_id}, {"password_hash": 0})
