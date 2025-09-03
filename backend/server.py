@@ -2285,6 +2285,11 @@ async def create_email_configuration(
     try:
         logging.info(f"DEBUG: Creating email config for user {current_user.email}")
         logging.info(f"DEBUG: Email config data: {email_config.dict()}")
+        logging.info(f"DEBUG: Database name: {db.name}")
+        
+        # Check existing configurations before deactivating
+        existing_configs = await db.email_configurations.find().to_list(100)
+        logging.info(f"DEBUG: Found {len(existing_configs)} existing configurations before deactivate")
         
         # Deactivate any existing configurations
         update_result = await db.email_configurations.update_many({}, {"$set": {"is_active": False}})
@@ -2292,17 +2297,28 @@ async def create_email_configuration(
         
         email_config_dict = email_config.dict()
         email_config_dict["id"] = str(uuid.uuid4())
+        email_config_dict["is_active"] = True  # Explicitly set active
         email_config_dict["created_at"] = datetime.now(timezone.utc)
         email_config_dict["updated_at"] = datetime.now(timezone.utc)
         logging.info(f"DEBUG: Prepared config dict with ID: {email_config_dict['id']}")
+        logging.info(f"DEBUG: Config dict keys: {list(email_config_dict.keys())}")
         
         # Insert new configuration
         insert_result = await db.email_configurations.insert_one(email_config_dict)
-        logging.info(f"DEBUG: Inserted config, result: {insert_result.inserted_id}")
+        logging.info(f"DEBUG: Inserted config, MongoDB _id: {insert_result.inserted_id}")
         
-        # Verify insertion
-        verification = await db.email_configurations.find_one({"id": email_config_dict["id"]})
-        logging.info(f"DEBUG: Verification query result: {verification}")
+        # Verify insertion with multiple queries
+        verification1 = await db.email_configurations.find_one({"id": email_config_dict["id"]})
+        logging.info(f"DEBUG: Verification by ID: {verification1 is not None}")
+        
+        verification2 = await db.email_configurations.find_one({"is_active": True})
+        logging.info(f"DEBUG: Verification by is_active=True: {verification2 is not None}")
+        
+        all_configs_after = await db.email_configurations.find().to_list(100)
+        logging.info(f"DEBUG: Total configs after insert: {len(all_configs_after)}")
+        
+        for i, config in enumerate(all_configs_after):
+            logging.info(f"DEBUG: Config {i+1} after insert: id={config.get('id')[:8]}..., is_active={config.get('is_active')}")
         
         # Reset email service config cache
         email_service.email_config = None
@@ -2311,6 +2327,8 @@ async def create_email_configuration(
         return EmailConfiguration(**email_config_dict)
     except Exception as e:
         logging.error(f"DEBUG: Error creating email configuration: {str(e)}")
+        import traceback
+        logging.error(f"DEBUG: Traceback: {traceback.format_exc()}")
         raise HTTPException(status_code=500, detail=f"Failed to create email configuration: {str(e)}")
 
 @api_router.get("/email-config", response_model=EmailConfiguration)
