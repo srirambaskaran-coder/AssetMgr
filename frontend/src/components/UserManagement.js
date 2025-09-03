@@ -130,7 +130,8 @@ const UserManagement = () => {
     const matchesStatus = statusFilter === 'all' || 
                          (statusFilter === 'active' && user.is_active) ||
                          (statusFilter === 'inactive' && !user.is_active);
-    return matchesSearch && matchesRole && matchesStatus;
+    const matchesLocation = locationFilter === 'all' || user.location_name === locationFilter;
+    return matchesSearch && matchesRole && matchesStatus && matchesLocation;
   });
 
   // Pagination logic
