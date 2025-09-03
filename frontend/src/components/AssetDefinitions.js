@@ -248,7 +248,7 @@ const AssetDefinitions = () => {
                       <TableCell className="max-w-xs truncate">{assetDef.asset_description}</TableCell>
                       <TableCell className="font-medium">
                         <div className="flex items-center">
-                          <DollarSign className="h-4 w-4 text-gray-500 mr-1" />
+                          <IndianRupee className="h-4 w-4 text-gray-500 mr-1" />
                           {assetDef.asset_value?.toLocaleString()}
                         </div>
                       </TableCell>
