@@ -2281,6 +2281,19 @@ async def create_email_configuration(
     
     return EmailConfiguration(**email_config_dict)
 
+# Debug endpoint to check user roles
+@api_router.get("/debug/user-roles")
+async def debug_user_roles(current_user: User = Depends(get_current_user)):
+    """Debug endpoint to check current user roles"""
+    return {
+        "user_id": current_user.id,
+        "user_email": current_user.email,
+        "user_name": current_user.name,
+        "user_roles": current_user.roles,
+        "has_admin_role": UserRole.ADMINISTRATOR in current_user.roles,
+        "admin_role_value": UserRole.ADMINISTRATOR
+    }
+
 @api_router.get("/email-config", response_model=EmailConfiguration)
 async def get_email_configuration(
     current_user: User = Depends(require_role([UserRole.ADMINISTRATOR]))
