@@ -331,7 +331,7 @@ const AssetTypeForm = ({ initialData, onSubmit, assetManagers = [] }) => {
     asset_life: initialData?.asset_life || '',
     to_be_recovered_on_separation: initialData?.to_be_recovered_on_separation ?? true,
     status: initialData?.status || 'Active',
-    assigned_asset_manager_id: initialData?.assigned_asset_manager_id || 'none'
+    assigned_asset_manager_id: initialData?.assigned_asset_manager_id ? initialData.assigned_asset_manager_id : 'none'
   });
   const [loading, setLoading] = useState(false);
 
