@@ -67,11 +67,11 @@ const Settings = () => {
     try {
       console.log('🔍 Fetching Email Config:');
       console.log('API URL:', `${API}/email-config`);
-      console.log('Token:', localStorage.getItem('token'));
+      console.log('Session Token:', localStorage.getItem('session_token'));
 
       const response = await axios.get(`${API}/email-config`, {
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
+          'Authorization': `Bearer ${localStorage.getItem('session_token')}`
         }
       });
       
