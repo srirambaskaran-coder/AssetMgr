@@ -2490,6 +2490,11 @@ def main():
     tester.test_asset_definition_crud()
     tester.test_asset_requisition_workflow()
     
+    # Test Asset Type Manager Assignment feature
+    print("\n👨‍💼 ASSET TYPE MANAGER ASSIGNMENT TESTS")
+    print("-" * 40)
+    tester.test_asset_type_manager_assignment()
+    
     # Test access control
     tester.test_role_based_access()
     
