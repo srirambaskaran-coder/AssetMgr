@@ -555,7 +555,7 @@ const RetrievalUpdateForm = ({ retrieval, onSubmit }) => {
 
             {formData.asset_condition === 'Damaged' && (
               <div>
-                <Label htmlFor="recovery_value">Recovery Value ($)</Label>
+                <Label htmlFor="recovery_value">Recovery Value (₹)</Label>
                 <Input
                   id="recovery_value"
                   type="number"
