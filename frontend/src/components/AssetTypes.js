@@ -204,6 +204,7 @@ const AssetTypes = () => {
                     <TableHead>Depreciation</TableHead>
                     <TableHead>Asset Life</TableHead>
                     <TableHead>Recovery Required</TableHead>
+                    <TableHead>Assigned Asset Manager</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
