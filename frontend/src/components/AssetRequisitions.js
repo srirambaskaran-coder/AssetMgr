@@ -389,6 +389,27 @@ const AssetRequisitions = () => {
                         </div>
                       </TableCell>
                       <TableCell>
+                        {requisition.assigned_to_name ? (
+                          <div className="space-y-1">
+                            <div className="font-medium text-sm">
+                              {requisition.assigned_to_name}
+                            </div>
+                            {requisition.routing_reason && (
+                              <div className="text-xs text-gray-500">
+                                {requisition.routing_reason}
+                              </div>
+                            )}
+                            {requisition.assigned_date && (
+                              <div className="text-xs text-gray-400">
+                                {new Date(requisition.assigned_date).toLocaleDateString()}
+                              </div>
+                            )}
+                          </div>
+                        ) : (
+                          <span className="text-gray-400 text-sm">Not assigned</span>
+                        )}
+                      </TableCell>
+                      <TableCell>
                         {new Date(requisition.created_at).toLocaleDateString()}
                       </TableCell>
                       <TableCell>
