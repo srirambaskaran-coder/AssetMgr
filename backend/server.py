@@ -2979,7 +2979,7 @@ async def create_ndc_request(
     
     # Get all assets assigned to the employee
     assigned_assets = await db.asset_definitions.find({
-        "assigned_to": ndc_data.employee_id,
+        "allocated_to": ndc_data.employee_id,
         "status": "Allocated"
     }).to_list(1000)
     
