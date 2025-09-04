@@ -433,8 +433,263 @@ const NDCRequests = () => {
 // For now, let's create placeholder components
 
 const NDCRequestForm = ({ onSubmit, employees, managers, separationReasons }) => {
-  // This will be implemented next
-  return <div>NDC Request Form - To be implemented</div>;
+  const [formData, setFormData] = useState({
+    employee_id: '',
+    resigned_on: '',
+    notice_period: 'Immediate',
+    last_working_date: '',
+    separation_approved_by: '',
+    separation_approved_on: '',
+    separation_reason: ''
+  });
+  const [selectedEmployee, setSelectedEmployee] = useState(null);
+  const [employeeAssets, setEmployeeAssets] = useState([]);
+  const [loading, setLoading] = useState(false);
+
+  const noticePeriodOptions = [
+    'Immediate', '7 days', '15 days', '30 days', '60 days', '90 days'
+  ];
+
+  const handleEmployeeSelect = async (employeeId) => {
+    if (employeeId === 'none') {
+      setSelectedEmployee(null);
+      setEmployeeAssets([]);
+      setFormData({ ...formData, employee_id: '' });
+      return;
+    }
+
+    const employee = employees.find(emp => emp.id === employeeId);
+    setSelectedEmployee(employee);
+    setFormData({ ...formData, employee_id: employeeId });
+
+    // Fetch employee assets
+    try {
+      const response = await axios.get(`${API}/asset-definitions`, {
+        headers: { 'Authorization': `Bearer ${localStorage.getItem('session_token')}` }
+      });
+      const userAssets = response.data.filter(asset => 
+        asset.assigned_to === employeeId && asset.status === 'Allocated'
+      );
+      setEmployeeAssets(userAssets);
+    } catch (error) {
+      console.error('Error fetching employee assets:', error);
+      setEmployeeAssets([]);
+    }
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!selectedEmployee || employeeAssets.length === 0) {
+      toast.error('Please select an employee with allocated assets');
+      return;
+    }
+
+    setLoading(true);
+    const submitData = {
+      ...formData,
+      resigned_on: new Date(formData.resigned_on).toISOString(),
+      last_working_date: new Date(formData.last_working_date).toISOString(),
+      separation_approved_on: new Date(formData.separation_approved_on).toISOString()
+    };
+
+    await onSubmit(submitData);
+    setLoading(false);
+  };
+
+  const handleChange = (field, value) => {
+    setFormData({ ...formData, [field]: value });
+  };
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-6">
+      {/* Employee Selection */}
+      <div>
+        <Label htmlFor="employee_id">Employee to be Separated *</Label>
+        <Select value={formData.employee_id} onValueChange={handleEmployeeSelect}>
+          <SelectTrigger>
+            <SelectValue placeholder="Select employee" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="none">Select Employee</SelectItem>
+            {employees.map(employee => (
+              <SelectItem key={employee.id} value={employee.id}>
+                {employee.name} ({employee.email})
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
+      {/* Employee Details */}
+      {selectedEmployee && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg">Employee Details</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <Label className="text-sm font-medium text-gray-500">Name</Label>
+                <p className="text-sm">{selectedEmployee.name}</p>
+              </div>
+              <div>
+                <Label className="text-sm font-medium text-gray-500">Designation</Label>
+                <p className="text-sm">{selectedEmployee.designation || 'N/A'}</p>
+              </div>
+              <div>
+                <Label className="text-sm font-medium text-gray-500">Date of Joining</Label>
+                <p className="text-sm">
+                  {selectedEmployee.date_of_joining 
+                    ? new Date(selectedEmployee.date_of_joining).toLocaleDateString()
+                    : 'N/A'
+                  }
+                </p>
+              </div>
+              <div>
+                <Label className="text-sm font-medium text-gray-500">Location</Label>
+                <p className="text-sm">{selectedEmployee.location_name || 'N/A'}</p>
+              </div>
+              <div>
+                <Label className="text-sm font-medium text-gray-500">Reporting Manager</Label>
+                <p className="text-sm">{selectedEmployee.reporting_manager_name || 'N/A'}</p>
+              </div>
+              <div>
+                <Label className="text-sm font-medium text-gray-500">Assets Allocated</Label>
+                <p className="text-sm font-medium text-blue-600">{employeeAssets.length} items</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Separation Details */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <Label htmlFor="resigned_on">Resigned On *</Label>
+          <Input
+            id="resigned_on"
+            type="date"
+            value={formData.resigned_on}
+            onChange={(e) => handleChange('resigned_on', e.target.value)}
+            required
+          />
+        </div>
+        
+        <div>
+          <Label htmlFor="notice_period">Notice Period *</Label>
+          <Select value={formData.notice_period} onValueChange={(value) => handleChange('notice_period', value)}>
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {noticePeriodOptions.map(option => (
+                <SelectItem key={option} value={option}>{option}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div>
+          <Label htmlFor="last_working_date">Last Working Date *</Label>
+          <Input
+            id="last_working_date"
+            type="date"
+            value={formData.last_working_date}
+            onChange={(e) => handleChange('last_working_date', e.target.value)}
+            required
+          />
+        </div>
+
+        <div>
+          <Label htmlFor="separation_approved_by">Separation Approved By *</Label>
+          <Select value={formData.separation_approved_by} onValueChange={(value) => handleChange('separation_approved_by', value)}>
+            <SelectTrigger>
+              <SelectValue placeholder="Select approver" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="none">Select Approver</SelectItem>
+              {managers.map(manager => (
+                <SelectItem key={manager.id} value={manager.id}>
+                  {manager.name} ({manager.designation || 'Manager'})
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div>
+          <Label htmlFor="separation_approved_on">Separation Approved On *</Label>
+          <Input
+            id="separation_approved_on"
+            type="date"
+            value={formData.separation_approved_on}
+            onChange={(e) => handleChange('separation_approved_on', e.target.value)}
+            required
+          />
+        </div>
+
+        <div>
+          <Label htmlFor="separation_reason">Reason for Separation *</Label>
+          <Select value={formData.separation_reason} onValueChange={(value) => handleChange('separation_reason', value)}>
+            <SelectTrigger>
+              <SelectValue placeholder="Select reason" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="none">Select Reason</SelectItem>
+              {separationReasons.map(reason => (
+                <SelectItem key={reason.id} value={reason.reason}>
+                  {reason.reason}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+
+      {/* Assets List */}
+      {employeeAssets.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg">Assets Associated with Employee</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Asset Code</TableHead>
+                    <TableHead>Asset Type</TableHead>
+                    <TableHead>Asset Value</TableHead>
+                    <TableHead>Status</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {employeeAssets.map((asset) => (
+                    <TableRow key={asset.id}>
+                      <TableCell className="font-medium">{asset.asset_code}</TableCell>
+                      <TableCell>{asset.asset_type_name}</TableCell>
+                      <TableCell>₹{asset.asset_value?.toLocaleString() || 0}</TableCell>
+                      <TableCell>
+                        <Badge className="bg-blue-100 text-blue-800">
+                          {asset.status}
+                        </Badge>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      <div className="flex justify-end pt-4">
+        <Button type="submit" disabled={loading} className="bg-blue-600 hover:bg-blue-700">
+          {loading ? 'Creating NDC Request...' : 'Submit NDC Request'}
+        </Button>
+      </div>
+    </form>
+  );
 };
 
 const AddReasonForm = ({ onSubmit }) => {
