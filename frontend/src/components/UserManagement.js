@@ -421,7 +421,7 @@ const UserForm = ({ initialData, onSubmit, managers = [], locations = [], isEdit
     password: '',
     date_of_joining: initialData?.date_of_joining ? new Date(initialData.date_of_joining).toISOString().split('T')[0] : '',
     reporting_manager_id: initialData?.reporting_manager_id || 'none',
-    location_id: initialData?.location_id || '',
+    location_id: initialData?.location_id ? initialData.location_id : 'none',
     is_active: initialData?.is_active ?? true
   });
   const [loading, setLoading] = useState(false);
