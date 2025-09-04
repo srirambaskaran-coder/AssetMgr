@@ -783,6 +783,28 @@ class EmailService:
                 </div>
             </body>
             </html>
+            """,
+            "request_routed": """
+            <html>
+            <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
+                <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
+                    <h2 style="color: #2563eb;">Asset Request Routed</h2>
+                    <p>Dear {{assigned_person_name}},</p>
+                    <p>An approved asset request has been assigned to you for processing:</p>
+                    <div style="background-color: #eff6ff; padding: 15px; border-radius: 5px; margin: 20px 0;">
+                        <strong>Request Details:</strong><br>
+                        Employee: {{employee_name}}<br>
+                        Asset Type: {{asset_type_name}}<br>
+                        Request Type: {{request_type}}<br>
+                        Location: {{location_name}}<br>
+                        Requisition ID: {{requisition_id}}<br>
+                        Routing Reason: {{routing_reason}}
+                    </div>
+                    <p>Please log in to the Asset Management System to process this asset allocation request.</p>
+                    <p>Best regards,<br>Asset Management System</p>
+                </div>
+            </body>
+            </html>
             """
         }
         
