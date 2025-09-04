@@ -731,7 +731,7 @@ test_plan:
 
   - task: "NDC (No Dues Certificate) Request System for Employee Separation"
     implemented: true
-    working: false
+    working: true
     file: "/app/backend/server.py, /app/frontend/src/components/"
     stuck_count: 0
     priority: "high"
