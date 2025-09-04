@@ -566,11 +566,11 @@ class RoutingLogicTester:
             print("❌ Failed to reject requisition")
             return False
         
-        # Verify no routing occurred
+        # Verify no routing occurred by getting all requisitions
         success, response = self.run_test(
-            "Verify No Routing on Rejection",
+            "Get All Requisitions to Verify No Routing on Rejection",
             "GET",
-            f"asset-requisitions/{edge_case_req_id}",
+            "asset-requisitions",
             200,
             user_role="Administrator"
         )
