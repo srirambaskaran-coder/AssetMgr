@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { useAuth, useRole } from '../App';
+import { useAuth } from '../App';
+import { useRole } from '../contexts/RoleContext';
 import axios from 'axios';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Button } from './ui/button';
