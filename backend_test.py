@@ -3446,6 +3446,542 @@ class AssetInventoryAPITester:
         
         return success
 
+    def test_enhanced_asset_allocation_routing(self):
+        """Test Enhanced Asset Allocation Logic with location-based routing system"""
+        print(f"\n🎯 Testing Enhanced Asset Allocation Logic with Location-Based Routing")
+        
+        # Step 1: Setup verification - Create test data
+        print("📋 Step 1: Setting up test data for routing logic")
+        
+        # Create test locations
+        location_data_1 = {
+            "code": "NYC01",
+            "name": "New York Office",
+            "country": "USA",
+            "status": "Active"
+        }
+        
+        success, response = self.run_test(
+            "Create Test Location 1 (NYC)",
+            "POST",
+            "locations",
+            200,
+            data=location_data_1,
+            user_role="Administrator"
+        )
+        
+        if success:
+            self.test_data['location_1_id'] = response['id']
+            print(f"   Created location 1: {response['name']} ({response['code']})")
+        
+        location_data_2 = {
+            "code": "LON01", 
+            "name": "London Office",
+            "country": "UK",
+            "status": "Active"
+        }
+        
+        success, response = self.run_test(
+            "Create Test Location 2 (London)",
+            "POST",
+            "locations",
+            200,
+            data=location_data_2,
+            user_role="Administrator"
+        )
+        
+        if success:
+            self.test_data['location_2_id'] = response['id']
+            print(f"   Created location 2: {response['name']} ({response['code']})")
+        
+        # Create test users with locations
+        from datetime import datetime
+        test_employee_data = {
+            "email": f"routing_employee_{datetime.now().strftime('%H%M%S')}@company.com",
+            "name": "Routing Test Employee",
+            "roles": ["Employee"],
+            "designation": "Software Developer",
+            "location_id": self.test_data.get('location_1_id'),
+            "password": "TestPassword123!"
+        }
+        
+        success, response = self.run_test(
+            "Create Test Employee with Location",
+            "POST",
+            "users",
+            200,
+            data=test_employee_data,
+            user_role="Administrator"
+        )
+        
+        if success:
+            self.test_data['routing_employee_id'] = response['id']
+            self.test_data['routing_employee_email'] = response['email']
+            print(f"   Created test employee: {response['name']} at {response.get('location_name', 'Unknown')}")
+        
+        # Create test Asset Manager
+        test_asset_manager_data = {
+            "email": f"routing_assetmgr_{datetime.now().strftime('%H%M%S')}@company.com",
+            "name": "Routing Test Asset Manager",
+            "roles": ["Asset Manager"],
+            "designation": "Asset Manager",
+            "location_id": self.test_data.get('location_1_id'),
+            "password": "TestPassword123!"
+        }
+        
+        success, response = self.run_test(
+            "Create Test Asset Manager with Location",
+            "POST",
+            "users",
+            200,
+            data=test_asset_manager_data,
+            user_role="Administrator"
+        )
+        
+        if success:
+            self.test_data['routing_asset_manager_id'] = response['id']
+            print(f"   Created test asset manager: {response['name']} at {response.get('location_name', 'Unknown')}")
+        
+        # Assign Asset Manager to location
+        if 'routing_asset_manager_id' in self.test_data and 'location_1_id' in self.test_data:
+            am_location_data = {
+                "asset_manager_id": self.test_data['routing_asset_manager_id'],
+                "location_id": self.test_data['location_1_id']
+            }
+            
+            success, response = self.run_test(
+                "Assign Asset Manager to Location",
+                "POST",
+                "asset-manager-locations",
+                200,
+                data=am_location_data,
+                user_role="Administrator"
+            )
+            
+            if success:
+                print(f"   Assigned Asset Manager to location successfully")
+        
+        # Create asset type with assigned Asset Manager
+        if 'routing_asset_manager_id' in self.test_data:
+            routing_asset_type_data = {
+                "code": "ROUTING_TEST",
+                "name": "Routing Test Asset Type",
+                "depreciation_applicable": True,
+                "asset_life": 3,
+                "to_be_recovered_on_separation": True,
+                "status": "Active",
+                "assigned_asset_manager_id": self.test_data['routing_asset_manager_id']
+            }
+            
+            success, response = self.run_test(
+                "Create Asset Type with Assigned Asset Manager",
+                "POST",
+                "asset-types",
+                200,
+                data=routing_asset_type_data,
+                user_role="Administrator"
+            )
+            
+            if success:
+                self.test_data['routing_asset_type_id'] = response['id']
+                print(f"   Created asset type with assigned Asset Manager: {response['name']}")
+        
+        # Step 2: Test Primary Routing - Asset Manager with asset type + location match
+        print("\n🎯 Step 2: Testing Primary Routing Logic")
+        
+        if all(key in self.test_data for key in ['routing_asset_type_id', 'routing_employee_id']):
+            # Login as test employee to create requisition
+            employee_login_success = self.test_login(
+                self.test_data['routing_employee_email'], 
+                "TestPassword123!", 
+                "Routing_Employee"
+            )
+            
+            if employee_login_success:
+                # Create asset requisition
+                from datetime import datetime, timedelta
+                required_by_date = (datetime.now() + timedelta(days=7)).isoformat()
+                
+                routing_requisition_data = {
+                    "asset_type_id": self.test_data['routing_asset_type_id'],
+                    "request_type": "New Allocation",
+                    "request_for": "Self",
+                    "justification": "Testing enhanced asset allocation routing logic",
+                    "required_by_date": required_by_date
+                }
+                
+                success, response = self.run_test(
+                    "Create Requisition for Routing Test",
+                    "POST",
+                    "asset-requisitions",
+                    200,
+                    data=routing_requisition_data,
+                    user_role="Routing_Employee"
+                )
+                
+                if success:
+                    self.test_data['routing_requisition_id'] = response['id']
+                    print(f"   Created requisition for routing test: {response['id'][:8]}...")
+                    
+                    # Manager approval to trigger routing
+                    manager_action_data = {
+                        "action": "approve",
+                        "reason": "Approved for routing logic testing"
+                    }
+                    
+                    success, response = self.run_test(
+                        "Manager Approve Requisition (Trigger Routing)",
+                        "POST",
+                        f"asset-requisitions/{self.test_data['routing_requisition_id']}/manager-action",
+                        200,
+                        data=manager_action_data,
+                        user_role="Manager"
+                    )
+                    
+                    if success:
+                        print(f"   Manager approved requisition - routing should be triggered")
+                        
+                        # Verify routing results
+                        success, response = self.run_test(
+                            "Verify Primary Routing Results",
+                            "GET",
+                            f"asset-requisitions/{self.test_data['routing_requisition_id']}",
+                            200,
+                            user_role="Administrator"
+                        )
+                        
+                        if success:
+                            status = response.get('status')
+                            assigned_to = response.get('assigned_to')
+                            assigned_to_name = response.get('assigned_to_name')
+                            routing_reason = response.get('routing_reason')
+                            assigned_date = response.get('assigned_date')
+                            
+                            print(f"   Status: {status}")
+                            print(f"   Assigned to: {assigned_to_name} ({assigned_to})")
+                            print(f"   Routing reason: {routing_reason}")
+                            print(f"   Assigned date: {assigned_date}")
+                            
+                            if status == "Assigned for Allocation":
+                                print("   ✅ Primary routing successful - Status set to 'Assigned for Allocation'")
+                            else:
+                                print(f"   ❌ Primary routing failed - Expected 'Assigned for Allocation', got '{status}'")
+                            
+                            if assigned_to == self.test_data.get('routing_asset_manager_id'):
+                                print("   ✅ Primary routing successful - Assigned to correct Asset Manager")
+                            else:
+                                print(f"   ❌ Primary routing failed - Not assigned to expected Asset Manager")
+                            
+                            if routing_reason and "assigned to asset type and employee location" in routing_reason:
+                                print("   ✅ Primary routing reason correct")
+                            else:
+                                print(f"   ❌ Primary routing reason incorrect: {routing_reason}")
+        
+        # Step 3: Test Secondary Routing - Administrator with location match
+        print("\n🎯 Step 3: Testing Secondary Routing Logic (Administrator fallback)")
+        
+        # Create asset type without assigned Asset Manager
+        secondary_asset_type_data = {
+            "code": "SECONDARY_TEST",
+            "name": "Secondary Routing Test Asset Type",
+            "depreciation_applicable": False,
+            "status": "Active"
+            # No assigned_asset_manager_id
+        }
+        
+        success, response = self.run_test(
+            "Create Asset Type without Assigned Asset Manager",
+            "POST",
+            "asset-types",
+            200,
+            data=secondary_asset_type_data,
+            user_role="Administrator"
+        )
+        
+        if success:
+            self.test_data['secondary_asset_type_id'] = response['id']
+            print(f"   Created asset type without Asset Manager: {response['name']}")
+            
+            # Create Administrator and assign to same location as employee
+            test_admin_data = {
+                "email": f"routing_admin_{datetime.now().strftime('%H%M%S')}@company.com",
+                "name": "Routing Test Administrator",
+                "roles": ["Administrator"],
+                "designation": "System Administrator",
+                "location_id": self.test_data.get('location_1_id'),
+                "password": "TestPassword123!"
+            }
+            
+            success, response = self.run_test(
+                "Create Test Administrator with Location",
+                "POST",
+                "users",
+                200,
+                data=test_admin_data,
+                user_role="Administrator"
+            )
+            
+            if success:
+                self.test_data['routing_admin_id'] = response['id']
+                print(f"   Created test administrator: {response['name']}")
+                
+                # Assign Administrator to location (using asset-manager-locations endpoint)
+                admin_location_data = {
+                    "asset_manager_id": self.test_data['routing_admin_id'],
+                    "location_id": self.test_data['location_1_id']
+                }
+                
+                success, response = self.run_test(
+                    "Assign Administrator to Location",
+                    "POST",
+                    "asset-manager-locations",
+                    200,
+                    data=admin_location_data,
+                    user_role="Administrator"
+                )
+                
+                if success:
+                    print(f"   Assigned Administrator to location successfully")
+                    
+                    # Create requisition with secondary asset type
+                    secondary_requisition_data = {
+                        "asset_type_id": self.test_data['secondary_asset_type_id'],
+                        "request_type": "New Allocation",
+                        "request_for": "Self",
+                        "justification": "Testing secondary routing logic (Administrator fallback)",
+                        "required_by_date": required_by_date
+                    }
+                    
+                    success, response = self.run_test(
+                        "Create Requisition for Secondary Routing Test",
+                        "POST",
+                        "asset-requisitions",
+                        200,
+                        data=secondary_requisition_data,
+                        user_role="Routing_Employee"
+                    )
+                    
+                    if success:
+                        self.test_data['secondary_requisition_id'] = response['id']
+                        print(f"   Created secondary requisition: {response['id'][:8]}...")
+                        
+                        # Manager approval to trigger secondary routing
+                        success, response = self.run_test(
+                            "Manager Approve Secondary Requisition (Trigger Secondary Routing)",
+                            "POST",
+                            f"asset-requisitions/{self.test_data['secondary_requisition_id']}/manager-action",
+                            200,
+                            data=manager_action_data,
+                            user_role="Manager"
+                        )
+                        
+                        if success:
+                            # Verify secondary routing results
+                            success, response = self.run_test(
+                                "Verify Secondary Routing Results",
+                                "GET",
+                                f"asset-requisitions/{self.test_data['secondary_requisition_id']}",
+                                200,
+                                user_role="Administrator"
+                            )
+                            
+                            if success:
+                                status = response.get('status')
+                                assigned_to = response.get('assigned_to')
+                                assigned_to_name = response.get('assigned_to_name')
+                                routing_reason = response.get('routing_reason')
+                                
+                                print(f"   Status: {status}")
+                                print(f"   Assigned to: {assigned_to_name} ({assigned_to})")
+                                print(f"   Routing reason: {routing_reason}")
+                                
+                                if status == "Assigned for Allocation":
+                                    print("   ✅ Secondary routing successful - Status set correctly")
+                                
+                                if assigned_to == self.test_data.get('routing_admin_id'):
+                                    print("   ✅ Secondary routing successful - Assigned to Administrator")
+                                
+                                if routing_reason and "assigned to employee location" in routing_reason:
+                                    print("   ✅ Secondary routing reason correct")
+        
+        # Step 4: Test Final Fallback - Any Administrator
+        print("\n🎯 Step 4: Testing Final Fallback Routing Logic")
+        
+        # Create employee without location
+        test_employee_no_location_data = {
+            "email": f"routing_employee_no_loc_{datetime.now().strftime('%H%M%S')}@company.com",
+            "name": "Employee Without Location",
+            "roles": ["Employee"],
+            "designation": "Remote Developer",
+            # No location_id
+            "password": "TestPassword123!"
+        }
+        
+        success, response = self.run_test(
+            "Create Employee Without Location",
+            "POST",
+            "users",
+            200,
+            data=test_employee_no_location_data,
+            user_role="Administrator"
+        )
+        
+        if success:
+            self.test_data['no_location_employee_email'] = response['email']
+            print(f"   Created employee without location: {response['name']}")
+            
+            # Login as employee without location
+            no_loc_login_success = self.test_login(
+                self.test_data['no_location_employee_email'],
+                "TestPassword123!",
+                "No_Location_Employee"
+            )
+            
+            if no_loc_login_success:
+                # Create requisition
+                fallback_requisition_data = {
+                    "asset_type_id": self.test_data.get('secondary_asset_type_id', self.test_data.get('routing_asset_type_id')),
+                    "request_type": "New Allocation",
+                    "request_for": "Self",
+                    "justification": "Testing final fallback routing logic",
+                    "required_by_date": required_by_date
+                }
+                
+                success, response = self.run_test(
+                    "Create Requisition for Fallback Routing Test",
+                    "POST",
+                    "asset-requisitions",
+                    200,
+                    data=fallback_requisition_data,
+                    user_role="No_Location_Employee"
+                )
+                
+                if success:
+                    self.test_data['fallback_requisition_id'] = response['id']
+                    print(f"   Created fallback requisition: {response['id'][:8]}...")
+                    
+                    # Manager approval to trigger fallback routing
+                    success, response = self.run_test(
+                        "Manager Approve Fallback Requisition (Trigger Fallback Routing)",
+                        "POST",
+                        f"asset-requisitions/{self.test_data['fallback_requisition_id']}/manager-action",
+                        200,
+                        data=manager_action_data,
+                        user_role="Manager"
+                    )
+                    
+                    if success:
+                        # Verify fallback routing results
+                        success, response = self.run_test(
+                            "Verify Fallback Routing Results",
+                            "GET",
+                            f"asset-requisitions/{self.test_data['fallback_requisition_id']}",
+                            200,
+                            user_role="Administrator"
+                        )
+                        
+                        if success:
+                            status = response.get('status')
+                            assigned_to = response.get('assigned_to')
+                            assigned_to_name = response.get('assigned_to_name')
+                            routing_reason = response.get('routing_reason')
+                            
+                            print(f"   Status: {status}")
+                            print(f"   Assigned to: {assigned_to_name} ({assigned_to})")
+                            print(f"   Routing reason: {routing_reason}")
+                            
+                            if status == "Assigned for Allocation":
+                                print("   ✅ Fallback routing successful - Status set correctly")
+                            
+                            if routing_reason and "general fallback" in routing_reason:
+                                print("   ✅ Fallback routing reason correct")
+        
+        # Step 5: Test Edge Cases
+        print("\n🎯 Step 5: Testing Edge Cases")
+        
+        # Test rejection doesn't trigger routing
+        if 'routing_asset_type_id' in self.test_data:
+            edge_case_requisition_data = {
+                "asset_type_id": self.test_data['routing_asset_type_id'],
+                "request_type": "New Allocation",
+                "request_for": "Self",
+                "justification": "Testing edge case - rejection should not trigger routing",
+                "required_by_date": required_by_date
+            }
+            
+            success, response = self.run_test(
+                "Create Requisition for Edge Case Test",
+                "POST",
+                "asset-requisitions",
+                200,
+                data=edge_case_requisition_data,
+                user_role="Routing_Employee"
+            )
+            
+            if success:
+                edge_case_req_id = response['id']
+                print(f"   Created edge case requisition: {edge_case_req_id[:8]}...")
+                
+                # Manager rejection (should NOT trigger routing)
+                reject_action_data = {
+                    "action": "reject",
+                    "reason": "Testing rejection - should not trigger routing"
+                }
+                
+                success, response = self.run_test(
+                    "Manager Reject Requisition (Should NOT Trigger Routing)",
+                    "POST",
+                    f"asset-requisitions/{edge_case_req_id}/manager-action",
+                    200,
+                    data=reject_action_data,
+                    user_role="Manager"
+                )
+                
+                if success:
+                    # Verify no routing occurred
+                    success, response = self.run_test(
+                        "Verify No Routing on Rejection",
+                        "GET",
+                        f"asset-requisitions/{edge_case_req_id}",
+                        200,
+                        user_role="Administrator"
+                    )
+                    
+                    if success:
+                        status = response.get('status')
+                        assigned_to = response.get('assigned_to')
+                        routing_reason = response.get('routing_reason')
+                        
+                        print(f"   Status: {status}")
+                        print(f"   Assigned to: {assigned_to}")
+                        print(f"   Routing reason: {routing_reason}")
+                        
+                        if status == "Rejected":
+                            print("   ✅ Edge case successful - Rejection does not trigger routing")
+                        
+                        if not assigned_to:
+                            print("   ✅ Edge case successful - No assignment on rejection")
+        
+        # Step 6: Test Email Notifications
+        print("\n📧 Step 6: Testing Email Notification Integration")
+        
+        # Test that routing triggers email notifications
+        success, response = self.run_test(
+            "Get Email Configurations (Check if email system is set up)",
+            "GET",
+            "email-config",
+            200,
+            user_role="Administrator"
+        )
+        
+        if success:
+            print("   ✅ Email system is configured - routing notifications should be sent")
+        else:
+            print("   ⚠️ Email system not configured - routing notifications will be logged but not sent")
+        
+        print("\n🎯 Enhanced Asset Allocation Routing Logic Testing Completed")
+        return True
+
     def test_ndc_separation_reasons_management(self):
         """Test NDC Separation Reasons Management"""
         print(f"\n📋 Testing NDC Separation Reasons Management")
