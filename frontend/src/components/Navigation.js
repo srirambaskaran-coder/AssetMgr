@@ -45,19 +45,19 @@ const Navigation = () => {
       name: 'Asset Types',
       href: '/asset-types',
       icon: Package,
-      roles: ['Administrator', 'HR Manager']
+      roles: ['Administrator']  // Removed HR Manager
     },
     {
       name: 'Asset Definitions',
       href: '/asset-definitions',
       icon: FileText,
-      roles: ['Administrator', 'HR Manager']
+      roles: ['Administrator']  // Removed HR Manager
     },
     {
       name: 'Asset Requisitions',
       href: '/asset-requisitions',
       icon: ClipboardList,
-      roles: ['Administrator', 'HR Manager', 'Employee', 'Manager', 'Asset Manager']
+      roles: ['Administrator', 'Employee', 'Manager', 'Asset Manager']  // Removed HR Manager
     },
     {
       name: 'Asset Allocations',
@@ -75,7 +75,13 @@ const Navigation = () => {
       name: 'My Assets',
       href: '/my-assets',
       icon: Package,
-      roles: ['Employee', 'Manager', 'HR Manager', 'Administrator']
+      roles: ['Employee', 'Manager', 'Administrator']  // Removed HR Manager
+    },
+    {
+      name: 'NDC Request',
+      href: '/ndc-requests',
+      icon: UserX,
+      roles: ['HR Manager', 'Asset Manager', 'Administrator']
     },
     {
       name: 'User Management',
@@ -93,7 +99,7 @@ const Navigation = () => {
       name: 'Bulk Import',
       href: '/bulk-import',
       icon: FileText,
-      roles: ['Administrator', 'HR Manager']
+      roles: ['Administrator']  // Removed HR Manager
     }
   ];
 
