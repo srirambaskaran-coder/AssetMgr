@@ -1711,108 +1711,105 @@ async def manager_action_on_requisition(
     }
 
 async def perform_asset_allocation_routing(requisition_id: str, requisition: dict):
-    """Enhanced Asset Allocation Logic - Automatically allocate available assets for approved requests"""
+    """Enhanced Asset Allocation Logic - Route approved requests to Asset Manager or Administrator based on location"""
     try:
-        # Find available assets of the requested type
-        available_assets = await db.asset_definitions.find({
-            "asset_type_id": requisition["asset_type_id"],
-            "status": AssetStatus.AVAILABLE
-        }).to_list(100)
-        
-        if not available_assets:
-            logging.info(f"No available assets found for requisition {requisition_id}")
-            return
-        
-        # Select the first available asset (could be enhanced with more sophisticated logic)
-        selected_asset = available_assets[0]
-        
-        # Get asset type and user details
-        asset_type = await db.asset_types.find_one({"id": selected_asset["asset_type_id"]})
+        # Get employee details (requester)
         requested_user = await db.users.find_one({"id": requisition["requested_by"]})
-        
-        # Determine who approved (HR or Manager)
-        approved_by_id = requisition.get("hr_action_by") or requisition.get("manager_action_by")
-        approved_by_user = await db.users.find_one({"id": approved_by_id}) if approved_by_id else None
-        
-        # Find an appropriate asset manager
-        asset_manager = None
-        if asset_type and asset_type.get("assigned_asset_manager_id"):
-            asset_manager = await db.users.find_one({"id": asset_type["assigned_asset_manager_id"]})
-        
-        # If no specific asset manager, find any asset manager
-        if not asset_manager:
-            asset_managers = await db.users.find({"roles": UserRole.ASSET_MANAGER, "is_active": True}).to_list(1)
-            if asset_managers:
-                asset_manager = asset_managers[0]
-        
-        if not asset_manager:
-            logging.error(f"No asset manager found for automatic allocation of requisition {requisition_id}")
+        if not requested_user:
+            logging.error(f"Employee not found for requisition {requisition_id}")
             return
         
-        # Create allocation record
-        allocation_dict = {
-            "id": str(uuid.uuid4()),
-            "requisition_id": requisition_id,
-            "request_type": "Asset Request",
-            "asset_type_id": selected_asset["asset_type_id"],
-            "asset_type_name": asset_type["name"] if asset_type else None,
-            "asset_definition_id": selected_asset["id"],
-            "asset_definition_code": selected_asset["asset_code"],
-            "requested_for": requisition["requested_by"],
-            "requested_for_name": requested_user["name"] if requested_user else None,
-            "approved_by": approved_by_id,
-            "approved_by_name": approved_by_user["name"] if approved_by_user else None,
-            "allocated_by": asset_manager["id"],
-            "allocated_by_name": asset_manager["name"],
-            "allocated_date": datetime.now(timezone.utc),
-            "remarks": "Automatically allocated upon approval",
-            "reference_id": None,
-            "document_id": None,
-            "dispatch_details": "Auto-routed allocation",
-            "status": AssetAllocationStatus.ALLOCATED_TO_EMPLOYEE,
-            "created_at": datetime.now(timezone.utc)
-        }
+        employee_location_id = requested_user.get("location_id")
+        if not employee_location_id:
+            logging.warning(f"Employee {requested_user['name']} has no location assigned for requisition {requisition_id}")
         
-        await db.asset_allocations.insert_one(allocation_dict)
+        # Get asset type details
+        asset_type = await db.asset_types.find_one({"id": requisition["asset_type_id"]})
+        if not asset_type:
+            logging.error(f"Asset type not found for requisition {requisition_id}")
+            return
         
-        # Update asset definition status and allocated to
-        await db.asset_definitions.update_one(
-            {"id": selected_asset["id"]},
-            {
-                "$set": {
-                    "status": AssetStatus.ALLOCATED,
-                    "allocated_to": requisition["requested_by"],
-                    "allocated_to_name": requested_user["name"] if requested_user else None,
-                    "allocation_date": datetime.now(timezone.utc)
-                }
-            }
-        )
+        assigned_person = None
+        routing_reason = "No routing performed"
         
-        # Update requisition status
-        await db.asset_requisitions.update_one(
-            {"id": requisition_id},
-            {
-                "$set": {
-                    "status": RequisitionStatus.ALLOCATED,
-                    "allocated_asset_id": selected_asset["id"],
-                    "allocated_asset_code": selected_asset["asset_code"]
-                }
-            }
-        )
-        
-        # Send email notification for asset allocation
-        try:
-            # Get manager details
-            manager = None
-            if requested_user and requested_user.get("reporting_manager_id"):
-                manager = await db.users.find_one({"id": requested_user["reporting_manager_id"]})
+        # Step 1: Try to find Asset Manager assigned to this asset type AND employee location
+        if asset_type.get("assigned_asset_manager_id") and employee_location_id:
+            # Check if the assigned Asset Manager is also assigned to the employee's location
+            am_location_assignment = await db.asset_manager_locations.find_one({
+                "asset_manager_id": asset_type["assigned_asset_manager_id"],
+                "location_id": employee_location_id
+            })
             
-            # Get HR managers
-            hr_managers = await db.users.find({"roles": UserRole.HR_MANAGER, "is_active": True}).to_list(100)
+            if am_location_assignment:
+                # Verify the Asset Manager still exists and is active
+                asset_manager = await db.users.find_one({
+                    "id": asset_type["assigned_asset_manager_id"],
+                    "is_active": True,
+                    "roles": {"$in": [UserRole.ASSET_MANAGER]}
+                })
+                
+                if asset_manager:
+                    assigned_person = asset_manager
+                    routing_reason = f"Routed to Asset Manager '{asset_manager['name']}' (assigned to asset type and employee location)"
+        
+        # Step 2: Fallback to Administrator based on employee location
+        if not assigned_person and employee_location_id:
+            # Find Administrator assigned to the same location as the employee
+            admin_location_assignments = await db.asset_manager_locations.find({
+                "location_id": employee_location_id
+            }).to_list(100)
             
-            if requested_user:
-                to_emails = [requested_user["email"]]
-                cc_emails = [asset_manager["email"]]  # Asset Manager
+            for assignment in admin_location_assignments:
+                admin = await db.users.find_one({
+                    "id": assignment["asset_manager_id"],
+                    "is_active": True,
+                    "roles": {"$in": [UserRole.ADMINISTRATOR]}
+                })
+                
+                if admin:
+                    assigned_person = admin
+                    routing_reason = f"Routed to Administrator '{admin['name']}' (assigned to employee location)"
+                    break
+        
+        # Step 3: Final fallback to any Administrator if no location-based match
+        if not assigned_person:
+            administrators = await db.users.find({
+                "is_active": True,
+                "roles": {"$in": [UserRole.ADMINISTRATOR]}
+            }).to_list(1)
+            
+            if administrators:
+                assigned_person = administrators[0]
+                routing_reason = f"Routed to Administrator '{assigned_person['name']}' (general fallback)"
+        
+        # Step 4: Update requisition with assigned person
+        if assigned_person:
+            await db.asset_requisitions.update_one(
+                {"id": requisition_id},
+                {
+                    "$set": {
+                        "assigned_to": assigned_person["id"],
+                        "assigned_to_name": assigned_person["name"],
+                        "assigned_date": datetime.now(timezone.utc),
+                        "routing_reason": routing_reason,
+                        "status": RequisitionStatus.ASSIGNED_FOR_ALLOCATION
+                    }
+                }
+            )
+            
+            # Step 5: Send notification emails about the routing
+            try:
+                # Get manager details
+                manager = None
+                if requested_user.get("reporting_manager_id"):
+                    manager = await db.users.find_one({"id": requested_user["reporting_manager_id"]})
+                
+                # Get HR managers
+                hr_managers = await db.users.find({"roles": UserRole.HR_MANAGER, "is_active": True}).to_list(100)
+                
+                # Prepare email recipients
+                to_emails = [assigned_person["email"]]  # Primary recipient: assigned Asset Manager/Administrator
+                cc_emails = [requested_user["email"]]  # CC: Employee who requested
                 
                 # Add manager to CC if exists
                 if manager:
@@ -1824,27 +1821,31 @@ async def perform_asset_allocation_routing(requisition_id: str, requisition: dic
                 # Context for email template
                 context = {
                     "employee_name": requested_user["name"],
-                    "asset_type_name": asset_type["name"] if asset_type else "Unknown",
-                    "asset_code": selected_asset["asset_code"],
-                    "asset_value": selected_asset.get("asset_value", 0),
-                    "asset_manager_name": asset_manager["name"],
-                    "allocation_date": datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S")
+                    "asset_type_name": asset_type["name"],
+                    "request_type": requisition.get("request_type", "Asset Request"),
+                    "assigned_person_name": assigned_person["name"],
+                    "routing_reason": routing_reason,
+                    "location_name": requested_user.get("location_name", "Unknown Location"),
+                    "requisition_id": requisition_id
                 }
                 
                 await email_service.send_notification(
-                    notification_type="asset_allocated",
+                    notification_type="request_routed",
                     to_emails=to_emails,
                     cc_emails=cc_emails,
                     context=context
                 )
-        except Exception as e:
-            # Log error but don't fail the allocation
-            logging.error(f"Failed to send automatic asset allocation notification: {str(e)}")
-        
-        logging.info(f"Successfully auto-allocated asset {selected_asset['asset_code']} for requisition {requisition_id}")
+                
+                logging.info(f"Successfully routed requisition {requisition_id}: {routing_reason}")
+                
+            except Exception as e:
+                # Log error but don't fail the routing
+                logging.error(f"Failed to send routing notification for requisition {requisition_id}: {str(e)}")
+        else:
+            logging.error(f"No Asset Manager or Administrator found to route requisition {requisition_id}")
         
     except Exception as e:
-        logging.error(f"Failed to perform automatic asset allocation for requisition {requisition_id}: {str(e)}")
+        logging.error(f"Failed to perform enhanced asset allocation routing for requisition {requisition_id}: {str(e)}")
 
 @api_router.post("/asset-requisitions/{requisition_id}/hr-action")
 async def hr_action_on_requisition(
