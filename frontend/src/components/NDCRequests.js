@@ -48,8 +48,8 @@ const NDCRequests = () => {
   const [isAssetsModalOpen, setIsAssetsModalOpen] = useState(false);
   const itemsPerPage = 10;
 
-  const isHRManager = effectiveRole === 'HR Manager';
-  const isAssetManager = effectiveRole === 'Asset Manager';
+  const isHRManager = activeRole === 'HR Manager';
+  const isAssetManager = activeRole === 'Asset Manager';
 
   useEffect(() => {
     fetchData();
