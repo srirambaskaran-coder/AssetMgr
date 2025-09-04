@@ -588,7 +588,7 @@ const UserForm = ({ initialData, onSubmit, managers = [], locations = [], isEdit
               <SelectValue placeholder="Select location" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">No Location Assigned</SelectItem>
+              <SelectItem value="none">No Location Assigned</SelectItem>
               {locations.map(location => (
                 <SelectItem key={location.id} value={location.id}>
                   {location.name} ({location.country})
