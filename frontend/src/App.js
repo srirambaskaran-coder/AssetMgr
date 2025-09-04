@@ -325,6 +325,14 @@ function App() {
                   </ProtectedRoute>
                 } 
               />
+              <Route 
+                path="/ndc-requests" 
+                element={
+                  <ProtectedRoute requiredRoles={['HR Manager', 'Asset Manager', 'Administrator']}>
+                    <NDCRequests />
+                  </ProtectedRoute>
+                } 
+              />
               
               <Route 
                 path="/bulk-import" 
