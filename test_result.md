@@ -731,11 +731,11 @@ test_plan:
 
   - task: "NDC (No Dues Certificate) Request System for Employee Separation"
     implemented: true
-    working: "NA"
+    working: false
     file: "/app/backend/server.py, /app/frontend/src/components/"
     stuck_count: 0
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
       - working: "NA"
         agent: "main"
@@ -749,6 +749,9 @@ test_plan:
       - working: "NA"
         agent: "main"
         comment: "FULLY IMPLEMENTED: Completed comprehensive NDC system implementation. Frontend: NDCRequestForm with employee selection and separation details, AddReasonForm for configurable reasons, RevokeButton with reason capture, NDCAssetsView with Asset Manager recovery interface including all required fields (recovered Y/N, condition, returned date, recovery value, remarks). Added route integration in App.js. Backend and frontend complete with role-based access, email notifications, and full workflow support. Ready for comprehensive testing."
+      - working: false
+        agent: "testing"
+        comment: "❌ CRITICAL NDC SYSTEM ISSUES DETECTED: Comprehensive testing revealed significant backend validation problems preventing NDC workflow completion. ✅ WORKING FEATURES: Separation Reasons Management working perfectly (GET/POST /api/separation-reasons with proper HR Manager/Administrator access control), NDC Request endpoints accessible with correct role-based filtering (HR Manager sees all, Asset Manager sees assigned, Employee correctly denied access), Asset Recovery endpoints functional with proper access control, NDC Revoke functionality working with proper validation, Email integration ready (configuration endpoints working). ❌ CRITICAL ISSUES: 1) ASSET ALLOCATION DETECTION FAILURE: Backend fails to detect allocated assets for employees even when assets are properly allocated with status='Allocated' and allocated_to field set. NDC creation consistently fails with 'Employee has no allocated assets' error despite confirmed asset allocations. 2) EMPLOYEE ACCESS CONTROL BUG: Employee role can access GET /api/ndc-requests (returns 200 with empty array) when it should return 403 Forbidden. 3) VALIDATION INCONSISTENCY: Invalid employee ID returns 404 instead of expected 400 validation error. ⚠️ IMPACT: Core NDC workflow is blocked - cannot create NDC requests for employees with allocated assets, preventing testing of asset recovery management, workflow progression, and email notifications. The asset allocation detection logic in NDC creation endpoint needs immediate debugging."
 
 test_plan:
   current_focus:
