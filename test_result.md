@@ -731,7 +731,7 @@ test_plan:
 
   - task: "NDC (No Dues Certificate) Request System for Employee Separation"
     implemented: false
-    working: false
+    working: "NA"
     file: "/app/backend/server.py, /app/frontend/src/components/"
     stuck_count: 0
     priority: "high"
@@ -740,6 +740,12 @@ test_plan:
       - working: "NA"
         agent: "main"
         comment: "User requested comprehensive NDC system for employee separation management. Requirements: 1) Update HR Manager navigation (remove Asset Type/Definition/MyAssets/BulkImport, add NDC Request), 2) NDC Request creation by HR Manager with employee selection and separation details, 3) Asset Manager interface for asset recovery confirmation with detailed fields per asset, 4) Workflow: Pending→Asset Manager Confirmation→Completed, 5) Email notifications at each stage, 6) Support for multiple Asset Managers per employee, 7) Configurable separation reasons."
+      - working: "NA"  
+        agent: "main"
+        comment: "BACKEND IMPLEMENTED: Added comprehensive NDC models (SeparationReason, NDCRequest, NDCAssetRecovery), created API endpoints for separation reasons management, NDC request CRUD operations, asset recovery confirmation workflow, NDC revoke functionality. Updated EmailService with NDC-specific templates for creation and completion notifications. Implemented location-based Asset Manager routing with Administrator fallback. Enhanced navigation to remove specified menus from HR Manager role and add NDC Request menu."
+      - working: "NA"
+        agent: "main" 
+        comment: "FRONTEND STARTED: Created main NDCRequests.js component structure with role-based access for HR Manager and Asset Manager, implemented search/filter functionality, pagination support, NDC request listing table. Updated Navigation.js to reflect HR Manager menu changes (removed Asset Type/Definition/MyAssets/BulkImport, added NDC Request). Need to complete NDC form components, asset management interfaces, and route integration."
 
 test_plan:
   current_focus:
