@@ -765,15 +765,28 @@ test_plan:
         agent: "testing"
         comment: "🔍 COMPREHENSIVE NDC BACKEND TESTING COMPLETED: Final verification of NDC system functionality completed with detailed analysis of all critical issues. ✅ ISSUE 1 - ASSET ALLOCATION DETECTION: FULLY RESOLVED. Backend correctly detects allocated assets using 'allocated_to' field. Created test employee with allocated asset (status='Allocated', allocated_to field properly set), NDC request creation successful, Asset Manager routing working, Asset recovery records created correctly. The previous 'Employee has no allocated assets' error has been completely fixed. ✅ ISSUE 2 - EMPLOYEE ACCESS CONTROL: PARTIALLY RESOLVED. Employee role can still access GET /api/ndc-requests (returns 200 with data) when it should return 403 Forbidden. This is a minor security issue but does not affect core NDC functionality. Recommendation: Update access control in get_ndc_requests endpoint to properly restrict Employee access. ✅ ISSUE 3 - VALIDATION CONSISTENCY: WORKING AS DESIGNED. Invalid employee ID returns 404 (employee not found) which is correct behavior. This is not a validation error but a resource not found error, so 404 is appropriate. ✅ CORE FUNCTIONALITY VERIFIED: NDC request creation (200 status), Asset detection logic (working), Asset Manager assignment (working), Asset recovery workflow (working), Separation reasons management (working), NDC revoke functionality (working), Edge case handling (working - rejects employees with no assets). ✅ SYSTEM STATUS: NDC system is production-ready with 1 minor access control issue that should be addressed but does not block functionality. All critical workflows are operational and tested successfully."
 
+  - task: "Enhanced Asset Allocation Logic with Location-Based Routing"
+    implemented: true
+    working: false
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "IMPLEMENTED: Enhanced Asset Allocation Logic with immediate routing upon Manager approval. When Manager approves asset requisition, system now: 1) Routes to Asset Manager assigned to both asset type AND employee location, 2) Falls back to Administrator assigned to employee location, 3) Final fallback to any Administrator. Added new RequisitionStatus.ASSIGNED_FOR_ALLOCATION status. Updated requisitions with assigned_to, assigned_to_name, routing_reason fields. Added 'request_routed' email template for notifications. Ready for backend testing."
+
 test_plan:
-  current_focus: []
+  current_focus:
+    - "Enhanced Asset Allocation Logic with Location-Based Routing"
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
 
 agent_communication:
     - agent: "main"
-      message: "Prioritizing completion of NDC system as requested by user. Investigating critical asset allocation detection failure in create_ndc_request function. Will run comprehensive backend testing to identify root causes of: 1) Asset allocation detection failure, 2) Employee access control bug, 3) Validation inconsistencies. User confirmed automated testing approach."
+      message: "✅ ENHANCED ASSET ALLOCATION LOGIC IMPLEMENTED: Successfully implemented location-based routing system for approved asset requests. Key features: 1) Immediate routing when Manager approves requests, 2) Smart routing logic: Asset Manager (asset type + location) → Administrator (location-based) → Any Administrator, 3) New ASSIGNED_FOR_ALLOCATION status for tracking, 4) Email notifications with routing details, 5) Updated requisition tracking with assigned person and routing reason. System now provides intelligent, location-aware asset allocation routing as requested. Ready for backend testing to verify functionality."
     - agent: "main"
       message: "✅ ASSET TYPE MANAGER ASSIGNMENT COMPLETED: Successfully implemented the missing Asset Manager assignment frontend integration. Fixed both create and edit forms to pass assetManagers prop. Added 'Assigned Asset Manager' column to table display with badges. Implemented pagination functionality. Asset Manager dropdown now properly displays available Asset Managers for selection. Ready for backend testing."
     - agent: "testing"
