@@ -627,7 +627,9 @@ class EmailService:
             "request_approved": "Asset Request Approved - {{asset_type_name}}",
             "request_rejected": "Asset Request Rejected - {{asset_type_name}}",
             "asset_allocated": "Asset Allocated - {{asset_type_name}} ({{asset_code}})",
-            "asset_acknowledged": "Asset Acknowledgment Received - {{asset_type_name}} ({{asset_code}})"
+            "asset_acknowledged": "Asset Acknowledgment Received - {{asset_type_name}} ({{asset_code}})",
+            "ndc_created": "NDC Request Created - {{employee_name}} Asset Recovery Required",
+            "ndc_completed": "NDC Request Completed - {{employee_name}} Asset Recovery Finalized"
         }
         
         subject_template = subjects.get(notification_type, "Asset Management Notification")
