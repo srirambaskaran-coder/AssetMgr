@@ -462,6 +462,7 @@ const UserForm = ({ initialData, onSubmit, managers = [], locations = [], isEdit
         password: '',
         date_of_joining: '',
         reporting_manager_id: 'none',
+        location_id: 'none',
         is_active: true
       });
     }
