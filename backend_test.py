@@ -4324,6 +4324,11 @@ def main():
     print("-" * 50)
     tester.test_location_based_asset_management_system()
     
+    # Test ENHANCED ASSET ALLOCATION ROUTING SYSTEM
+    print("\n🎯 ENHANCED ASSET ALLOCATION ROUTING SYSTEM TESTS")
+    print("-" * 55)
+    tester.test_enhanced_asset_allocation_routing()
+    
     # Test NDC (NO DUES CERTIFICATE) SYSTEM
     print("\n🏥 NDC (NO DUES CERTIFICATE) SYSTEM TESTS")
     print("-" * 45)
