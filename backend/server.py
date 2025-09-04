@@ -63,6 +63,7 @@ class RequisitionStatus(str, Enum):
     HR_APPROVED = "HR Approved"
     REJECTED = "Rejected"
     ON_HOLD = "On Hold"
+    ASSIGNED_FOR_ALLOCATION = "Assigned for Allocation"
     ALLOCATED = "Allocated"
 
 class ActiveStatus(str, Enum):
