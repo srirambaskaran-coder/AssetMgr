@@ -22,6 +22,7 @@ import {
   CheckCircle,
   XCircle,
   AlertCircle,
+  ArrowRight,
   User,
   Calendar
 } from 'lucide-react';
