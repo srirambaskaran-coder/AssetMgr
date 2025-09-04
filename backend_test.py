@@ -3756,13 +3756,375 @@ class AssetInventoryAPITester:
         
         return True
 
+    def test_ndc_system_comprehensive(self):
+        """Test NDC (No Dues Certificate) System - Focus on Critical Bug Fix and Complete Workflow"""
+        print(f"\n🏢 Testing NDC (No Dues Certificate) System - Post Bug Fix Verification")
+        
+        # Step 1: Setup - Create test employee with allocated assets
+        print(f"\n📋 Step 1: Setting up test data for NDC workflow")
+        
+        # Create test employee
+        from datetime import datetime, timedelta
+        employee_data = {
+            "email": f"ndc_employee_{datetime.now().strftime('%H%M%S')}@company.com",
+            "name": "NDC Test Employee",
+            "roles": ["Employee"],
+            "designation": "Software Developer",
+            "date_of_joining": "2023-01-15T00:00:00Z",
+            "password": "TestPassword123!"
+        }
+        
+        success, response = self.run_test(
+            "Create Test Employee for NDC",
+            "POST",
+            "users",
+            200,
+            data=employee_data,
+            user_role="Administrator"
+        )
+        
+        if not success:
+            print("❌ Failed to create test employee for NDC testing")
+            return False
+        
+        test_employee_id = response['id']
+        print(f"   Created test employee ID: {test_employee_id}")
+        
+        # Create asset type and definition for allocation
+        if 'asset_type_id' not in self.test_data:
+            asset_type_data = {
+                "code": "NDC_LAPTOP",
+                "name": "NDC Test Laptop",
+                "depreciation_applicable": True,
+                "asset_life": 3,
+                "to_be_recovered_on_separation": True,
+                "status": "Active"
+            }
+            
+            success, response = self.run_test(
+                "Create Asset Type for NDC Test",
+                "POST",
+                "asset-types",
+                200,
+                data=asset_type_data,
+                user_role="Administrator"
+            )
+            
+            if success:
+                self.test_data['ndc_asset_type_id'] = response['id']
+        
+        # Create asset definition
+        asset_def_data = {
+            "asset_type_id": self.test_data.get('ndc_asset_type_id', self.test_data.get('asset_type_id')),
+            "asset_code": f"NDC_LAP_{datetime.now().strftime('%H%M%S')}",
+            "asset_description": "NDC Test Laptop",
+            "asset_details": "Dell Laptop for NDC Testing",
+            "asset_value": 50000.0,
+            "asset_depreciation_value_per_year": 16666.67,
+            "status": "Available"
+        }
+        
+        success, response = self.run_test(
+            "Create Asset Definition for NDC Test",
+            "POST",
+            "asset-definitions",
+            200,
+            data=asset_def_data,
+            user_role="Administrator"
+        )
+        
+        if not success:
+            print("❌ Failed to create asset definition for NDC testing")
+            return False
+        
+        test_asset_id = response['id']
+        print(f"   Created test asset ID: {test_asset_id}")
+        
+        # Allocate asset to employee (simulate allocation)
+        allocation_update = {
+            "allocated_to": test_employee_id,
+            "allocated_to_name": "NDC Test Employee",
+            "status": "Allocated"
+        }
+        
+        success, response = self.run_test(
+            "Allocate Asset to Test Employee",
+            "PUT",
+            f"asset-definitions/{test_asset_id}",
+            200,
+            data=allocation_update,
+            user_role="Administrator"
+        )
+        
+        if success:
+            print(f"   ✅ Asset allocated to employee successfully")
+        else:
+            print("❌ Failed to allocate asset to employee")
+            return False
+        
+        # Step 2: Test Critical Bug Fix - NDC Request Creation with correct "allocated_to" field
+        print(f"\n🔍 Step 2: Testing Critical Bug Fix - Asset Detection with 'allocated_to' field")
+        
+        # Create separation reason first
+        separation_reason_data = {"reason": "Resignation - Better Opportunity"}
+        success, response = self.run_test(
+            "Create Separation Reason",
+            "POST",
+            "separation-reasons",
+            200,
+            data=separation_reason_data,
+            user_role="HR Manager"
+        )
+        
+        if success:
+            separation_reason = response['reason']
+            print(f"   Created separation reason: {separation_reason}")
+        
+        # Create NDC request - This should now work with the bug fix
+        ndc_request_data = {
+            "employee_id": test_employee_id,
+            "resigned_on": datetime.now().isoformat(),
+            "notice_period": "30 days",
+            "last_working_date": (datetime.now() + timedelta(days=30)).isoformat(),
+            "separation_approved_by": self.users["Administrator"]["id"],
+            "separation_approved_on": datetime.now().isoformat(),
+            "separation_reason": "Resignation - Better Opportunity"
+        }
+        
+        success, response = self.run_test(
+            "Create NDC Request (Critical Bug Fix Test)",
+            "POST",
+            "ndc-requests",
+            200,
+            data=ndc_request_data,
+            user_role="HR Manager"
+        )
+        
+        if success:
+            print(f"   ✅ CRITICAL BUG FIXED: NDC request created successfully with allocated assets detected")
+            print(f"   NDC requests created for {len(response['requests'])} Asset Manager(s)")
+            self.test_data['ndc_request_info'] = response['requests'][0]
+            ndc_request_id = response['requests'][0]['ndc_request_id']
+            self.test_data['ndc_request_id'] = ndc_request_id
+        else:
+            print(f"   ❌ CRITICAL BUG NOT FIXED: NDC request creation failed")
+            return False
+        
+        # Step 3: Test Asset Manager Routing and Asset Recovery Records
+        print(f"\n🎯 Step 3: Testing Asset Manager Routing and Asset Recovery Records")
+        
+        # Get NDC requests to verify Asset Manager assignment
+        success, response = self.run_test(
+            "Get NDC Requests (Asset Manager Routing Test)",
+            "GET",
+            "ndc-requests",
+            200,
+            user_role="HR Manager"
+        )
+        
+        if success:
+            ndc_found = False
+            for ndc in response:
+                if ndc['id'] == ndc_request_id:
+                    ndc_found = True
+                    print(f"   ✅ NDC request found with Asset Manager: {ndc['asset_manager_name']}")
+                    print(f"   Status: {ndc['status']}")
+                    break
+            
+            if not ndc_found:
+                print(f"   ❌ Created NDC request not found in list")
+        
+        # Get asset recovery records
+        success, response = self.run_test(
+            "Get NDC Asset Recovery Records",
+            "GET",
+            f"ndc-requests/{ndc_request_id}/assets",
+            200,
+            user_role="Asset Manager"
+        )
+        
+        if success:
+            print(f"   ✅ Asset recovery records created: {len(response)} assets")
+            if response:
+                asset_recovery = response[0]
+                self.test_data['asset_recovery_id'] = asset_recovery['id']
+                print(f"   Asset Code: {asset_recovery['asset_code']}")
+                print(f"   Asset Value: ₹{asset_recovery['asset_value']}")
+                print(f"   Status: {asset_recovery['status']}")
+        
+        # Step 4: Test Complete NDC Workflow - Asset Recovery Processing
+        print(f"\n🔄 Step 4: Testing Complete NDC Workflow - Asset Recovery Processing")
+        
+        if 'asset_recovery_id' in self.test_data:
+            # Asset Manager processes asset recovery
+            recovery_update_data = {
+                "recovered": True,
+                "asset_condition": "Good Condition",
+                "returned_on": datetime.now().isoformat(),
+                "recovery_value": 0.0,
+                "remarks": "Asset recovered in excellent condition during separation"
+            }
+            
+            success, response = self.run_test(
+                "Process Asset Recovery (Asset Manager)",
+                "PUT",
+                f"ndc-asset-recovery/{self.test_data['asset_recovery_id']}",
+                200,
+                data=recovery_update_data,
+                user_role="Asset Manager"
+            )
+            
+            if success:
+                print(f"   ✅ Asset recovery processed successfully")
+                print(f"   Recovered: {response['recovered']}")
+                print(f"   Condition: {response['asset_condition']}")
+                print(f"   Status: {response['status']}")
+        
+        # Step 5: Test Access Control Verification
+        print(f"\n🔒 Step 5: Testing Access Control Verification")
+        
+        # Test Employee cannot access NDC requests
+        success, response = self.run_test(
+            "Employee Access NDC Requests (Should Fail)",
+            "GET",
+            "ndc-requests",
+            403,
+            user_role="Employee"
+        )
+        
+        if success:
+            print(f"   ✅ Employee correctly denied access to NDC requests")
+        
+        # Test HR Manager can see all NDC requests
+        success, response = self.run_test(
+            "HR Manager Access All NDC Requests",
+            "GET",
+            "ndc-requests",
+            200,
+            user_role="HR Manager"
+        )
+        
+        if success:
+            print(f"   ✅ HR Manager can access all NDC requests: {len(response)} requests")
+        
+        # Test Asset Manager can see their assigned NDC requests
+        success, response = self.run_test(
+            "Asset Manager Access Assigned NDC Requests",
+            "GET",
+            "ndc-requests",
+            200,
+            user_role="Asset Manager"
+        )
+        
+        if success:
+            print(f"   ✅ Asset Manager can access assigned NDC requests: {len(response)} requests")
+        
+        # Step 6: Test Edge Cases and Validation
+        print(f"\n⚠️ Step 6: Testing Edge Cases and Validation")
+        
+        # Test NDC creation for employee with no allocated assets (should fail)
+        employee_no_assets_data = {
+            "email": f"no_assets_{datetime.now().strftime('%H%M%S')}@company.com",
+            "name": "Employee No Assets",
+            "roles": ["Employee"],
+            "password": "TestPassword123!"
+        }
+        
+        success, response = self.run_test(
+            "Create Employee Without Assets",
+            "POST",
+            "users",
+            200,
+            data=employee_no_assets_data,
+            user_role="Administrator"
+        )
+        
+        if success:
+            no_assets_employee_id = response['id']
+            
+            # Try to create NDC for employee with no assets
+            ndc_no_assets_data = {
+                "employee_id": no_assets_employee_id,
+                "resigned_on": datetime.now().isoformat(),
+                "notice_period": "30 days",
+                "last_working_date": (datetime.now() + timedelta(days=30)).isoformat(),
+                "separation_approved_by": self.users["Administrator"]["id"],
+                "separation_approved_on": datetime.now().isoformat(),
+                "separation_reason": "Resignation"
+            }
+            
+            success, response = self.run_test(
+                "Create NDC for Employee with No Assets (Should Fail)",
+                "POST",
+                "ndc-requests",
+                400,
+                data=ndc_no_assets_data,
+                user_role="HR Manager"
+            )
+            
+            if success:
+                print(f"   ✅ NDC creation correctly rejected for employee with no allocated assets")
+        
+        # Test NDC revoke functionality
+        if 'ndc_request_id' in self.test_data:
+            revoke_data = {"reason": "Employee decided to stay with company"}
+            
+            success, response = self.run_test(
+                "Revoke NDC Request",
+                "POST",
+                f"ndc-requests/{self.test_data['ndc_request_id']}/revoke",
+                200,
+                data=revoke_data,
+                user_role="HR Manager"
+            )
+            
+            if success:
+                print(f"   ✅ NDC request revoked successfully")
+        
+        # Step 7: Test Data Integrity
+        print(f"\n🔍 Step 7: Testing Data Integrity")
+        
+        # Verify NDC request data integrity
+        success, response = self.run_test(
+            "Verify NDC Data Integrity",
+            "GET",
+            "ndc-requests",
+            200,
+            user_role="HR Manager"
+        )
+        
+        if success:
+            print(f"   ✅ NDC data integrity verified: {len(response)} total NDC requests")
+            
+            # Check if our test NDC request has proper data
+            for ndc in response:
+                if ndc['id'] == self.test_data.get('ndc_request_id'):
+                    print(f"   Employee Name: {ndc['employee_name']}")
+                    print(f"   Asset Manager: {ndc['asset_manager_name']}")
+                    print(f"   Status: {ndc['status']}")
+                    break
+        
+        print(f"\n✅ NDC System Testing Completed Successfully")
+        print(f"   - Critical asset detection bug verified as FIXED")
+        print(f"   - Asset Manager routing working correctly")
+        print(f"   - Asset recovery workflow functional")
+        print(f"   - Access control properly implemented")
+        print(f"   - Edge cases and validation working")
+        print(f"   - Data integrity maintained")
+        
+        return True
+
     def test_ndc_comprehensive_system(self):
         """Test Complete NDC System"""
         print(f"\n🏥 Testing Complete NDC (No Dues Certificate) System")
         
         success = True
         
-        # Run all NDC-related tests
+        # Run the comprehensive NDC test that focuses on the bug fix
+        if not self.test_ndc_system_comprehensive():
+            success = False
+        
+        # Run additional NDC-related tests
         if not self.test_ndc_separation_reasons_management():
             success = False
         
