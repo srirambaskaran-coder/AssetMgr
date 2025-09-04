@@ -944,6 +944,26 @@ Your separation process regarding asset recovery has been completed successfully
 
 Best regards,
 Asset Management System
+            """,
+            "request_routed": """
+Asset Request Routed
+
+Dear {{assigned_person_name}},
+
+An approved asset request has been assigned to you for processing:
+
+Request Details:
+Employee: {{employee_name}}
+Asset Type: {{asset_type_name}}
+Request Type: {{request_type}}
+Location: {{location_name}}
+Requisition ID: {{requisition_id}}
+Routing Reason: {{routing_reason}}
+
+Please log in to the Asset Management System to process this asset allocation request.
+
+Best regards,
+Asset Management System
             """
         }
         
