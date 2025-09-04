@@ -676,6 +676,18 @@ test_plan:
         agent: "main"
         comment: "IMPLEMENTED: Fixed AssetTypeForm integration by adding assetManagers prop to both create (line 140) and edit (lines 278-281) form instances. Added 'Assigned Asset Manager' column to table display with proper badge styling. Added pagination functionality with DataPagination component. Asset Manager dropdown now receives full list of available Asset Managers for selection."
 
+  - task: "Enhanced Asset Allocation Logic - Frontend UI Integration"
+    implemented: false
+    working: false
+    file: "/app/frontend/src/components/AssetRequisitions.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: false
+        agent: "testing"
+        comment: "❌ CRITICAL FRONTEND IMPLEMENTATION GAP: Comprehensive testing revealed that while the Enhanced Asset Allocation Logic backend is working perfectly (confirmed 5 requisitions with 'Assigned for Allocation' status and complete routing data), the frontend AssetRequisitions component has NOT been updated to support the new routing features. BACKEND DATA CONFIRMED: API returns routing fields (assigned_to, assigned_to_name, routing_reason, assigned_date) and 'Assigned for Allocation' status correctly. FRONTEND ISSUES: 1) 'Assigned for Allocation' status missing from filter options (only shows: Pending, Manager Approved, HR Approved, Rejected, Allocated), 2) No routing information columns in table (missing: Assigned To, Routing Reason, Assigned Date), 3) Status badge colors don't include new status, 4) Table headers unchanged: ['Requisition ID', 'Asset Type', 'Request Type', 'Request For', 'Requested By', 'Required By', 'Status', 'Request Date', 'Actions']. TESTED ACROSS ALL ROLES: Manager, Administrator, HR Manager, Asset Manager - none can see routing information in UI despite backend data being present. URGENT: Frontend component needs complete update to display Enhanced Asset Allocation Logic routing information."
+
   - task: "Enhanced Asset Allocation Logic with Location-Based Routing"
     implemented: true
     working: true
