@@ -2831,6 +2831,332 @@ async def set_default_location_for_users(
         "updated_count": total_updated
     }
 
+# NDC (No Dues Certificate) Management Routes
+
+# Separation Reasons Management
+@api_router.get("/separation-reasons", response_model=List[SeparationReason])
+async def get_separation_reasons(
+    current_user: User = Depends(require_role([UserRole.HR_MANAGER, UserRole.ADMINISTRATOR]))
+):
+    """Get all separation reasons"""
+    reasons = await db.separation_reasons.find().to_list(100)
+    return [SeparationReason(**reason) for reason in reasons]
+
+@api_router.post("/separation-reasons", response_model=SeparationReason)
+async def create_separation_reason(
+    reason_data: SeparationReasonCreate,
+    current_user: User = Depends(require_role([UserRole.HR_MANAGER, UserRole.ADMINISTRATOR]))
+):
+    """Create new separation reason"""
+    # Check if reason already exists
+    existing = await db.separation_reasons.find_one({"reason": reason_data.reason})
+    if existing:
+        raise HTTPException(status_code=400, detail="Separation reason already exists")
+    
+    reason_dict = {
+        "id": str(uuid.uuid4()),
+        "reason": reason_data.reason,
+        "created_by": current_user.id,
+        "created_at": datetime.now(timezone.utc)
+    }
+    
+    await db.separation_reasons.insert_one(reason_dict)
+    return SeparationReason(**reason_dict)
+
+# NDC Request Management
+@api_router.get("/ndc-requests", response_model=List[NDCRequest])
+async def get_ndc_requests(
+    current_user: User = Depends(get_current_user)
+):
+    """Get NDC requests based on user role"""
+    if UserRole.HR_MANAGER in current_user.roles:
+        # HR Managers see all NDC requests
+        requests = await db.ndc_requests.find().to_list(1000)
+    elif UserRole.ASSET_MANAGER in current_user.roles:
+        # Asset Managers see only their assigned requests
+        requests = await db.ndc_requests.find({"asset_manager_id": current_user.id}).to_list(1000)
+    else:
+        # Administrators see all
+        requests = await db.ndc_requests.find().to_list(1000)
+    
+    return [NDCRequest(**request) for request in requests]
+
+@api_router.post("/ndc-requests", response_model=dict)
+async def create_ndc_request(
+    ndc_data: NDCRequestCreate,
+    current_user: User = Depends(require_role([UserRole.HR_MANAGER]))
+):
+    """Create NDC request for employee separation"""
+    # Get employee details
+    employee = await db.users.find_one({"id": ndc_data.employee_id})
+    if not employee:
+        raise HTTPException(status_code=404, detail="Employee not found")
+    
+    # Get separation approver details
+    approver = await db.users.find_one({"id": ndc_data.separation_approved_by})
+    if not approver:
+        raise HTTPException(status_code=404, detail="Separation approver not found")
+    
+    # Get all assets assigned to the employee
+    assigned_assets = await db.asset_definitions.find({
+        "assigned_to": ndc_data.employee_id,
+        "status": "Allocated"
+    }).to_list(1000)
+    
+    if not assigned_assets:
+        raise HTTPException(status_code=400, detail="Employee has no allocated assets")
+    
+    # Group assets by Asset Manager (based on location and asset type)
+    asset_manager_groups = {}
+    
+    for asset in assigned_assets:
+        # Get asset type details
+        asset_type = await db.asset_types.find_one({"id": asset["asset_type_id"]})
+        
+        # Find Asset Manager for this asset (by location + asset type)
+        asset_manager = None
+        if asset_type and asset_type.get("assigned_asset_manager_id"):
+            # Check if Asset Manager is assigned to the employee's location
+            am_location = await db.asset_manager_locations.find_one({
+                "asset_manager_id": asset_type["assigned_asset_manager_id"],
+                "location_id": employee.get("location_id")
+            })
+            if am_location:
+                asset_manager = await db.users.find_one({"id": asset_type["assigned_asset_manager_id"]})
+        
+        # Fallback to Administrator if no Asset Manager found
+        if not asset_manager:
+            # Find an Administrator
+            admin = await db.users.find_one({"roles": {"$in": [UserRole.ADMINISTRATOR]}})
+            if admin:
+                asset_manager = admin
+        
+        if asset_manager:
+            am_id = asset_manager["id"]
+            if am_id not in asset_manager_groups:
+                asset_manager_groups[am_id] = {
+                    "asset_manager": asset_manager,
+                    "assets": []
+                }
+            asset_manager_groups[am_id]["assets"].append(asset)
+    
+    # Create NDC requests for each Asset Manager
+    created_requests = []
+    
+    for am_id, group_data in asset_manager_groups.items():
+        asset_manager = group_data["asset_manager"]
+        assets = group_data["assets"]
+        
+        # Create NDC request
+        ndc_request_dict = {
+            "id": str(uuid.uuid4()),
+            "employee_id": ndc_data.employee_id,
+            "employee_name": employee["name"],
+            "employee_code": employee.get("employee_code", "N/A"),
+            "employee_designation": employee.get("designation"),
+            "employee_date_of_joining": employee.get("date_of_joining"),
+            "employee_location_name": employee.get("location_name"),
+            "employee_reporting_manager_name": employee.get("reporting_manager_name"),
+            
+            "resigned_on": ndc_data.resigned_on,
+            "notice_period": ndc_data.notice_period,
+            "last_working_date": ndc_data.last_working_date,
+            "separation_approved_by": ndc_data.separation_approved_by,
+            "separation_approved_by_name": approver["name"],
+            "separation_approved_on": ndc_data.separation_approved_on,
+            "separation_reason": ndc_data.separation_reason,
+            
+            "created_by": current_user.id,
+            "created_by_name": current_user.name,
+            "asset_manager_id": asset_manager["id"],
+            "asset_manager_name": asset_manager["name"],
+            "status": "Pending",
+            
+            "created_at": datetime.now(timezone.utc),
+            "updated_at": datetime.now(timezone.utc)
+        }
+        
+        await db.ndc_requests.insert_one(ndc_request_dict)
+        
+        # Create asset recovery records
+        for asset in assets:
+            asset_type = await db.asset_types.find_one({"id": asset["asset_type_id"]})
+            
+            recovery_dict = {
+                "id": str(uuid.uuid4()),
+                "ndc_request_id": ndc_request_dict["id"],
+                "asset_definition_id": asset["id"],
+                "asset_code": asset["asset_code"],
+                "asset_type_name": asset_type["name"] if asset_type else "Unknown",
+                "asset_value": asset.get("asset_value", 0),
+                "status": "Pending",
+                "updated_at": datetime.now(timezone.utc)
+            }
+            
+            await db.ndc_asset_recovery.insert_one(recovery_dict)
+        
+        created_requests.append({
+            "ndc_request_id": ndc_request_dict["id"],
+            "asset_manager_name": asset_manager["name"],
+            "asset_count": len(assets)
+        })
+        
+        # Send email notification to Asset Manager
+        try:
+            # Get HR managers for CC
+            hr_managers = await db.users.find({"roles": UserRole.HR_MANAGER, "is_active": True}).to_list(100)
+            reporting_manager = await db.users.find_one({"id": employee.get("reporting_manager_id")}) if employee.get("reporting_manager_id") else None
+            
+            to_emails = [asset_manager["email"]]
+            cc_emails = [current_user.email]  # HR Manager
+            
+            if reporting_manager:
+                cc_emails.append(reporting_manager["email"])
+            
+            context = {
+                "asset_manager_name": asset_manager["name"],
+                "employee_name": employee["name"],
+                "employee_designation": employee.get("designation", "N/A"),
+                "last_working_date": ndc_data.last_working_date.strftime("%Y-%m-%d"),
+                "asset_count": len(assets),
+                "separation_reason": ndc_data.separation_reason
+            }
+            
+            await email_service.send_notification(
+                notification_type="ndc_created",
+                to_emails=to_emails,
+                cc_emails=cc_emails,  
+                context=context
+            )
+        except Exception as e:
+            logging.error(f"Failed to send NDC creation notification: {str(e)}")
+    
+    return {
+        "message": f"NDC requests created successfully for {len(created_requests)} Asset Manager(s)",
+        "requests": created_requests
+    }
+
+@api_router.get("/ndc-requests/{ndc_id}/assets", response_model=List[NDCAssetRecovery])
+async def get_ndc_assets(
+    ndc_id: str,
+    current_user: User = Depends(get_current_user)
+):
+    """Get assets for NDC request"""
+    # Verify access
+    ndc_request = await db.ndc_requests.find_one({"id": ndc_id})
+    if not ndc_request:
+        raise HTTPException(status_code=404, detail="NDC request not found")
+    
+    # Check if user has access
+    if (UserRole.ASSET_MANAGER in current_user.roles and ndc_request["asset_manager_id"] != current_user.id and
+        UserRole.HR_MANAGER not in current_user.roles and UserRole.ADMINISTRATOR not in current_user.roles):
+        raise HTTPException(status_code=403, detail="Access denied")
+    
+    assets = await db.ndc_asset_recovery.find({"ndc_request_id": ndc_id}).to_list(1000)
+    return [NDCAssetRecovery(**asset) for asset in assets]
+
+@api_router.put("/ndc-asset-recovery/{recovery_id}", response_model=NDCAssetRecovery)
+async def update_asset_recovery(
+    recovery_id: str,
+    recovery_data: NDCAssetRecoveryUpdate,
+    current_user: User = Depends(require_role([UserRole.ASSET_MANAGER, UserRole.ADMINISTRATOR]))
+):
+    """Update asset recovery details by Asset Manager"""
+    recovery = await db.ndc_asset_recovery.find_one({"id": recovery_id})
+    if not recovery:
+        raise HTTPException(status_code=404, detail="Asset recovery record not found")
+    
+    # Get NDC request to verify access
+    ndc_request = await db.ndc_requests.find_one({"id": recovery["ndc_request_id"]})
+    if (UserRole.ASSET_MANAGER in current_user.roles and 
+        ndc_request and ndc_request["asset_manager_id"] != current_user.id):
+        raise HTTPException(status_code=403, detail="Access denied")
+    
+    update_data = recovery_data.dict()
+    update_data["status"] = "Recovered" if recovery_data.recovered else "Not Recovered"
+    update_data["updated_by"] = current_user.id
+    update_data["updated_at"] = datetime.now(timezone.utc)
+    
+    await db.ndc_asset_recovery.update_one({"id": recovery_id}, {"$set": update_data})
+    
+    # Check if all assets are processed for this NDC request
+    if ndc_request:
+        all_assets = await db.ndc_asset_recovery.find({"ndc_request_id": ndc_request["id"]}).to_list(1000)
+        processed_assets = [asset for asset in all_assets if asset.get("recovered") is not None]
+        
+        if len(processed_assets) == len(all_assets):
+            # All assets processed, update NDC request status
+            await db.ndc_requests.update_one(
+                {"id": ndc_request["id"]},
+                {"$set": {"status": "Completed", "updated_at": datetime.now(timezone.utc)}}
+            )
+            
+            # Send completion notification
+            try:
+                employee = await db.users.find_one({"id": ndc_request["employee_id"]})
+                hr_manager = await db.users.find_one({"id": ndc_request["created_by"]})
+                reporting_manager = await db.users.find_one({"id": employee.get("reporting_manager_id")}) if employee and employee.get("reporting_manager_id") else None
+                
+                if employee and hr_manager:
+                    to_emails = [employee["email"], hr_manager["email"]]
+                    cc_emails = []
+                    if reporting_manager:
+                        cc_emails.append(reporting_manager["email"])
+                    
+                    context = {
+                        "employee_name": employee["name"],
+                        "hr_manager_name": hr_manager["name"],
+                        "asset_manager_name": current_user.name,
+                        "total_assets": len(all_assets),
+                        "recovered_assets": len([a for a in all_assets if a.get("recovered") == True])
+                    }
+                    
+                    await email_service.send_notification(
+                        notification_type="ndc_completed",
+                        to_emails=to_emails,
+                        cc_emails=cc_emails,
+                        context=context
+                    )
+            except Exception as e:
+                logging.error(f"Failed to send NDC completion notification: {str(e)}")
+    
+    updated = await db.ndc_asset_recovery.find_one({"id": recovery_id})
+    return NDCAssetRecovery(**updated)
+
+@api_router.post("/ndc-requests/{ndc_id}/revoke")
+async def revoke_ndc_request(
+    ndc_id: str,
+    revoke_data: NDCRevokeRequest,
+    current_user: User = Depends(require_role([UserRole.HR_MANAGER]))
+):
+    """Revoke NDC request"""
+    ndc_request = await db.ndc_requests.find_one({"id": ndc_id})
+    if not ndc_request:
+        raise HTTPException(status_code=404, detail="NDC request not found")
+    
+    if ndc_request["status"] == "Completed":
+        raise HTTPException(status_code=400, detail="Cannot revoke completed NDC request")
+    
+    # Update NDC request status
+    await db.ndc_requests.update_one(
+        {"id": ndc_id},
+        {"$set": {
+            "status": "Revoked",
+            "revoke_reason": revoke_data.reason,
+            "revoked_by": current_user.id,
+            "revoked_at": datetime.now(timezone.utc),
+            "updated_at": datetime.now(timezone.utc)
+        }}
+    )
+    
+    # Update all associated asset recovery records
+    await db.ndc_asset_recovery.update_many(
+        {"ndc_request_id": ndc_id},
+        {"$set": {"status": "Revoked", "updated_at": datetime.now(timezone.utc)}}
+    )
+    
+    return {"message": "NDC request revoked successfully"}
+
 # Include the router in the main app
 app.include_router(api_router)
 
