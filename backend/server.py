@@ -394,6 +394,83 @@ class LocationUpdate(BaseModel):
     country: Optional[str] = None
     status: Optional[str] = None
 
+# NDC (No Dues Certificate) Models for Employee Separation
+class SeparationReason(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    reason: str
+    created_by: str
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+class SeparationReasonCreate(BaseModel):
+    reason: str
+
+class NDCRequest(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    employee_id: str
+    employee_name: str
+    employee_code: Optional[str] = None
+    employee_designation: Optional[str] = None
+    employee_date_of_joining: Optional[datetime] = None
+    employee_location_name: Optional[str] = None
+    employee_reporting_manager_name: Optional[str] = None
+    
+    # Separation details
+    resigned_on: datetime
+    notice_period: str  # Immediate, 7 days, 15 days, 30 days, 60 days, 90 days
+    last_working_date: datetime
+    separation_approved_by: str
+    separation_approved_by_name: str
+    separation_approved_on: datetime
+    separation_reason: str
+    
+    # Request details
+    created_by: str  # HR Manager ID
+    created_by_name: str
+    asset_manager_id: str  # Responsible Asset Manager
+    asset_manager_name: str
+    status: str = "Pending"  # Pending, Asset Manager Confirmation, Completed
+    
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+class NDCRequestCreate(BaseModel):
+    employee_id: str
+    resigned_on: datetime
+    notice_period: str
+    last_working_date: datetime
+    separation_approved_by: str
+    separation_approved_on: datetime
+    separation_reason: str
+
+class NDCAssetRecovery(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    ndc_request_id: str
+    asset_definition_id: str
+    asset_code: str
+    asset_type_name: str
+    asset_value: float
+    
+    # Recovery details - filled by Asset Manager
+    recovered: Optional[bool] = None  # Yes/No
+    asset_condition: Optional[str] = None  # Good Condition / Damaged
+    returned_on: Optional[datetime] = None
+    recovery_value: Optional[float] = None  # If damaged
+    remarks: Optional[str] = None
+    status: str = "Pending"  # Pending, Recovered, Not Recovered
+    
+    updated_by: Optional[str] = None  # Asset Manager ID
+    updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+class NDCAssetRecoveryUpdate(BaseModel):
+    recovered: bool
+    asset_condition: str
+    returned_on: Optional[datetime] = None
+    recovery_value: Optional[float] = None
+    remarks: Optional[str] = None
+
+class NDCRevokeRequest(BaseModel):
+    reason: str
+
 # Asset Manager Location Assignment Models
 class AssetManagerLocation(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
