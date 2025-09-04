@@ -182,6 +182,8 @@ const AssetRequisitions = () => {
         return <CheckCircle className="h-4 w-4" />;
       case 'Rejected':
         return <XCircle className="h-4 w-4" />;
+      case 'Assigned for Allocation':
+        return <ArrowRight className="h-4 w-4" />;
       case 'Allocated':
         return <CheckCircle className="h-4 w-4" />;
       default:
