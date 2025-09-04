@@ -438,6 +438,7 @@ const UserForm = ({ initialData, onSubmit, managers = [], locations = [], isEdit
           roles: formData.roles, 
           date_of_joining: formData.date_of_joining ? new Date(formData.date_of_joining).toISOString() : null,
           reporting_manager_id: formData.reporting_manager_id === "none" ? null : formData.reporting_manager_id || null,
+          location_id: formData.location_id === "none" ? null : formData.location_id || null,
           is_active: formData.is_active,
           // Include password only if it's being changed
           ...(showPasswordChange && formData.password ? { password: formData.password } : {})
@@ -445,7 +446,8 @@ const UserForm = ({ initialData, onSubmit, managers = [], locations = [], isEdit
       : {
           ...formData,
           date_of_joining: formData.date_of_joining ? new Date(formData.date_of_joining).toISOString() : null,
-          reporting_manager_id: formData.reporting_manager_id === "none" ? null : formData.reporting_manager_id || null
+          reporting_manager_id: formData.reporting_manager_id === "none" ? null : formData.reporting_manager_id || null,
+          location_id: formData.location_id === "none" ? null : formData.location_id || null
         };
 
     await onSubmit(submitData);
