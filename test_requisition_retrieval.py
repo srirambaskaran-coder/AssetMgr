@@ -2,7 +2,7 @@ import requests
 import json
 
 def test_requisition_retrieval():
-    base_url = "https://asset-flow-app.preview.emergentagent.com"
+    base_url = "https://asset-track-2.preview.emergentagent.com"
     api_url = f"{base_url}/api"
     
     # Login as admin
