@@ -2955,9 +2955,12 @@ async def get_ndc_requests(
     elif UserRole.ASSET_MANAGER in current_user.roles:
         # Asset Managers see only their assigned requests
         requests = await db.ndc_requests.find({"asset_manager_id": current_user.id}).to_list(1000)
-    else:
+    elif UserRole.ADMINISTRATOR in current_user.roles:
         # Administrators see all
         requests = await db.ndc_requests.find().to_list(1000)
+    else:
+        # Employee or other roles - access denied
+        raise HTTPException(status_code=403, detail="Access denied. Insufficient permissions to view NDC requests.")
     
     return [NDCRequest(**request) for request in requests]
 
