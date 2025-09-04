@@ -33,7 +33,7 @@ const API = `${BACKEND_URL}/api`;
 
 const NDCRequests = () => {
   const { user } = useAuth();
-  const { effectiveRole } = useRole();
+  const { activeRole } = useRole();
   const [ndcRequests, setNdcRequests] = useState([]);
   const [employees, setEmployees] = useState([]);
   const [managers, setManagers] = useState([]);
