@@ -3446,6 +3446,342 @@ class AssetInventoryAPITester:
         
         return success
 
+    def test_ndc_separation_reasons_management(self):
+        """Test NDC Separation Reasons Management"""
+        print(f"\n📋 Testing NDC Separation Reasons Management")
+        
+        # Test 1: GET /api/separation-reasons - Retrieve all separation reasons
+        success, response = self.run_test(
+            "Get All Separation Reasons (HR Manager)",
+            "GET",
+            "separation-reasons",
+            200,
+            user_role="HR Manager"
+        )
+        
+        if success:
+            initial_count = len(response)
+            print(f"   Found {initial_count} existing separation reasons")
+        
+        # Test 2: POST /api/separation-reasons - Create new separation reason
+        reason_data = {
+            "reason": "Voluntary Resignation - Better Opportunity"
+        }
+        
+        success, response = self.run_test(
+            "Create New Separation Reason (HR Manager)",
+            "POST",
+            "separation-reasons",
+            200,
+            data=reason_data,
+            user_role="HR Manager"
+        )
+        
+        if success:
+            self.test_data['separation_reason_id'] = response['id']
+            print(f"   Created separation reason with ID: {response['id']}")
+            print(f"   Reason: {response['reason']}")
+        
+        # Test 3: Access control - Administrator can access
+        success, response = self.run_test(
+            "Get Separation Reasons (Administrator)",
+            "GET",
+            "separation-reasons",
+            200,
+            user_role="Administrator"
+        )
+        
+        if success:
+            print(f"   Administrator can access separation reasons ({len(response)} found)")
+        
+        # Test 4: Access control - Employee should be denied
+        success, response = self.run_test(
+            "Employee Access Separation Reasons (Should Fail)",
+            "GET",
+            "separation-reasons",
+            403,
+            user_role="Employee"
+        )
+        
+        if success:
+            print("   ✅ Employee correctly denied access to separation reasons")
+        
+        return True
+
+    def test_ndc_request_creation_and_management(self):
+        """Test NDC Request Creation and Management"""
+        print(f"\n📝 Testing NDC Request Creation and Management")
+        
+        # First, get employees and managers for testing
+        success, users_response = self.run_test(
+            "Get Users for NDC Testing",
+            "GET",
+            "users",
+            200,
+            user_role="Administrator"
+        )
+        
+        if not success:
+            print("❌ Failed to get users for NDC testing")
+            return False
+        
+        # Find an employee and manager for testing
+        employee_with_assets = None
+        manager_user = None
+        
+        for user in users_response:
+            user_roles = user.get('roles', [])
+            if 'Employee' in user_roles and not employee_with_assets:
+                employee_with_assets = user
+            if 'Manager' in user_roles and not manager_user:
+                manager_user = user
+        
+        if not employee_with_assets:
+            print("❌ No employee found for NDC testing")
+            return False
+        
+        if not manager_user:
+            print("❌ No manager found for NDC testing")
+            return False
+        
+        # Test 1: Create NDC request for employee
+        from datetime import datetime, timedelta
+        
+        ndc_data = {
+            "employee_id": employee_with_assets['id'],
+            "resigned_on": (datetime.now() - timedelta(days=30)).isoformat(),
+            "notice_period": "30 days",
+            "last_working_date": (datetime.now() + timedelta(days=5)).isoformat(),
+            "separation_approved_by": manager_user['id'],
+            "separation_approved_on": datetime.now().isoformat(),
+            "separation_reason": "Voluntary Resignation - Better Opportunity"
+        }
+        
+        success, response = self.run_test(
+            "Create NDC Request (HR Manager)",
+            "POST",
+            "ndc-requests",
+            200,
+            data=ndc_data,
+            user_role="HR Manager"
+        )
+        
+        if success:
+            if isinstance(response, dict) and 'requests' in response:
+                # Multiple NDC requests created (one per Asset Manager)
+                created_requests = response['requests']
+                print(f"   Created {len(created_requests)} NDC requests for different Asset Managers")
+                if created_requests:
+                    self.test_data['ndc_request_id'] = created_requests[0]['id']
+                    print(f"   First NDC request ID: {created_requests[0]['id']}")
+            else:
+                # Single NDC request created
+                self.test_data['ndc_request_id'] = response['id']
+                print(f"   Created NDC request with ID: {response['id']}")
+        
+        # Test 2: Employee validation - non-existent employee
+        invalid_ndc_data = {
+            "employee_id": "non-existent-employee-id",
+            "resigned_on": (datetime.now() - timedelta(days=30)).isoformat(),
+            "notice_period": "30 days",
+            "last_working_date": (datetime.now() + timedelta(days=5)).isoformat(),
+            "separation_approved_by": manager_user['id'],
+            "separation_approved_on": datetime.now().isoformat(),
+            "separation_reason": "Test Reason"
+        }
+        
+        success, response = self.run_test(
+            "Create NDC Request - Invalid Employee (Should Fail)",
+            "POST",
+            "ndc-requests",
+            400,
+            data=invalid_ndc_data,
+            user_role="HR Manager"
+        )
+        
+        if success:
+            print("   ✅ Invalid employee ID correctly rejected")
+        
+        # Test 3: GET /api/ndc-requests - Retrieve NDC requests
+        success, response = self.run_test(
+            "Get NDC Requests (HR Manager)",
+            "GET",
+            "ndc-requests",
+            200,
+            user_role="HR Manager"
+        )
+        
+        if success:
+            print(f"   HR Manager can see {len(response)} NDC requests")
+        
+        # Test 4: Asset Manager can see their assigned NDC requests
+        success, response = self.run_test(
+            "Get NDC Requests (Asset Manager)",
+            "GET",
+            "ndc-requests",
+            200,
+            user_role="Asset Manager"
+        )
+        
+        if success:
+            print(f"   Asset Manager can see {len(response)} assigned NDC requests")
+        
+        # Test 5: Employee access should be denied
+        success, response = self.run_test(
+            "Employee Access NDC Requests (Should Fail)",
+            "GET",
+            "ndc-requests",
+            403,
+            user_role="Employee"
+        )
+        
+        if success:
+            print("   ✅ Employee correctly denied access to NDC requests")
+        
+        return True
+
+    def test_ndc_asset_recovery_management(self):
+        """Test NDC Asset Recovery Management"""
+        print(f"\n🔄 Testing NDC Asset Recovery Management")
+        
+        if 'ndc_request_id' not in self.test_data:
+            print("❌ Skipping Asset Recovery tests - no NDC request created")
+            return False
+        
+        ndc_id = self.test_data['ndc_request_id']
+        
+        # Test 1: GET /api/ndc-requests/{id}/assets - Get assets for NDC request
+        success, response = self.run_test(
+            "Get NDC Assets (Asset Manager)",
+            "GET",
+            f"ndc-requests/{ndc_id}/assets",
+            200,
+            user_role="Asset Manager"
+        )
+        
+        if success:
+            assets_count = len(response)
+            print(f"   Found {assets_count} assets for recovery")
+            if assets_count > 0:
+                self.test_data['ndc_asset_recovery_id'] = response[0]['id']
+                print(f"   First asset recovery ID: {response[0]['id']}")
+                print(f"   Asset code: {response[0].get('asset_code', 'Unknown')}")
+                print(f"   Asset type: {response[0].get('asset_type_name', 'Unknown')}")
+        
+        # Test 2: PUT /api/ndc-asset-recovery/{id} - Update asset recovery details
+        if 'ndc_asset_recovery_id' in self.test_data:
+            recovery_id = self.test_data['ndc_asset_recovery_id']
+            
+            recovery_update_data = {
+                "recovered": True,
+                "asset_condition": "Good Condition",
+                "returned_on": datetime.now().isoformat(),
+                "recovery_value": 0.0,
+                "remarks": "Asset recovered in excellent condition during automated testing"
+            }
+            
+            success, response = self.run_test(
+                "Update Asset Recovery Details (Asset Manager)",
+                "PUT",
+                f"ndc-asset-recovery/{recovery_id}",
+                200,
+                data=recovery_update_data,
+                user_role="Asset Manager"
+            )
+            
+            if success:
+                print(f"   Asset recovery updated successfully")
+                print(f"   Recovered: {response.get('recovered', False)}")
+                print(f"   Condition: {response.get('asset_condition', 'Unknown')}")
+                print(f"   Status: {response.get('status', 'Unknown')}")
+        
+        # Test 3: Employee should be denied access to update
+        if 'ndc_asset_recovery_id' in self.test_data:
+            recovery_id = self.test_data['ndc_asset_recovery_id']
+            
+            success, response = self.run_test(
+                "Employee Update Asset Recovery (Should Fail)",
+                "PUT",
+                f"ndc-asset-recovery/{recovery_id}",
+                403,
+                data={"recovered": True},
+                user_role="Employee"
+            )
+            
+            if success:
+                print("   ✅ Employee correctly denied access to update asset recovery")
+        
+        return True
+
+    def test_ndc_request_workflow(self):
+        """Test NDC Request Workflow"""
+        print(f"\n🔄 Testing NDC Request Workflow")
+        
+        if 'ndc_request_id' not in self.test_data:
+            print("❌ Skipping NDC Workflow tests - no NDC request created")
+            return False
+        
+        ndc_id = self.test_data['ndc_request_id']
+        
+        # Test 1: POST /api/ndc-requests/{id}/revoke - Revoke NDC request
+        revoke_data = {
+            "reason": "Employee decided to stay - separation cancelled"
+        }
+        
+        success, response = self.run_test(
+            "Revoke NDC Request (HR Manager)",
+            "POST",
+            f"ndc-requests/{ndc_id}/revoke",
+            200,
+            data=revoke_data,
+            user_role="HR Manager"
+        )
+        
+        if success:
+            print(f"   NDC request revoked successfully")
+            print(f"   Revoke reason: {revoke_data['reason']}")
+        
+        # Test 2: Employee should be denied access to revoke
+        success, response = self.run_test(
+            "Employee Revoke NDC Request (Should Fail)",
+            "POST",
+            f"ndc-requests/{ndc_id}/revoke",
+            403,
+            data=revoke_data,
+            user_role="Employee"
+        )
+        
+        if success:
+            print("   ✅ Employee correctly denied access to revoke NDC request")
+        
+        return True
+
+    def test_ndc_comprehensive_system(self):
+        """Test Complete NDC System"""
+        print(f"\n🏥 Testing Complete NDC (No Dues Certificate) System")
+        
+        success = True
+        
+        # Run all NDC-related tests
+        if not self.test_ndc_separation_reasons_management():
+            success = False
+        
+        if not self.test_ndc_request_creation_and_management():
+            success = False
+        
+        if not self.test_ndc_asset_recovery_management():
+            success = False
+        
+        if not self.test_ndc_request_workflow():
+            success = False
+        
+        if success:
+            print("   🎉 NDC System: ALL TESTS PASSED")
+        else:
+            print("   ⚠️ NDC System: Some tests failed")
+        
+        return success
+
 def main():
     print("🚀 Starting Asset Inventory Management System API Tests")
     print("=" * 60)
