@@ -731,11 +731,11 @@ test_plan:
 
   - task: "NDC (No Dues Certificate) Request System for Employee Separation"
     implemented: true
-    working: true
+    working: false
     file: "/app/backend/server.py, /app/frontend/src/components/"
-    stuck_count: 0
+    stuck_count: 1
     priority: "high"
-    needs_retesting: false
+    needs_retesting: true
     status_history:
       - working: "NA"
         agent: "main"
