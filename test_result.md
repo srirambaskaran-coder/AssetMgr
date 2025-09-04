@@ -386,7 +386,7 @@ metadata:
 
 test_plan:
   current_focus:
-    - "Asset Type Manager Assignment - Frontend Form Integration"
+    - "Enhanced Asset Allocation Logic - Frontend UI Integration"
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
