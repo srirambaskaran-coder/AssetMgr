@@ -330,6 +330,7 @@ const AssetRequisitions = () => {
                     <TableHead>Requested By</TableHead>
                     <TableHead>Required By</TableHead>
                     <TableHead>Status</TableHead>
+                    <TableHead>Assigned To</TableHead>
                     <TableHead>Request Date</TableHead>
                     <TableHead>Actions</TableHead>
                   </TableRow>
