@@ -884,6 +884,43 @@ The asset allocation process has been completed successfully.
 
 Best regards,
 Asset Management System
+            """,
+            "ndc_created": """
+NDC Request Created - Asset Recovery Required
+
+Dear {{asset_manager_name}},
+
+A No Dues Certificate (NDC) request has been created for an employee separation. Your action is required for asset recovery:
+
+Employee Details:
+Name: {{employee_name}}
+Designation: {{employee_designation}}
+Last Working Date: {{last_working_date}}
+Separation Reason: {{separation_reason}}
+Assets to Recover: {{asset_count}} items
+
+Please log in to the Asset Management System to review and process the asset recovery for this employee.
+
+Best regards,
+Asset Management System
+            """,
+            "ndc_completed": """
+NDC Request Completed
+
+Dear {{employee_name}},
+
+Your No Dues Certificate (NDC) request has been completed. All asset recovery processes have been finalized:
+
+Recovery Summary:
+Total Assets: {{total_assets}}
+Assets Recovered: {{recovered_assets}}
+Processed By: {{asset_manager_name}}
+HR Manager: {{hr_manager_name}}
+
+Your separation process regarding asset recovery has been completed successfully.
+
+Best regards,
+Asset Management System
             """
         }
         
