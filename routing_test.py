@@ -461,11 +461,11 @@ class RoutingLogicTester:
             print("❌ Failed to approve secondary requisition")
             return False
         
-        # Verify secondary routing results
+        # Verify secondary routing results by getting all requisitions
         success, response = self.run_test(
-            "Verify Secondary Routing Results",
+            "Get All Requisitions to Verify Secondary Routing Results",
             "GET",
-            f"asset-requisitions/{self.test_data['secondary_requisition_id']}",
+            "asset-requisitions",
             200,
             user_role="Administrator"
         )
