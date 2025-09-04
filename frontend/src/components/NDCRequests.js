@@ -793,8 +793,292 @@ const RevokeButton = ({ ndcId, onRevoke }) => {
 };
 
 const NDCAssetsView = ({ ndc, isAssetManager, onUpdate }) => {
-  // This will be implemented next
-  return <div>NDC Assets View - To be implemented</div>;
+  const [assets, setAssets] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchAssets();
+  }, [ndc.id]);
+
+  const fetchAssets = async () => {
+    try {
+      const response = await axios.get(`${API}/ndc-requests/${ndc.id}/assets`, {
+        headers: { 'Authorization': `Bearer ${localStorage.getItem('session_token')}` }
+      });
+      setAssets(response.data);
+    } catch (error) {
+      console.error('Error fetching NDC assets:', error);
+      toast.error('Failed to fetch assets');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleAssetUpdate = async (recoveryId, updateData) => {
+    try {
+      await axios.put(`${API}/ndc-asset-recovery/${recoveryId}`, updateData, {
+        headers: { 'Authorization': `Bearer ${localStorage.getItem('session_token')}` }
+      });
+      toast.success('Asset recovery updated successfully');
+      fetchAssets();
+      onUpdate(); // Refresh parent NDC list
+    } catch (error) {
+      console.error('Error updating asset recovery:', error);
+      toast.error('Failed to update asset recovery');
+    }
+  };
+
+  if (loading) {
+    return <div className="text-center py-8">Loading assets...</div>;
+  }
+
+  return (
+    <div className="space-y-6">
+      {/* NDC Details Header */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-lg">NDC Request Details</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+              <Label className="text-sm font-medium text-gray-500">Employee</Label>
+              <p className="text-sm font-medium">{ndc.employee_name}</p>
+              <p className="text-xs text-gray-500">{ndc.employee_code}</p>
+            </div>
+            <div>
+              <Label className="text-sm font-medium text-gray-500">Designation</Label>
+              <p className="text-sm">{ndc.employee_designation || 'N/A'}</p>
+            </div>
+            <div>
+              <Label className="text-sm font-medium text-gray-500">Location</Label>
+              <p className="text-sm">{ndc.employee_location_name || 'N/A'}</p>
+            </div>
+            <div>
+              <Label className="text-sm font-medium text-gray-500">Reporting Manager</Label>
+              <p className="text-sm">{ndc.employee_reporting_manager_name || 'N/A'}</p>
+            </div>
+            <div>
+              <Label className="text-sm font-medium text-gray-500">Last Working Date</Label>
+              <p className="text-sm">{new Date(ndc.last_working_date).toLocaleDateString()}</p>
+            </div>
+            <div>
+              <Label className="text-sm font-medium text-gray-500">Separation Reason</Label>
+              <p className="text-sm">{ndc.separation_reason}</p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Assets Recovery Table */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-lg">Asset Recovery Details</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {assets.length === 0 ? (
+            <div className="text-center py-8">
+              <Package className="mx-auto h-12 w-12 text-gray-400" />
+              <p className="text-gray-500 mt-2">No assets found for this NDC request</p>
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Asset Code</TableHead>
+                    <TableHead>Asset Type</TableHead>
+                    <TableHead>Asset Value</TableHead>
+                    <TableHead>Recovered</TableHead>
+                    <TableHead>Condition</TableHead>
+                    <TableHead>Returned On</TableHead>
+                    <TableHead>Recovery Value</TableHead>
+                    <TableHead>Remarks</TableHead>
+                    <TableHead>Status</TableHead>
+                    {isAssetManager && <TableHead className="text-right">Actions</TableHead>}
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {assets.map((asset) => (
+                    <AssetRecoveryRow 
+                      key={asset.id}
+                      asset={asset}
+                      isAssetManager={isAssetManager}
+                      onUpdate={handleAssetUpdate}
+                    />
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    </div>
+  );
+};
+
+const AssetRecoveryRow = ({ asset, isAssetManager, onUpdate }) => {
+  const [isEditing, setIsEditing] = useState(false);
+  const [formData, setFormData] = useState({
+    recovered: asset.recovered || false,
+    asset_condition: asset.asset_condition || 'Good Condition',
+    returned_on: asset.returned_on ? asset.returned_on.split('T')[0] : '',
+    recovery_value: asset.recovery_value || '',
+    remarks: asset.remarks || ''
+  });
+
+  const handleSave = async () => {
+    const updateData = {
+      ...formData,
+      returned_on: formData.returned_on ? new Date(formData.returned_on).toISOString() : null,
+      recovery_value: formData.recovery_value ? parseFloat(formData.recovery_value) : null
+    };
+
+    await onUpdate(asset.id, updateData);
+    setIsEditing(false);
+  };
+
+  const handleChange = (field, value) => {
+    setFormData({ ...formData, [field]: value });
+  };
+
+  const getStatusBadge = (status) => {
+    const statusConfig = {
+      'Pending': { color: 'bg-yellow-100 text-yellow-800', icon: Clock },
+      'Recovered': { color: 'bg-green-100 text-green-800', icon: CheckCircle },
+      'Not Recovered': { color: 'bg-red-100 text-red-800', icon: AlertCircle }
+    };
+    
+    const config = statusConfig[status] || statusConfig['Pending'];
+    const Icon = config.icon;
+    
+    return (
+      <Badge variant="outline" className={config.color}>
+        <Icon className="mr-1 h-3 w-3" />
+        {status}
+      </Badge>
+    );
+  };
+
+  return (
+    <TableRow>
+      <TableCell className="font-medium">{asset.asset_code}</TableCell>
+      <TableCell>{asset.asset_type_name}</TableCell>
+      <TableCell>₹{asset.asset_value?.toLocaleString() || 0}</TableCell>
+      
+      {/* Recovered */}
+      <TableCell>
+        {isEditing && isAssetManager ? (
+          <Select 
+            value={formData.recovered ? 'true' : 'false'} 
+            onValueChange={(value) => handleChange('recovered', value === 'true')}
+          >
+            <SelectTrigger className="w-20">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="true">Yes</SelectItem>
+              <SelectItem value="false">No</SelectItem>
+            </SelectContent>
+          </Select>
+        ) : (
+          <Badge variant="outline" className={asset.recovered ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}>
+            {asset.recovered === null ? 'Pending' : asset.recovered ? 'Yes' : 'No'}
+          </Badge>
+        )}
+      </TableCell>
+      
+      {/* Condition */}
+      <TableCell>
+        {isEditing && isAssetManager ? (
+          <Select 
+            value={formData.asset_condition} 
+            onValueChange={(value) => handleChange('asset_condition', value)}
+          >
+            <SelectTrigger className="w-32">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="Good Condition">Good Condition</SelectItem>
+              <SelectItem value="Damaged">Damaged</SelectItem>
+            </SelectContent>
+          </Select>
+        ) : (
+          <span className="text-sm">{asset.asset_condition || 'N/A'}</span>
+        )}
+      </TableCell>
+      
+      {/* Returned On */}
+      <TableCell>
+        {isEditing && isAssetManager ? (
+          <Input
+            type="date"
+            value={formData.returned_on}
+            onChange={(e) => handleChange('returned_on', e.target.value)}
+            className="w-32"
+          />
+        ) : (
+          <span className="text-sm">
+            {asset.returned_on ? new Date(asset.returned_on).toLocaleDateString() : 'N/A'}
+          </span>
+        )}
+      </TableCell>
+      
+      {/* Recovery Value */}
+      <TableCell>
+        {isEditing && isAssetManager ? (
+          <Input
+            type="number"
+            value={formData.recovery_value}
+            onChange={(e) => handleChange('recovery_value', e.target.value)}
+            placeholder="0"
+            className="w-24"
+          />
+        ) : (
+          <span className="text-sm">
+            {asset.recovery_value ? `₹${asset.recovery_value.toLocaleString()}` : 'N/A'}
+          </span>
+        )}
+      </TableCell>
+      
+      {/* Remarks */}
+      <TableCell>
+        {isEditing && isAssetManager ? (
+          <Input
+            value={formData.remarks}
+            onChange={(e) => handleChange('remarks', e.target.value)}
+            placeholder="Enter remarks"
+            className="w-32"
+          />
+        ) : (
+          <span className="text-sm">{asset.remarks || 'N/A'}</span>
+        )}
+      </TableCell>
+      
+      {/* Status */}
+      <TableCell>{getStatusBadge(asset.status)}</TableCell>
+      
+      {/* Actions */}
+      {isAssetManager && (
+        <TableCell className="text-right">
+          {isEditing ? (
+            <div className="flex gap-2">
+              <Button size="sm" onClick={handleSave}>
+                <CheckCircle className="h-4 w-4" />
+              </Button>
+              <Button size="sm" variant="outline" onClick={() => setIsEditing(false)}>
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
+          ) : (
+            <Button size="sm" variant="ghost" onClick={() => setIsEditing(true)}>
+              <FileText className="h-4 w-4" />
+            </Button>
+          )}
+        </TableCell>
+      )}
+    </TableRow>
+  );
 };
 
 export default NDCRequests;
