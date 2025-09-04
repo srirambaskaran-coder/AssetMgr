@@ -576,9 +576,20 @@ class RoutingLogicTester:
         )
         
         if success:
-            status = response.get('status')
-            assigned_to = response.get('assigned_to')
-            routing_reason = response.get('routing_reason')
+            # Find our edge case requisition in the list
+            requisition = None
+            for req in response:
+                if req.get('id') == edge_case_req_id:
+                    requisition = req
+                    break
+            
+            if not requisition:
+                print("❌ Could not find our edge case requisition in the list")
+                return False
+            
+            status = requisition.get('status')
+            assigned_to = requisition.get('assigned_to')
+            routing_reason = requisition.get('routing_reason')
             
             print(f"   Status: {status}")
             print(f"   Assigned to: {assigned_to}")
