@@ -273,11 +273,11 @@ class RoutingLogicTester:
             print("❌ Failed to approve requisition")
             return False
         
-        # Verify routing results
+        # Verify routing results by getting all requisitions and finding ours
         success, response = self.run_test(
-            "Verify Primary Routing Results",
+            "Get All Requisitions to Verify Primary Routing Results",
             "GET",
-            f"asset-requisitions/{self.test_data['requisition_id']}",
+            "asset-requisitions",
             200,
             user_role="Administrator"
         )
