@@ -693,13 +693,103 @@ const NDCRequestForm = ({ onSubmit, employees, managers, separationReasons }) =>
 };
 
 const AddReasonForm = ({ onSubmit }) => {
-  // This will be implemented next
-  return <div>Add Reason Form - To be implemented</div>;
+  const [reason, setReason] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!reason.trim()) {
+      toast.error('Please enter a separation reason');
+      return;
+    }
+
+    setLoading(true);
+    await onSubmit(reason.trim());
+    setLoading(false);
+    setReason('');
+  };
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-4">
+      <div>
+        <Label htmlFor="reason">Separation Reason *</Label>
+        <Input
+          id="reason"
+          value={reason}
+          onChange={(e) => setReason(e.target.value)}
+          placeholder="e.g., Performance Issues, Voluntary Resignation"
+          required
+        />
+      </div>
+
+      <div className="flex justify-end pt-4">
+        <Button type="submit" disabled={loading} className="bg-blue-600 hover:bg-blue-700">
+          {loading ? 'Adding...' : 'Add Reason'}
+        </Button>
+      </div>
+    </form>
+  );
 };
 
 const RevokeButton = ({ ndcId, onRevoke }) => {
-  // This will be implemented next
-  return <div>Revoke Button - To be implemented</div>;
+  const [isOpen, setIsOpen] = useState(false);
+  const [reason, setReason] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  const handleRevoke = async () => {
+    if (!reason.trim()) {
+      toast.error('Please provide a reason for revocation');
+      return;
+    }
+
+    setLoading(true);
+    await onRevoke(ndcId, reason.trim());
+    setLoading(false);
+    setIsOpen(false);
+    setReason('');
+  };
+
+  return (
+    <Dialog open={isOpen} onOpenChange={setIsOpen}>
+      <DialogTrigger asChild>
+        <Button variant="ghost" size="sm" className="text-red-600 hover:text-red-800">
+          <AlertCircle className="h-4 w-4" />
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="max-w-md">
+        <DialogHeader>
+          <DialogTitle>Revoke NDC Request</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-4">
+          <p className="text-sm text-gray-600">
+            Are you sure you want to revoke this NDC request? Please provide a reason.
+          </p>
+          <div>
+            <Label htmlFor="revoke_reason">Reason for Revocation *</Label>
+            <Input
+              id="revoke_reason"
+              value={reason}
+              onChange={(e) => setReason(e.target.value)}
+              placeholder="e.g., Employee decided not to resign"
+              required
+            />
+          </div>
+          <div className="flex justify-end gap-2 pt-4">
+            <Button variant="outline" onClick={() => setIsOpen(false)}>
+              Cancel
+            </Button>
+            <Button 
+              onClick={handleRevoke} 
+              disabled={loading}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              {loading ? 'Revoking...' : 'Revoke Request'}
+            </Button>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
 };
 
 const NDCAssetsView = ({ ndc, isAssetManager, onUpdate }) => {
