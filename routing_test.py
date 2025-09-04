@@ -471,10 +471,21 @@ class RoutingLogicTester:
         )
         
         if success:
-            status = response.get('status')
-            assigned_to = response.get('assigned_to')
-            assigned_to_name = response.get('assigned_to_name')
-            routing_reason = response.get('routing_reason')
+            # Find our secondary requisition in the list
+            requisition = None
+            for req in response:
+                if req.get('id') == self.test_data['secondary_requisition_id']:
+                    requisition = req
+                    break
+            
+            if not requisition:
+                print("❌ Could not find our secondary requisition in the list")
+                return False
+            
+            status = requisition.get('status')
+            assigned_to = requisition.get('assigned_to')
+            assigned_to_name = requisition.get('assigned_to_name')
+            routing_reason = requisition.get('routing_reason')
             
             print(f"   Status: {status}")
             print(f"   Assigned to: {assigned_to_name} ({assigned_to})")
