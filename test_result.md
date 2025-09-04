@@ -762,13 +762,14 @@ test_plan:
 test_plan:
   current_focus:
     - "NDC (No Dues Certificate) Request System for Employee Separation"
-  stuck_tasks: []
+  stuck_tasks:
+    - "NDC (No Dues Certificate) Request System for Employee Separation"
   test_all: false
-  test_priority: "high_first"
+  test_priority: "stuck_first"
 
 agent_communication:
-  - agent: "main"
-    message: "🔧 ASSET TYPE MANAGER ASSIGNMENT COMPLETION: Identified the missing piece in Asset Type Manager assignment feature. The AssetTypes component fetches assetManagers correctly but fails to pass them to AssetTypeForm component in both create and edit modals. Need to update lines 140 and 278-281 to pass assetManagers prop."
+    - agent: "main"
+      message: "Prioritizing completion of NDC system as requested by user. Investigating critical asset allocation detection failure in create_ndc_request function. Will run comprehensive backend testing to identify root causes of: 1) Asset allocation detection failure, 2) Employee access control bug, 3) Validation inconsistencies. User confirmed automated testing approach."
   - agent: "main"
     message: "✅ ASSET TYPE MANAGER ASSIGNMENT COMPLETED: Successfully implemented the missing Asset Manager assignment frontend integration. Fixed both create and edit forms to pass assetManagers prop. Added 'Assigned Asset Manager' column to table display with badges. Implemented pagination functionality. Asset Manager dropdown now properly displays available Asset Managers for selection. Ready for backend testing."
   - agent: "testing"
