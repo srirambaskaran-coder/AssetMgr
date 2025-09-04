@@ -24,7 +24,8 @@ import {
   Building,
   Menu,
   X,
-  MapPin
+  MapPin,
+  UserX
 } from 'lucide-react';
 
 const Navigation = () => {
