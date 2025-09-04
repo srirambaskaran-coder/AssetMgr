@@ -4144,6 +4144,87 @@ class AssetInventoryAPITester:
         
         return success
 
+    def test_ndc_access_control_fix(self):
+        """Test the specific NDC access control fix for Employee role"""
+        print(f"\n🔒 Testing NDC Access Control Fix")
+        
+        # Test Employee access to NDC requests (should be 403 Forbidden)
+        success, response = self.run_test(
+            "Employee Access NDC Requests (Should be 403)",
+            "GET",
+            "ndc-requests",
+            403,  # Expecting forbidden
+            user_role="Employee"
+        )
+        
+        if success:
+            print("   ✅ Employee correctly denied access to NDC requests (403 Forbidden)")
+            # Check if the error message is correct
+            if isinstance(response, dict) and "detail" in response:
+                expected_message = "Access denied. Insufficient permissions to view NDC requests."
+                if response["detail"] == expected_message:
+                    print(f"   ✅ Correct error message: '{response['detail']}'")
+                else:
+                    print(f"   ⚠️ Unexpected error message: '{response['detail']}'")
+        else:
+            print("   ❌ Employee access control fix failed - Employee should get 403 Forbidden")
+        
+        # Test that other roles still work correctly
+        authorized_roles = ["HR Manager", "Asset Manager", "Administrator"]
+        
+        for role in authorized_roles:
+            if role in self.tokens:
+                success, response = self.run_test(
+                    f"{role} Access NDC Requests (Should be 200)",
+                    "GET",
+                    "ndc-requests",
+                    200,  # Expecting success
+                    user_role=role
+                )
+                
+                if success:
+                    print(f"   ✅ {role} can still access NDC requests (200 OK)")
+                    if isinstance(response, list):
+                        print(f"   📊 {role} can see {len(response)} NDC requests")
+                else:
+                    print(f"   ❌ {role} access failed - should have 200 OK access")
+        
+        return success
+
+    def run_ndc_access_control_test(self):
+        """Run focused NDC access control test"""
+        print("🎯 Starting NDC Access Control Fix Verification")
+        print("=" * 60)
+        
+        # Test login for required roles
+        login_success = True
+        for email, password, role in [
+            ("employee@company.com", "password123", "Employee"),
+            ("hr@company.com", "password123", "HR Manager"),
+            ("assetmanager@company.com", "password123", "Asset Manager"),
+            ("admin@company.com", "password123", "Administrator")
+        ]:
+            if not self.test_login(email, password, role):
+                login_success = False
+        
+        if not login_success:
+            print("❌ Some logins failed. Cannot proceed with NDC access control test.")
+            return False
+        
+        # Run the specific NDC access control test
+        test_result = self.test_ndc_access_control_fix()
+        
+        # Print final results
+        print(f"\n" + "=" * 60)
+        print(f"🎯 NDC ACCESS CONTROL TEST COMPLETED")
+        print(f"📊 Tests Run: {self.tests_run}")
+        print(f"✅ Tests Passed: {self.tests_passed}")
+        print(f"❌ Tests Failed: {self.tests_run - self.tests_passed}")
+        print(f"📈 Success Rate: {(self.tests_passed/self.tests_run)*100:.1f}%")
+        print(f"=" * 60)
+        
+        return test_result
+
 def main():
     print("🚀 Starting Asset Inventory Management System API Tests")
     print("=" * 60)
@@ -4263,4 +4344,11 @@ def main():
         return 1
 
 if __name__ == "__main__":
-    sys.exit(main())
+    # Check if we want to run the focused NDC test
+    import sys
+    if len(sys.argv) > 1 and sys.argv[1] == "ndc":
+        tester = AssetInventoryAPITester()
+        result = tester.run_ndc_access_control_test()
+        sys.exit(0 if result else 1)
+    else:
+        sys.exit(main())
