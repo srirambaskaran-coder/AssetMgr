@@ -3881,6 +3881,11 @@ def main():
     print("-" * 50)
     tester.test_location_based_asset_management_system()
     
+    # Test NDC (NO DUES CERTIFICATE) SYSTEM
+    print("\n🏥 NDC (NO DUES CERTIFICATE) SYSTEM TESTS")
+    print("-" * 45)
+    tester.test_ndc_comprehensive_system()
+    
     # Print final results
     print("\n" + "=" * 60)
     print(f"📊 FINAL RESULTS")
