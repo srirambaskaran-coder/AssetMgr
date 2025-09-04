@@ -1643,6 +1643,10 @@ async def manager_action_on_requisition(
     # Update the requisition
     await db.asset_requisitions.update_one({"id": requisition_id}, {"$set": update_data})
     
+    # Enhanced Asset Allocation Logic - Route approved requests immediately
+    if action_request.action.lower() == "approve":
+        await perform_asset_allocation_routing(requisition_id, requisition)
+    
     # Get updated requisition to return
     updated_requisition = await db.asset_requisitions.find_one({"id": requisition_id})
     
