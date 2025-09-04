@@ -741,6 +741,47 @@ class EmailService:
                 </div>
             </body>
             </html>
+            """,
+            "ndc_created": """
+            <html>
+            <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
+                <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
+                    <h2 style="color: #dc2626;">NDC Request Created - Asset Recovery Required</h2>
+                    <p>Dear {{asset_manager_name}},</p>
+                    <p>A No Dues Certificate (NDC) request has been created for an employee separation. Your action is required for asset recovery:</p>
+                    <div style="background-color: #fef2f2; padding: 15px; border-radius: 5px; margin: 20px 0;">
+                        <strong>Employee Details:</strong><br>
+                        Name: {{employee_name}}<br>
+                        Designation: {{employee_designation}}<br>
+                        Last Working Date: {{last_working_date}}<br>
+                        Separation Reason: {{separation_reason}}<br>
+                        Assets to Recover: {{asset_count}} items
+                    </div>
+                    <p>Please log in to the Asset Management System to review and process the asset recovery for this employee.</p>
+                    <p>Best regards,<br>Asset Management System</p>
+                </div>
+            </body>
+            </html>
+            """,
+            "ndc_completed": """
+            <html>
+            <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
+                <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
+                    <h2 style="color: #16a34a;">NDC Request Completed</h2>
+                    <p>Dear {{employee_name}},</p>
+                    <p>Your No Dues Certificate (NDC) request has been completed. All asset recovery processes have been finalized:</p>
+                    <div style="background-color: #f0fdf4; padding: 15px; border-radius: 5px; margin: 20px 0;">
+                        <strong>Recovery Summary:</strong><br>
+                        Total Assets: {{total_assets}}<br>
+                        Assets Recovered: {{recovered_assets}}<br>
+                        Processed By: {{asset_manager_name}}<br>
+                        HR Manager: {{hr_manager_name}}
+                    </div>
+                    <p>Your separation process regarding asset recovery has been completed successfully.</p>
+                    <p>Best regards,<br>Asset Management System</p>
+                </div>
+            </body>
+            </html>
             """
         }
         
