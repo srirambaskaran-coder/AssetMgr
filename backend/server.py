@@ -214,6 +214,13 @@ class AssetRequisition(BaseModel):
     allocated_asset_id: Optional[str] = None
     allocated_asset_code: Optional[str] = None
     comments: Optional[str] = None
+    
+    # Enhanced Asset Allocation Routing fields
+    assigned_to: Optional[str] = None  # Asset Manager/Administrator ID assigned for allocation
+    assigned_to_name: Optional[str] = None  # Asset Manager/Administrator name assigned for allocation
+    assigned_date: Optional[datetime] = None  # When the routing assignment was made
+    routing_reason: Optional[str] = None  # Reason for the routing decision
+    
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 class AssetRequisitionCreate(BaseModel):
