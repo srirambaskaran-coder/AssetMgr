@@ -283,6 +283,7 @@ const AssetRequisitions = () => {
                   <SelectItem value="Manager Approved">Manager Approved</SelectItem>
                   <SelectItem value="HR Approved">HR Approved</SelectItem>
                   <SelectItem value="Rejected">Rejected</SelectItem>
+                  <SelectItem value="Assigned for Allocation">Assigned for Allocation</SelectItem>
                   <SelectItem value="Allocated">Allocated</SelectItem>
                 </SelectContent>
               </Select>
