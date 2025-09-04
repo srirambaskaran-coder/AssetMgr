@@ -386,12 +386,7 @@ metadata:
 
 test_plan:
   current_focus:
-    - "Currency Symbol Changes - $ to ₹ Replacement"
-    - "Pagination Implementation - Asset Definitions"
-    - "Pagination Implementation - Asset Requisitions"
-    - "Pagination Implementation - User Management"
-    - "Pagination Implementation - My Assets"
-    - "DataPagination Component Functionality"
+    - "Asset Type Manager Assignment - Frontend Form Integration"
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
