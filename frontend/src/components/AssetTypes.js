@@ -140,7 +140,7 @@ const AssetTypes = () => {
             <DialogHeader>
               <DialogTitle>Create New Asset Type</DialogTitle>
             </DialogHeader>
-            <AssetTypeForm onSubmit={handleCreateAssetType} assetManagers={assetManagers} />
+            <AssetTypeForm onSubmit={handleCreateAssetType} />
           </DialogContent>
         </Dialog>
       </div>
