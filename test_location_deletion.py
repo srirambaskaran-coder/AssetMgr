@@ -130,6 +130,38 @@ class LocationDeletionTester:
             print(f"    Status: {location['status']}")
             print(f"    ID: {location['id']}")
         
+        # Step 3.5: Check and remove asset manager assignments for these locations
+        print("\nStep 3.5: Checking and removing asset manager assignments...")
+        success, am_assignments = self.run_test(
+            "Get Asset Manager Location Assignments",
+            "GET",
+            "asset-manager-locations",
+            200
+        )
+        
+        if success:
+            target_location_ids = [loc['id'] for loc in target_locations.values()]
+            assignments_to_remove = []
+            
+            for assignment in am_assignments:
+                if assignment.get('location_id') in target_location_ids:
+                    assignments_to_remove.append(assignment)
+                    print(f"  Found assignment: {assignment.get('asset_manager_name')} -> {assignment.get('location_name')}")
+            
+            # Remove assignments
+            for assignment in assignments_to_remove:
+                success, response = self.run_test(
+                    f"Remove Asset Manager Assignment {assignment['id']}",
+                    "DELETE",
+                    f"asset-manager-locations/{assignment['id']}",
+                    200
+                )
+                
+                if success:
+                    print(f"  ✅ Removed assignment: {assignment.get('asset_manager_name')} from {assignment.get('location_name')}")
+                else:
+                    print(f"  ❌ Failed to remove assignment: {assignment.get('asset_manager_name')} from {assignment.get('location_name')}")
+        
         # Step 4: Delete each found location
         print("\nStep 4: Deleting target locations...")
         deletion_results = {}
