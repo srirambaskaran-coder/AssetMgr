@@ -134,7 +134,7 @@ const AssetRequisitions = () => {
       toast.success('Asset requisition created successfully');
     } catch (error) {
       console.error('Error creating asset requisition:', error);
-      toast.error(error.response?.data?.detail || 'Failed to create asset requisition');
+      toast.error(getErrorMessage(error));
     }
   };
 
