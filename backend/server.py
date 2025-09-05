@@ -108,8 +108,6 @@ class AssetType(BaseModel):
     asset_life: Optional[int] = None  # in years, required if depreciation_applicable is True
     to_be_recovered_on_separation: bool = True
     status: ActiveStatus = ActiveStatus.ACTIVE
-    assigned_asset_manager_id: Optional[str] = None  # User ID of assigned Asset Manager
-    assigned_asset_manager_name: Optional[str] = None  # Display name of assigned Asset Manager
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     created_by: Optional[str] = None
 
@@ -120,7 +118,6 @@ class AssetTypeCreate(BaseModel):
     asset_life: Optional[int] = None
     to_be_recovered_on_separation: bool = True
     status: ActiveStatus = ActiveStatus.ACTIVE
-    assigned_asset_manager_id: Optional[str] = None
 
 class AssetTypeUpdate(BaseModel):
     code: Optional[str] = None
@@ -129,7 +126,6 @@ class AssetTypeUpdate(BaseModel):
     asset_life: Optional[int] = None
     to_be_recovered_on_separation: Optional[bool] = None
     status: Optional[ActiveStatus] = None
-    assigned_asset_manager_id: Optional[str] = None
 
 class AssetDefinition(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
