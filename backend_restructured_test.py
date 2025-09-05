@@ -340,7 +340,7 @@ class RestructuredAssetManagementTester:
         # Test 4: Validation - Invalid Location ID
         invalid_location_def = {
             "asset_type_id": self.test_data['asset_type_id'],
-            "asset_code": "LAP004_TEST",
+            "asset_code": f"LAP004_TEST_{timestamp}",
             "asset_description": "Test Invalid Location",
             "asset_details": "Test with invalid Location ID",
             "asset_value": 40000.0,
