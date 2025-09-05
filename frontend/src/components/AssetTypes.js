@@ -25,7 +25,6 @@ const API = `${BACKEND_URL}/api`;
 
 const AssetTypes = () => {
   const [assetTypes, setAssetTypes] = useState([]);
-  const [assetManagers, setAssetManagers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
@@ -39,7 +38,6 @@ const AssetTypes = () => {
 
   useEffect(() => {
     fetchAssetTypes();
-    fetchAssetManagers();
   }, []);
 
   const fetchAssetTypes = async () => {
