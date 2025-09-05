@@ -625,8 +625,144 @@ const Settings = () => {
             </form>
           </CardContent>
         </Card>
+
+        {/* Asset System Reset - Administrator Only */}
+        <Card className="border-red-200">
+          <CardHeader>
+            <div className="flex items-center">
+              <AlertCircle className="mr-2 h-5 w-5 text-red-600" />
+              <CardTitle className="text-red-700">Danger Zone - Asset System Reset</CardTitle>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <Alert className="border-red-200 bg-red-50">
+              <AlertCircle className="h-4 w-4 text-red-600" />
+              <AlertDescription className="text-red-800">
+                <strong>WARNING:</strong> This action will permanently delete ALL asset management data including:
+                <ul className="mt-2 text-sm list-disc list-inside space-y-1">
+                  <li>All Asset Types and Asset Definitions</li>
+                  <li>All Asset Requisitions and Allocations</li>
+                  <li>All Asset Retrievals and NDC Requests</li>
+                  <li>All user asset assignments and history</li>
+                </ul>
+                <strong>This action cannot be undone!</strong>
+              </AlertDescription>
+            </Alert>
+
+            <div className="flex justify-end pt-4">
+              <AssetSystemResetButton />
+            </div>
+          </CardContent>
+        </Card>
       )}
     </div>
+  );
+};
+
+// Asset System Reset Button Component
+const AssetSystemResetButton = () => {
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+  const [confirmationText, setConfirmationText] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  const handleResetSystem = async () => {
+    if (confirmationText !== 'DELETE ALL ASSETS') {
+      toast.error('Please type "DELETE ALL ASSETS" to confirm');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const response = await axios.post(`${API}/admin/reset-asset-system`, {}, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('session_token')}`
+        }
+      });
+
+      toast.success('Asset system has been completely reset');
+      console.log('Reset Summary:', response.data.deletion_summary);
+      
+      // Reset form
+      setShowConfirmDialog(false);
+      setConfirmationText('');
+      
+      // Optionally refresh the page to reflect changes
+      setTimeout(() => {
+        window.location.reload();
+      }, 2000);
+
+    } catch (error) {
+      console.error('Error resetting asset system:', error);
+      if (error.response?.status === 403) {
+        toast.error('Access denied. Administrator role required.');
+      } else {
+        toast.error(error.response?.data?.detail || 'Failed to reset asset system');
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <>
+      <Button
+        variant="destructive"
+        onClick={() => setShowConfirmDialog(true)}
+        className="bg-red-600 hover:bg-red-700"
+      >
+        <AlertCircle className="mr-2 h-4 w-4" />
+        Reset Asset System
+      </Button>
+
+      {showConfirmDialog && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+            <div className="flex items-center mb-4">
+              <AlertCircle className="mr-2 h-6 w-6 text-red-600" />
+              <h3 className="text-lg font-semibold text-red-700">Confirm Asset System Reset</h3>
+            </div>
+            
+            <div className="mb-4">
+              <p className="text-sm text-gray-600 mb-4">
+                This will permanently delete ALL asset management data. This action cannot be undone.
+              </p>
+              
+              <p className="text-sm font-medium text-red-700 mb-2">
+                Type "DELETE ALL ASSETS" to confirm:
+              </p>
+              
+              <Input
+                value={confirmationText}
+                onChange={(e) => setConfirmationText(e.target.value)}
+                placeholder="DELETE ALL ASSETS"
+                className="border-red-300 focus:border-red-500"
+              />
+            </div>
+
+            <div className="flex justify-end gap-2">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setShowConfirmDialog(false);
+                  setConfirmationText('');
+                }}
+                disabled={loading}
+              >
+                Cancel
+              </Button>
+              <Button
+                variant="destructive"
+                onClick={handleResetSystem}
+                disabled={loading || confirmationText !== 'DELETE ALL ASSETS'}
+                className="bg-red-600 hover:bg-red-700"
+              >
+                {loading ? 'Resetting...' : 'Reset Asset System'}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
   );
 };
 
