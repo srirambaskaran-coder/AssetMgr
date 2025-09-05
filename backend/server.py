@@ -1379,6 +1379,35 @@ async def update_asset_definition(
             raise HTTPException(status_code=400, detail="Asset type not found")
         update_data["asset_type_name"] = asset_type["name"]
     
+    # If Asset Manager is being changed, validate and update name
+    if "assigned_asset_manager_id" in update_data:
+        if update_data["assigned_asset_manager_id"]:
+            asset_manager = await db.users.find_one({
+                "id": update_data["assigned_asset_manager_id"],
+                "roles": {"$in": [UserRole.ASSET_MANAGER]},
+                "is_active": True
+            })
+            if not asset_manager:
+                raise HTTPException(status_code=400, detail="Asset Manager not found or inactive")
+            update_data["assigned_asset_manager_name"] = asset_manager["name"]
+        else:
+            # Clear Asset Manager if set to None
+            update_data["assigned_asset_manager_name"] = None
+    
+    # If Location is being changed, validate and update name
+    if "location_id" in update_data:
+        if update_data["location_id"]:
+            location = await db.locations.find_one({
+                "id": update_data["location_id"],
+                "status": ActiveStatus.ACTIVE
+            })
+            if not location:
+                raise HTTPException(status_code=400, detail="Location not found or inactive")
+            update_data["location_name"] = location["name"]
+        else:
+            # Clear Location if set to None
+            update_data["location_name"] = None
+    
     if update_data:
         await db.asset_definitions.update_one({"id": asset_def_id}, {"$set": update_data})
         updated = await db.asset_definitions.find_one({"id": asset_def_id})
