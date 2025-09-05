@@ -140,6 +140,20 @@ const AssetAllocations = () => {
     }
   };
 
+  const handleAllocateFromRequisition = (requisition) => {
+    // Pre-populate the allocation form with requisition data
+    setFormData({
+      asset_type_id: requisition.asset_type_id,
+      asset_definition_id: '', // This will be selected by the Asset Manager
+      request_type: requisition.request_type,
+      requested_for: requisition.requested_for,
+      remarks: `Allocated from requisition ${requisition.id}`,
+      dispatch_details: '',
+      requisition_id: requisition.id // Add this to link the allocation to the requisition
+    });
+    setIsCreateModalOpen(true);
+  };
+
   // Filter allocations based on search term and filters
   const filteredAllocations = allocations.filter(allocation => {
     const matchesSearch = 
