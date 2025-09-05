@@ -148,6 +148,10 @@ class AssetDefinition(BaseModel):
     acknowledged: bool = False  # Whether employee has acknowledged receipt
     acknowledgment_date: Optional[datetime] = None  # When acknowledgment was made
     acknowledgment_notes: Optional[str] = None  # Employee notes during acknowledgment
+    assigned_asset_manager_id: Optional[str] = None  # Asset Manager assigned to this asset
+    assigned_asset_manager_name: Optional[str] = None  # Asset Manager name for display
+    location_id: Optional[str] = None  # Location where asset is deployed
+    location_name: Optional[str] = None  # Location name for display
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     created_by: Optional[str] = None
 
