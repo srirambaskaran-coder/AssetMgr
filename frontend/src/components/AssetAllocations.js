@@ -485,6 +485,21 @@ const AssetAllocationForm = ({ assetTypes, assetDefinitions, users, onSubmit, in
   const [loading, setLoading] = useState(false);
   const [filteredAssetDefinitions, setFilteredAssetDefinitions] = useState([]);
 
+  // Update form data when initialData changes
+  useEffect(() => {
+    if (initialData) {
+      setFormData({
+        asset_type_id: initialData.asset_type_id || '',
+        asset_definition_id: initialData.asset_definition_id || '',
+        request_type: initialData.request_type || 'New Request',
+        requested_for: initialData.requested_for || '',
+        remarks: initialData.remarks || '',
+        dispatch_details: initialData.dispatch_details || '',
+        requisition_id: initialData.requisition_id || null
+      });
+    }
+  }, [initialData]);
+
   // Filter asset definitions based on selected asset type
   useEffect(() => {
     if (formData.asset_type_id) {
@@ -493,9 +508,11 @@ const AssetAllocationForm = ({ assetTypes, assetDefinitions, users, onSubmit, in
     } else {
       setFilteredAssetDefinitions([]);
     }
-    // Reset asset definition selection when asset type changes
-    setFormData(prev => ({ ...prev, asset_definition_id: '' }));
-  }, [formData.asset_type_id, assetDefinitions]);
+    // Only reset asset definition selection when asset type changes if it's not from initialData
+    if (!initialData?.asset_definition_id) {
+      setFormData(prev => ({ ...prev, asset_definition_id: '' }));
+    }
+  }, [formData.asset_type_id, assetDefinitions, initialData]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
