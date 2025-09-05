@@ -2169,6 +2169,16 @@ async def update_user(
     
     update_data = user_update.dict(exclude_unset=True)
     
+    # Validate email uniqueness if provided
+    if "email" in update_data and update_data["email"]:
+        # Check if email already exists (excluding current user)
+        existing_email_user = await db.users.find_one({
+            "email": update_data["email"],
+            "id": {"$ne": user_id}  # Exclude current user from check
+        })
+        if existing_email_user:
+            raise HTTPException(status_code=400, detail="Email already exists")
+    
     # Handle password update if provided
     if "password" in update_data and update_data["password"]:
         # Hash the new password
