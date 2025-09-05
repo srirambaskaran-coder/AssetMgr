@@ -5550,27 +5550,44 @@ class AssetInventoryAPITester:
         
         # Create asset type for testing if needed
         if 'asset_type_id' not in self.test_data:
-            asset_type_data = {
-                "code": "EMAIL_TEST_LAPTOP",
-                "name": "Email Test Laptop",
-                "depreciation_applicable": True,
-                "asset_life": 3,
-                "to_be_recovered_on_separation": True,
-                "status": "Active"
-            }
-            
+            # First try to get existing asset types
             success, response = self.run_test(
-                "Create Asset Type for Email Testing",
-                "POST",
+                "Get Existing Asset Types",
+                "GET",
                 "asset-types",
                 200,
-                data=asset_type_data,
                 user_role="Administrator"
             )
             
-            if success:
-                self.test_data['asset_type_id'] = response['id']
-                print(f"   Created asset type for testing: {response['id']}")
+            if success and response:
+                # Use the first existing asset type
+                self.test_data['asset_type_id'] = response[0]['id']
+                print(f"   Using existing asset type for testing: {response[0]['id']}")
+            else:
+                # Create new asset type with unique code
+                from datetime import datetime
+                unique_code = f"EMAIL_TEST_{datetime.now().strftime('%H%M%S')}"
+                asset_type_data = {
+                    "code": unique_code,
+                    "name": "Email Test Laptop",
+                    "depreciation_applicable": True,
+                    "asset_life": 3,
+                    "to_be_recovered_on_separation": True,
+                    "status": "Active"
+                }
+                
+                success, response = self.run_test(
+                    "Create Asset Type for Email Testing",
+                    "POST",
+                    "asset-types",
+                    200,
+                    data=asset_type_data,
+                    user_role="Administrator"
+                )
+                
+                if success:
+                    self.test_data['asset_type_id'] = response['id']
+                    print(f"   Created asset type for testing: {response['id']}")
         
         # Run the email configuration workflow test
         test_result = self.test_email_configuration_workflow()
