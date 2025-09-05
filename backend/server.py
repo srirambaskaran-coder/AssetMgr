@@ -364,6 +364,7 @@ class UserCreate(BaseModel):
 
 class UserUpdate(BaseModel):
     name: Optional[str] = None
+    email: Optional[str] = None
     roles: Optional[List[UserRole]] = None
     designation: Optional[str] = None
     date_of_joining: Optional[datetime] = None
