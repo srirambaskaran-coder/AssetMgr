@@ -5240,6 +5240,11 @@ def main():
     print("-" * 45)
     tester.test_ndc_comprehensive_system()
     
+    # Test SPECIFIC LOCATION DELETION TASK
+    print("\n🗑️ SPECIFIC LOCATION DELETION TASK")
+    print("-" * 35)
+    tester.test_delete_specific_test_locations()
+    
     # Print final results
     print("\n" + "=" * 60)
     print(f"📊 FINAL RESULTS")
