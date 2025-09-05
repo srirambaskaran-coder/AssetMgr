@@ -317,7 +317,7 @@ class RestructuredAssetManagementTester:
         # Test 3: Validation - Invalid Asset Manager ID
         invalid_asset_def = {
             "asset_type_id": self.test_data['asset_type_id'],
-            "asset_code": "LAP003_TEST",
+            "asset_code": f"LAP003_TEST_{timestamp}",
             "asset_description": "Test Invalid Asset Manager",
             "asset_details": "Test with invalid Asset Manager ID",
             "asset_value": 40000.0,
