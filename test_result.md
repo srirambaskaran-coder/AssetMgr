@@ -431,7 +431,7 @@ metadata:
 
 test_plan:
   current_focus:
-    - "Restructured Asset Management System Testing Completed"
+    - "Specific Test Location Deletion Task Completed Successfully"
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
