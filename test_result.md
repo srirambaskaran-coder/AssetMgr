@@ -436,6 +436,22 @@ test_plan:
   test_all: false
   test_priority: "high_first"
 
+backend:
+  - task: "Specific Test Location Deletion Task"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: "NA"
+        agent: "testing"
+        comment: "Task to delete specific test locations by codes: TEST124613, TEST124810, TEST124853. Requires authentication as Administrator, finding locations by code, removing asset manager assignments, and deleting locations."
+      - working: true
+        agent: "testing"
+        comment: "✅ SPECIFIC LOCATION DELETION TASK COMPLETED SUCCESSFULLY: Comprehensive testing completed with 100% success rate (10/10 tests passed). ✅ AUTHENTICATION: Administrator login successful with proper session token. ✅ LOCATION DISCOVERY: Found all 3 target locations (TEST124613, TEST124810, TEST124853) in system with complete details (Name: Test Routing Office, Country: USA, Status: Active). ✅ ASSET MANAGER ASSIGNMENT REMOVAL: Successfully identified and removed 3 asset manager assignments that were blocking deletion (Routing Test Asset Manager assignments to all target locations). ✅ LOCATION DELETION: Successfully deleted all 3 target locations using DELETE /api/locations/{location_id} with 200 status responses. ✅ VERIFICATION: Confirmed all target locations removed from system - remaining locations reduced from 6 to 3. ✅ COMPREHENSIVE WORKFLOW: Complete end-to-end workflow executed: Authentication → Discovery → Dependency Removal → Deletion → Verification. All specified location codes (TEST124613, TEST124810, TEST124853) successfully deleted from the system."
+
   - task: "Asset Acknowledgment API - POST /api/asset-definitions/{id}/acknowledge"
     implemented: true
     working: true
