@@ -5737,7 +5737,189 @@ def main():
         print(f"⚠️  {tester.tests_run - tester.tests_passed} tests failed")
         return 1
 
-    def test_asset_manager_pending_requisitions(self):
+def run_asset_allocation_system_test():
+    """Run focused Asset Allocation System test"""
+    tester = AssetInventoryAPITester()
+    
+    # Test 1: Asset Manager Pending Requisitions Workflow
+    print(f"\n{'='*50}")
+    print("TEST 1: ASSET MANAGER PENDING REQUISITIONS WORKFLOW")
+    print(f"{'='*50}")
+    
+    # Step 1: Login as Asset Manager
+    print("\n📋 Step 1: Asset Manager Authentication")
+    if not tester.test_login("assetmanager@company.com", "password123", "Asset Manager"):
+        print("❌ CRITICAL: Asset Manager login failed - cannot proceed with tests")
+        return False
+    
+    # Step 2: Get all asset requisitions to check for "Assigned for Allocation" status
+    print("\n📋 Step 2: Fetch Asset Requisitions")
+    success, response = tester.run_test(
+        "Get All Asset Requisitions (Asset Manager)",
+        "GET",
+        "asset-requisitions",
+        200,
+        user_role="Asset Manager"
+    )
+    
+    if not success:
+        print("❌ CRITICAL: Failed to fetch asset requisitions")
+        return False
+    
+    print(f"   Found {len(response)} total requisitions")
+    
+    # Filter for "Assigned for Allocation" status
+    assigned_requisitions = [req for req in response if req.get('status') == 'Assigned for Allocation']
+    print(f"   Found {len(assigned_requisitions)} requisitions with 'Assigned for Allocation' status")
+    
+    # Step 3: Verify requisitions are assigned to current Asset Manager
+    asset_manager_id = tester.users.get("Asset Manager", {}).get("id")
+    if not asset_manager_id:
+        print("❌ CRITICAL: Asset Manager ID not found")
+        return False
+    
+    print(f"\n📋 Step 3: Verify Assignment to Current Asset Manager (ID: {asset_manager_id[:8]}...)")
+    assigned_to_current_manager = []
+    
+    for req in assigned_requisitions:
+        assigned_to = req.get('assigned_to')
+        assigned_to_name = req.get('assigned_to_name', 'Unknown')
+        routing_reason = req.get('routing_reason', 'No reason provided')
+        
+        print(f"   Requisition {req['id'][:8]}...")
+        print(f"     Status: {req.get('status')}")
+        print(f"     Assigned To: {assigned_to_name} ({assigned_to[:8] if assigned_to else 'None'}...)")
+        print(f"     Routing Reason: {routing_reason}")
+        
+        if assigned_to == asset_manager_id:
+            assigned_to_current_manager.append(req)
+            print(f"     ✅ Correctly assigned to current Asset Manager")
+        else:
+            print(f"     ⚠️ Assigned to different Asset Manager")
+    
+    print(f"\n   Summary: {len(assigned_to_current_manager)} requisitions assigned to current Asset Manager")
+    
+    # Step 4: Test asset allocation creation from pending requisitions
+    allocation_success = False
+    if assigned_to_current_manager:
+        print(f"\n📋 Step 4: Test Asset Allocation Creation")
+        
+        # Get available assets for allocation
+        success, assets_response = tester.run_test(
+            "Get Available Asset Definitions",
+            "GET",
+            "asset-definitions",
+            200,
+            user_role="Asset Manager"
+        )
+        
+        if success:
+            available_assets = [asset for asset in assets_response if asset.get('status') == 'Available']
+            print(f"   Found {len(available_assets)} available assets for allocation")
+            
+            if available_assets and assigned_to_current_manager:
+                # Test allocation creation
+                test_requisition = assigned_to_current_manager[0]
+                test_asset = available_assets[0]
+                
+                from datetime import datetime
+                allocation_data = {
+                    "requisition_id": test_requisition['id'],
+                    "asset_definition_id": test_asset['id'],
+                    "remarks": "Test allocation from pending requisition",
+                    "reference_id": f"REF-{datetime.now().strftime('%Y%m%d%H%M%S')}",
+                    "dispatch_details": "Test dispatch via automated testing"
+                }
+                
+                success, allocation_response = tester.run_test(
+                    "Create Asset Allocation from Pending Requisition",
+                    "POST",
+                    "asset-allocations",
+                    200,
+                    data=allocation_data,
+                    user_role="Asset Manager"
+                )
+                
+                if success:
+                    print(f"   ✅ Successfully created allocation: {allocation_response['id'][:8]}...")
+                    print(f"   Allocation Status: {allocation_response.get('status')}")
+                    print(f"   Asset Code: {allocation_response.get('asset_definition_code')}")
+                    allocation_success = True
+                    
+                    # Step 5: Verify status transitions
+                    print(f"\n📋 Step 5: Verify Status Transitions")
+                    
+                    # Check if requisition status changed
+                    success, updated_reqs = tester.run_test(
+                        "Verify Requisition Status Update",
+                        "GET",
+                        "asset-requisitions",
+                        200,
+                        user_role="Asset Manager"
+                    )
+                    
+                    if success:
+                        updated_req = next((req for req in updated_reqs if req['id'] == test_requisition['id']), None)
+                        if updated_req:
+                            new_status = updated_req.get('status')
+                            print(f"   Requisition status changed from 'Assigned for Allocation' to '{new_status}'")
+                            if new_status == 'Allocated':
+                                print(f"   ✅ Status transition successful")
+                            else:
+                                print(f"   ⚠️ Unexpected status: {new_status}")
+                    
+                    # Check if asset status changed
+                    success, updated_assets = tester.run_test(
+                        "Verify Asset Status Update",
+                        "GET",
+                        "asset-definitions",
+                        200,
+                        user_role="Asset Manager"
+                    )
+                    
+                    if success:
+                        updated_asset = next((asset for asset in updated_assets if asset['id'] == test_asset['id']), None)
+                        if updated_asset:
+                            new_asset_status = updated_asset.get('status')
+                            allocated_to = updated_asset.get('allocated_to_name', 'Unknown')
+                            print(f"   Asset status changed from 'Available' to '{new_asset_status}'")
+                            print(f"   Asset allocated to: {allocated_to}")
+                            if new_asset_status == 'Allocated':
+                                print(f"   ✅ Asset status transition successful")
+                            else:
+                                print(f"   ⚠️ Unexpected asset status: {new_asset_status}")
+                else:
+                    print("   ❌ Failed to create asset allocation")
+            else:
+                print("   ⚠️ No available assets or pending requisitions for allocation test")
+        else:
+            print("   ❌ Failed to fetch available assets")
+    else:
+        print("   ⚠️ No requisitions assigned to current Asset Manager for allocation testing")
+    
+    # Summary
+    print(f"\n{'='*50}")
+    print("ASSET ALLOCATION SYSTEM TEST SUMMARY")
+    print(f"{'='*50}")
+    print(f"Total Tests Run: {tester.tests_run}")
+    print(f"Tests Passed: {tester.tests_passed}")
+    print(f"Tests Failed: {tester.tests_run - tester.tests_passed}")
+    print(f"Success Rate: {(tester.tests_passed/tester.tests_run*100):.1f}%" if tester.tests_run > 0 else "No tests run")
+    
+    # Determine overall success
+    has_pending_requisitions = len(assigned_to_current_manager) > 0
+    
+    if has_pending_requisitions and allocation_success:
+        print("🎉 ALL ASSET ALLOCATION SYSTEM TESTS PASSED!")
+        return True
+    elif has_pending_requisitions:
+        print("⚠️ Found pending requisitions but allocation test failed")
+        return False
+    else:
+        print("⚠️ No pending requisitions found for current Asset Manager")
+        return False
+
+def test_asset_manager_pending_requisitions(self):
         """Test Asset Manager pending requisitions workflow - MAIN FOCUS"""
         print(f"\n🎯 Testing Asset Manager Pending Requisitions Workflow")
         
