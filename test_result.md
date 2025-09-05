@@ -891,7 +891,9 @@ agent_communication:
 
 test_plan:
   current_focus:
-    - "Enhanced Asset Allocation Logic with Location-Based Routing"
+    - "Asset Type CRUD (Updated - No Asset Manager Fields)"
+    - "Asset Definition CRUD (Enhanced - With Asset Manager & Location)"
+    - "Enhanced Asset Allocation Routing (Asset Definition-based)"
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
