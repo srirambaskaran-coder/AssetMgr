@@ -113,7 +113,7 @@ class RestructuredAssetManagementTester:
         
         # Test 2: Try to create Asset Type WITH Asset Manager fields (should be ignored)
         asset_type_with_manager = {
-            "code": "MOBILE_TEST",
+            "code": f"MOBILE_TEST_{timestamp}",
             "name": "Test Mobile Devices",
             "depreciation_applicable": True,
             "asset_life": 2,
