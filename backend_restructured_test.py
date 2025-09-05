@@ -282,7 +282,7 @@ class RestructuredAssetManagementTester:
         # Test 2: Create Asset Definition WITHOUT Asset Manager and Location (should work)
         asset_def_no_assignments = {
             "asset_type_id": self.test_data['asset_type_id'],
-            "asset_code": "LAP002_TEST",
+            "asset_code": f"LAP002_TEST_{timestamp}",
             "asset_description": "Test Dell Laptop No Assignments",
             "asset_details": "Dell Inspiron 15 3000 Series - No Assignments",
             "asset_value": 45000.0,
