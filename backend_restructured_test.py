@@ -79,8 +79,10 @@ class RestructuredAssetManagementTester:
         print(f"\n📋 PRIORITY 1: Testing Asset Type CRUD (Restructured - No Asset Manager Fields)")
         
         # Test 1: Create Asset Type WITHOUT Asset Manager fields (should work)
+        import time
+        timestamp = str(int(time.time()))
         asset_type_data = {
-            "code": "LAPTOP_TEST",
+            "code": f"LAPTOP_TEST_{timestamp}",
             "name": "Test Laptop Computers",
             "depreciation_applicable": True,
             "asset_life": 3,
