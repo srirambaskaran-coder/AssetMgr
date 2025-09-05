@@ -832,6 +832,18 @@ agent_communication:
         agent: "main"
         comment: "IMPLEMENTED: Enhanced Asset Allocation Logic with immediate routing upon Manager approval. When Manager approves asset requisition, system now: 1) Routes to Asset Manager assigned to both asset type AND employee location, 2) Falls back to Administrator assigned to employee location, 3) Final fallback to any Administrator. Added new RequisitionStatus.ASSIGNED_FOR_ALLOCATION status. Updated requisitions with assigned_to, assigned_to_name, routing_reason fields. Added 'request_routed' email template for notifications. Ready for backend testing."
 
+  - task: "Asset System Reset Endpoint - POST /api/admin/reset-asset-system"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "✅ ASSET SYSTEM RESET ENDPOINT FULLY WORKING: Comprehensive testing completed with 100% success rate (11/11 tests passed). ✅ ACCESS CONTROL VERIFIED: Administrator role has access (200 status), all other roles correctly denied (403 status) - Employee, Manager, HR Manager, Asset Manager all properly restricted. ✅ DATA DELETION VERIFIED: Successfully deleted all asset-related data in correct order - NDC requests (2), NDC asset recovery (2), asset retrievals (0), asset allocations (4), asset requisitions (46), asset definitions (9), asset types (21), user asset assignments cleared (0). ✅ RESPONSE FORMAT VERIFIED: All required fields present - message, deleted_by (user_id, user_name), deletion_summary (all 8 expected fields), timestamp in ISO format. ✅ SYSTEM FUNCTIONALITY VERIFIED: System remains fully functional after reset - can create new asset types and definitions. ✅ USER DATA INTEGRITY VERIFIED: All 14 users preserved, user asset assignments properly cleared. ✅ AUDIT TRAIL VERIFIED: Proper audit information captured with administrator details and timestamp. The reset endpoint is production-ready and safely deletes all asset data while preserving user accounts and system functionality."
+
 test_plan:
   current_focus:
     - "Enhanced Asset Allocation Logic with Location-Based Routing"
