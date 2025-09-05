@@ -176,7 +176,7 @@ const AssetRequisitions = () => {
       toast.success(`Requisition ${action}d successfully`);
     } catch (error) {
       console.error('Error processing HR action:', error);
-      toast.error(error.response?.data?.detail || `Failed to ${action} requisition`);
+      toast.error(getErrorMessage(error));
     }
   };
 
