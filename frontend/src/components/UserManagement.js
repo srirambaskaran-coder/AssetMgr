@@ -179,20 +179,28 @@ const UserManagement = () => {
           <p className="text-gray-600 mt-1">Manage system users and their access permissions</p>
         </div>
 
-        <Dialog open={isCreateModalOpen} onOpenChange={setIsCreateModalOpen}>
-          <DialogTrigger asChild>
-            <Button className="bg-blue-600 hover:bg-blue-700">
-              <Plus className="mr-2 h-4 w-4" />
-              Add User
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="max-w-2xl">
-            <DialogHeader>
-              <DialogTitle>Create New User</DialogTitle>
-            </DialogHeader>
-            <UserForm onSubmit={handleCreateUser} managers={managers} locations={locations} />
-          </DialogContent>
-        </Dialog>
+        <div className="flex items-center gap-2">
+          <ExportButton 
+            data={filteredUsers}
+            type="users"
+            disabled={loading}
+          />
+          
+          <Dialog open={isCreateModalOpen} onOpenChange={setIsCreateModalOpen}>
+            <DialogTrigger asChild>
+              <Button className="bg-blue-600 hover:bg-blue-700">
+                <Plus className="mr-2 h-4 w-4" />
+                Add User
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-2xl">
+              <DialogHeader>
+                <DialogTitle>Create New User</DialogTitle>
+              </DialogHeader>
+              <UserForm onSubmit={handleCreateUser} managers={managers} locations={locations} />
+            </DialogContent>
+          </Dialog>
+        </div>
       </div>
 
       {/* Filters */}
