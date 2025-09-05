@@ -5305,14 +5305,27 @@ class AssetInventoryAPITester:
             "from_name": "Asset Management System"
         }
         
-        success, response = self.run_test(
-            "Fix Email Configuration TLS Settings",
-            "PUT",
-            "email-config",
-            200,
-            data=fixed_email_config,
-            user_role="Administrator"
-        )
+        # If we have an existing config, update it; otherwise create a new one
+        if success and 'id' in current_config:
+            # Update existing configuration
+            success, response = self.run_test(
+                "Fix Email Configuration TLS Settings (Update)",
+                "PUT",
+                f"email-config/{current_config['id']}",
+                200,
+                data=fixed_email_config,
+                user_role="Administrator"
+            )
+        else:
+            # Create new configuration
+            success, response = self.run_test(
+                "Fix Email Configuration TLS Settings (Create)",
+                "POST",
+                "email-config",
+                200,
+                data=fixed_email_config,
+                user_role="Administrator"
+            )
         
         if success:
             print("   ✅ Email configuration updated successfully")
