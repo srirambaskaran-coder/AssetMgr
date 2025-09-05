@@ -199,6 +199,8 @@ const AssetDefinitions = () => {
             </DialogHeader>
             <AssetDefinitionForm 
               assetTypes={assetTypes}
+              assetManagers={assetManagers}
+              locations={locations}
               onSubmit={handleCreateAssetDefinition} 
             />
           </DialogContent>
