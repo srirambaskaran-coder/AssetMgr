@@ -302,7 +302,6 @@ const AssetTypes = () => {
             <AssetTypeForm 
               initialData={selectedAssetType}
               onSubmit={(formData) => handleUpdateAssetType(selectedAssetType.id, formData)}
-              assetManagers={assetManagers}
             />
           )}
         </DialogContent>
