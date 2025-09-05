@@ -3435,6 +3435,87 @@ async def revoke_ndc_request(
     
     return {"message": "NDC request revoked successfully"}
 
+@api_router.post("/admin/reset-asset-system")
+async def reset_asset_system(
+    current_user: User = Depends(require_role([UserRole.ADMINISTRATOR]))
+):
+    """
+    Complete asset management system reset - deletes all asset types, definitions, and related transactions
+    WARNING: This is a destructive operation that cannot be undone
+    """
+    try:
+        deletion_summary = {
+            "ndc_requests": 0,
+            "ndc_asset_recovery": 0,
+            "asset_retrievals": 0,
+            "asset_allocations": 0,
+            "asset_requisitions": 0,
+            "asset_definitions": 0,
+            "asset_types": 0,
+            "user_asset_assignments_cleared": 0
+        }
+        
+        # Delete in order to avoid referential integrity issues
+        
+        # 1. Delete NDC requests and related asset recovery records
+        ndc_recovery_result = await db.ndc_asset_recovery.delete_many({})
+        deletion_summary["ndc_asset_recovery"] = ndc_recovery_result.deleted_count
+        
+        ndc_requests_result = await db.ndc_requests.delete_many({})
+        deletion_summary["ndc_requests"] = ndc_requests_result.deleted_count
+        
+        # 2. Delete asset retrievals
+        asset_retrievals_result = await db.asset_retrievals.delete_many({})
+        deletion_summary["asset_retrievals"] = asset_retrievals_result.deleted_count
+        
+        # 3. Delete asset allocations
+        asset_allocations_result = await db.asset_allocations.delete_many({})
+        deletion_summary["asset_allocations"] = asset_allocations_result.deleted_count
+        
+        # 4. Delete asset requisitions
+        asset_requisitions_result = await db.asset_requisitions.delete_many({})
+        deletion_summary["asset_requisitions"] = asset_requisitions_result.deleted_count
+        
+        # 5. Delete asset definitions
+        asset_definitions_result = await db.asset_definitions.delete_many({})
+        deletion_summary["asset_definitions"] = asset_definitions_result.deleted_count
+        
+        # 6. Delete asset types
+        asset_types_result = await db.asset_types.delete_many({})
+        deletion_summary["asset_types"] = asset_types_result.deleted_count
+        
+        # 7. Clear user asset assignments and related fields
+        user_update_result = await db.users.update_many(
+            {},
+            {"$unset": {
+                "allocated_to": "",
+                "allocated_to_name": "",
+                "allocation_date": "",
+                "acknowledged": "",
+                "acknowledgment_date": "",
+                "acknowledgment_notes": ""
+            }}
+        )
+        deletion_summary["user_asset_assignments_cleared"] = user_update_result.modified_count
+        
+        # Log the deletion for audit trail
+        logging.info(f"Asset system reset performed by user {current_user.id} ({current_user.name})")
+        logging.info(f"Deletion summary: {deletion_summary}")
+        
+        return {
+            "message": "Asset management system has been completely reset",
+            "deleted_by": {
+                "user_id": current_user.id,
+                "user_name": current_user.name
+            },
+            "deletion_summary": deletion_summary,
+            "timestamp": datetime.now(timezone.utc).isoformat()
+        }
+        
+    except Exception as e:
+        logging.error(f"Error during asset system reset: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to reset asset system: {str(e)}")
+
 # Include the router in the main app
 app.include_router(api_router)
 
