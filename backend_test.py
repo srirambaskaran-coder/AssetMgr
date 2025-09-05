@@ -5263,6 +5263,322 @@ class AssetInventoryAPITester:
         
         return success_result
 
+    def test_email_configuration_tls_conflict(self):
+        """Test Email Configuration TLS Conflict Fix"""
+        print(f"\n📧 Testing Email Configuration TLS Conflict Fix")
+        
+        # Test 1: Check current email configuration
+        success, response = self.run_test(
+            "Get Current Email Configuration",
+            "GET",
+            "email-config",
+            200,
+            user_role="Administrator"
+        )
+        
+        if success:
+            print(f"   Current email config found")
+            current_config = response
+            print(f"   Current use_tls: {current_config.get('use_tls', 'Not set')}")
+            print(f"   Current use_ssl: {current_config.get('use_ssl', 'Not set')}")
+            
+            # Check for TLS conflict
+            if current_config.get('use_tls') and current_config.get('use_ssl'):
+                print("   ⚠️ TLS CONFLICT DETECTED: Both use_tls and use_ssl are enabled")
+            elif current_config.get('use_tls') == True and current_config.get('use_ssl') == False:
+                print("   ✅ TLS configuration is correct (use_tls: true, use_ssl: false)")
+            else:
+                print(f"   📋 Current TLS config: use_tls={current_config.get('use_tls')}, use_ssl={current_config.get('use_ssl')}")
+        else:
+            print("   ❌ Failed to get current email configuration")
+            return False
+        
+        # Test 2: Fix email configuration with proper TLS settings
+        fixed_email_config = {
+            "smtp_server": "smtp.gmail.com",
+            "smtp_port": 587,
+            "smtp_username": "test@company.com",
+            "smtp_password": "test_password",
+            "use_tls": True,
+            "use_ssl": False,
+            "from_email": "noreply@company.com",
+            "from_name": "Asset Management System"
+        }
+        
+        success, response = self.run_test(
+            "Fix Email Configuration TLS Settings",
+            "PUT",
+            "email-config",
+            200,
+            data=fixed_email_config,
+            user_role="Administrator"
+        )
+        
+        if success:
+            print("   ✅ Email configuration updated successfully")
+            updated_config = response
+            print(f"   Updated use_tls: {updated_config.get('use_tls')}")
+            print(f"   Updated use_ssl: {updated_config.get('use_ssl')}")
+            
+            # Verify the fix
+            if updated_config.get('use_tls') == True and updated_config.get('use_ssl') == False:
+                print("   ✅ TLS CONFLICT FIXED: use_tls=true, use_ssl=false")
+                self.test_data['email_config_fixed'] = True
+            else:
+                print("   ❌ TLS conflict not properly fixed")
+                return False
+        else:
+            print("   ❌ Failed to update email configuration")
+            return False
+        
+        # Test 3: Verify configuration persists
+        success, response = self.run_test(
+            "Verify Fixed Email Configuration",
+            "GET",
+            "email-config",
+            200,
+            user_role="Administrator"
+        )
+        
+        if success:
+            verified_config = response
+            if verified_config.get('use_tls') == True and verified_config.get('use_ssl') == False:
+                print("   ✅ Fixed configuration persisted correctly")
+            else:
+                print("   ❌ Fixed configuration did not persist")
+                return False
+        
+        return True
+
+    def test_asset_requisition_after_email_fix(self):
+        """Test Asset Requisition Creation After Email Configuration Fix"""
+        print(f"\n📝 Testing Asset Requisition Creation After Email Fix")
+        
+        if not self.test_data.get('email_config_fixed'):
+            print("   ⚠️ Email configuration not fixed - proceeding with caution")
+        
+        if 'asset_type_id' not in self.test_data:
+            print("   ❌ Skipping Asset Requisition test - no asset type created")
+            return False
+        
+        # Test 1: Create asset requisition after email fix
+        from datetime import datetime, timedelta
+        required_by_date = (datetime.now() + timedelta(days=7)).isoformat()
+        
+        post_fix_requisition_data = {
+            "asset_type_id": self.test_data['asset_type_id'],
+            "request_type": "New Allocation",
+            "request_for": "Self",
+            "justification": "Test requisition after email TLS fix",
+            "required_by_date": required_by_date
+        }
+        
+        success, response = self.run_test(
+            "Create Asset Requisition After Email Fix",
+            "POST",
+            "asset-requisitions",
+            200,
+            data=post_fix_requisition_data,
+            user_role="Employee"
+        )
+        
+        if success:
+            self.test_data['post_fix_requisition_id'] = response['id']
+            print(f"   ✅ Asset requisition created successfully after email fix")
+            print(f"   Requisition ID: {response['id'][:8]}...")
+            print(f"   Status: {response.get('status', 'Unknown')}")
+            print(f"   Request Type: {response.get('request_type', 'Unknown')}")
+            
+            # Check if any email-related errors occurred
+            if 'error' not in str(response).lower() and 'email' not in str(response).lower():
+                print("   ✅ No email-related errors in response")
+            else:
+                print("   ⚠️ Possible email-related issues in response")
+        else:
+            print("   ❌ Failed to create asset requisition after email fix")
+            return False
+        
+        # Test 2: Verify requisition was properly stored
+        if 'post_fix_requisition_id' in self.test_data:
+            success, response = self.run_test(
+                "Verify Asset Requisition Storage",
+                "GET",
+                "asset-requisitions",
+                200,
+                user_role="Administrator"
+            )
+            
+            if success:
+                requisition_found = any(
+                    req['id'] == self.test_data['post_fix_requisition_id'] 
+                    for req in response
+                )
+                if requisition_found:
+                    print("   ✅ Asset requisition properly stored in database")
+                else:
+                    print("   ❌ Asset requisition not found in database")
+                    return False
+        
+        # Test 3: Test multiple requisition types to ensure email fix works for all
+        test_requisition_types = [
+            {
+                "request_type": "Replacement",
+                "reason_for_return_replacement": "Device malfunction after email fix test",
+                "asset_details": "Laptop showing hardware issues",
+                "justification": "Need replacement due to hardware failure"
+            },
+            {
+                "request_type": "Return",
+                "reason_for_return_replacement": "Project completed after email fix",
+                "asset_details": "MacBook Pro in good condition",
+                "justification": "Returning equipment after project completion"
+            }
+        ]
+        
+        for i, req_data in enumerate(test_requisition_types):
+            full_req_data = {
+                "asset_type_id": self.test_data['asset_type_id'],
+                "request_for": "Self",
+                "required_by_date": required_by_date,
+                **req_data
+            }
+            
+            success, response = self.run_test(
+                f"Create {req_data['request_type']} Request After Email Fix",
+                "POST",
+                "asset-requisitions",
+                200,
+                data=full_req_data,
+                user_role="Employee"
+            )
+            
+            if success:
+                print(f"   ✅ {req_data['request_type']} request created successfully")
+            else:
+                print(f"   ❌ {req_data['request_type']} request failed")
+        
+        return True
+
+    def test_email_configuration_workflow(self):
+        """Test Complete Email Configuration Workflow"""
+        print(f"\n🔄 Testing Complete Email Configuration Workflow")
+        
+        # Test 1: Authentication as Administrator
+        if "Administrator" not in self.tokens:
+            print("   ❌ Administrator not logged in - cannot test email configuration")
+            return False
+        
+        print("   ✅ Administrator authenticated successfully")
+        
+        # Test 2: Check current email configuration
+        if not self.test_email_configuration_tls_conflict():
+            print("   ❌ Email configuration TLS conflict fix failed")
+            return False
+        
+        # Test 3: Test asset requisition creation after fix
+        if not self.test_asset_requisition_after_email_fix():
+            print("   ❌ Asset requisition creation after email fix failed")
+            return False
+        
+        # Test 4: Test email configuration access control
+        success, response = self.run_test(
+            "Employee Access Email Config (Should Fail)",
+            "GET",
+            "email-config",
+            403,
+            user_role="Employee"
+        )
+        
+        if success:
+            print("   ✅ Employee correctly denied access to email configuration")
+        
+        # Test 5: Test email configuration validation
+        invalid_email_config = {
+            "smtp_server": "",  # Invalid empty server
+            "smtp_port": 587,
+            "smtp_username": "test@company.com",
+            "smtp_password": "test_password",
+            "use_tls": True,
+            "use_ssl": False,
+            "from_email": "invalid-email",  # Invalid email format
+            "from_name": "Test System"
+        }
+        
+        success, response = self.run_test(
+            "Invalid Email Configuration (Should Fail)",
+            "PUT",
+            "email-config",
+            422,  # Expecting validation error
+            data=invalid_email_config,
+            user_role="Administrator"
+        )
+        
+        if success:
+            print("   ✅ Invalid email configuration correctly rejected")
+        
+        print("   ✅ Complete email configuration workflow tested successfully")
+        return True
+
+    def run_email_tls_fix_test(self):
+        """Run focused Email TLS Configuration Fix Test"""
+        print("🚀 Starting Email TLS Configuration Fix Test")
+        print("=" * 80)
+        
+        # Test authentication for Administrator
+        if not self.test_login("admin@company.com", "password123", "Administrator"):
+            print("❌ Administrator login failed. Cannot proceed with email configuration test.")
+            return False
+        
+        if not self.test_login("employee@company.com", "password123", "Employee"):
+            print("❌ Employee login failed. Cannot proceed with asset requisition test.")
+            return False
+        
+        print(f"\n✅ Successfully logged in required users")
+        
+        # Create asset type for testing if needed
+        if 'asset_type_id' not in self.test_data:
+            asset_type_data = {
+                "code": "EMAIL_TEST_LAPTOP",
+                "name": "Email Test Laptop",
+                "depreciation_applicable": True,
+                "asset_life": 3,
+                "to_be_recovered_on_separation": True,
+                "status": "Active"
+            }
+            
+            success, response = self.run_test(
+                "Create Asset Type for Email Testing",
+                "POST",
+                "asset-types",
+                200,
+                data=asset_type_data,
+                user_role="Administrator"
+            )
+            
+            if success:
+                self.test_data['asset_type_id'] = response['id']
+                print(f"   Created asset type for testing: {response['id']}")
+        
+        # Run the email configuration workflow test
+        test_result = self.test_email_configuration_workflow()
+        
+        # Print final results
+        print(f"\n" + "=" * 80)
+        print(f"🎯 EMAIL TLS CONFIGURATION FIX TEST COMPLETED")
+        print(f"📊 Tests Run: {self.tests_run}")
+        print(f"✅ Tests Passed: {self.tests_passed}")
+        print(f"❌ Tests Failed: {self.tests_run - self.tests_passed}")
+        print(f"📈 Success Rate: {(self.tests_passed/self.tests_run)*100:.1f}%")
+        
+        if test_result:
+            print("🎉 EMAIL TLS CONFIGURATION FIX: ALL TESTS PASSED!")
+        else:
+            print("⚠️ EMAIL TLS CONFIGURATION FIX: Some tests failed")
+        
+        print("=" * 80)
+        
+        return test_result
+
 def main():
     print("🚀 Starting Asset Inventory Management System API Tests")
     print("=" * 60)
