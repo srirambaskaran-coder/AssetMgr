@@ -31,6 +31,7 @@ const AssetAllocations = () => {
   const { user } = useAuth();
   const { activeRole } = useRole();
   const [allocations, setAllocations] = useState([]);
+  const [pendingRequisitions, setPendingRequisitions] = useState([]);
   const [assetTypes, setAssetTypes] = useState([]);
   const [assetDefinitions, setAssetDefinitions] = useState([]);
   const [users, setUsers] = useState([]);
@@ -46,6 +47,7 @@ const AssetAllocations = () => {
 
   useEffect(() => {
     fetchAssetAllocations();
+    fetchPendingRequisitions();
     fetchAssetTypes();
     fetchAssetDefinitions();
     fetchUsers();
@@ -62,6 +64,27 @@ const AssetAllocations = () => {
     } catch (error) {
       console.error('Error fetching asset allocations:', error);
       toast.error('Failed to load asset allocations');
+    }
+  };
+
+  const fetchPendingRequisitions = async () => {
+    try {
+      const response = await axios.get(`${API}/asset-requisitions`, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('session_token')}`
+        }
+      });
+      
+      // Filter requisitions assigned to current user (Asset Manager) for allocation
+      const assignedRequisitions = response.data.filter(req => 
+        req.status === 'Assigned for Allocation' && 
+        req.assigned_to === user?.id
+      );
+      
+      setPendingRequisitions(assignedRequisitions);
+    } catch (error) {
+      console.error('Error fetching pending requisitions:', error);
+      toast.error('Failed to load pending requisitions');
     } finally {
       setLoading(false);
     }
