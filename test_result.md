@@ -431,7 +431,7 @@ metadata:
 
 test_plan:
   current_focus:
-    - "Enhanced Asset Allocation Logic - Frontend UI Integration"
+    - "Restructured Asset Management System Testing Completed"
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
