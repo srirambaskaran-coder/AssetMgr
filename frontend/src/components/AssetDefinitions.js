@@ -506,6 +506,43 @@ const AssetDefinitionForm = ({ assetTypes, assetManagers, locations, initialData
         </Select>
       </div>
 
+      <div className="grid grid-cols-2 gap-4">
+        <div>
+          <Label htmlFor="assigned_asset_manager_id">Assigned Asset Manager</Label>
+          <Select 
+            value={formData.assigned_asset_manager_id} 
+            onValueChange={(value) => setFormData({ ...formData, assigned_asset_manager_id: value === 'none' ? '' : value })}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Select asset manager" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="none">No Asset Manager</SelectItem>
+              {assetManagers.map(manager => (
+                <SelectItem key={manager.id} value={manager.id}>{manager.name}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <div>
+          <Label htmlFor="location_id">Location</Label>
+          <Select 
+            value={formData.location_id} 
+            onValueChange={(value) => setFormData({ ...formData, location_id: value === 'none' ? '' : value })}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Select location" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="none">No Location</SelectItem>
+              {locations.map(location => (
+                <SelectItem key={location.id} value={location.id}>{location.name}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+
       <div className="flex justify-end gap-2 pt-4">
         <Button type="submit" disabled={loading} className="bg-blue-600 hover:bg-blue-700">
           {loading ? 'Saving...' : (initialData ? 'Update' : 'Create')}
