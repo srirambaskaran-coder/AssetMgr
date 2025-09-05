@@ -285,6 +285,8 @@ const AssetDefinitions = () => {
                     <TableHead>Value</TableHead>
                     <TableHead>Current Value</TableHead>
                     <TableHead>Status</TableHead>
+                    <TableHead>Asset Manager</TableHead>
+                    <TableHead>Location</TableHead>
                     <TableHead>Allocated To</TableHead>
                     <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
