@@ -249,7 +249,20 @@ const AssetAllocations = () => {
                   assetTypes={assetTypes}
                   assetDefinitions={assetDefinitions}
                   users={users}
-                  onSubmit={handleCreateAllocation} 
+                  onSubmit={handleCreateAllocation}
+                  initialData={formData}
+                  onClose={() => {
+                    setIsCreateModalOpen(false);
+                    setFormData({
+                      asset_type_id: '',
+                      asset_definition_id: '',
+                      request_type: 'New Request',
+                      requested_for: '',
+                      remarks: '',
+                      dispatch_details: '',
+                      requisition_id: null
+                    });
+                  }}
                 />
               </DialogContent>
             </Dialog>
