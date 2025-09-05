@@ -200,6 +200,9 @@ class RestructuredAssetManagementTester:
             print("❌ Skipping Asset Definition tests - no asset type created")
             return
         
+        import time
+        timestamp = str(int(time.time()))
+        
         # First, get Asset Managers and Locations for testing
         success, asset_managers = self.run_test(
             "Get Asset Managers for Testing",
