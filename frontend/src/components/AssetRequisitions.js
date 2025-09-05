@@ -31,6 +31,34 @@ import { useRole } from '../contexts/RoleContext';
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
 
+// Helper function to extract readable error messages from FastAPI validation errors
+const getErrorMessage = (error) => {
+  if (!error.response?.data?.detail) {
+    return 'An unexpected error occurred';
+  }
+  
+  const detail = error.response.data.detail;
+  
+  // If detail is a string, return it directly
+  if (typeof detail === 'string') {
+    return detail;
+  }
+  
+  // If detail is an array of validation errors, format them
+  if (Array.isArray(detail)) {
+    return detail.map(err => {
+      if (err.msg && err.loc) {
+        const field = err.loc[err.loc.length - 1]; // Get the field name
+        return `${field}: ${err.msg}`;
+      }
+      return err.msg || err.toString();
+    }).join(', ');
+  }
+  
+  // Fallback for other object types
+  return detail.message || detail.toString() || 'Validation error occurred';
+};
+
 const AssetRequisitions = () => {
   const { user } = useAuth();
   const { activeRole } = useRole();
