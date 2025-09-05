@@ -5140,5 +5140,20 @@ if __name__ == "__main__":
         tester = AssetInventoryAPITester()
         result = tester.run_ndc_access_control_test()
         sys.exit(0 if result else 1)
+    elif len(sys.argv) > 1 and sys.argv[1] == "reset":
+        # Run focused reset endpoint test
+        tester = AssetInventoryAPITester()
+        # Login as Administrator
+        if tester.test_login("admin@company.com", "password123", "Administrator"):
+            result = tester.test_asset_system_reset_endpoint()
+            print(f"\n🎯 RESET ENDPOINT TEST COMPLETED")
+            print(f"📊 Tests Run: {tester.tests_run}")
+            print(f"✅ Tests Passed: {tester.tests_passed}")
+            print(f"❌ Tests Failed: {tester.tests_run - tester.tests_passed}")
+            print(f"📈 Success Rate: {(tester.tests_passed/tester.tests_run)*100:.1f}%")
+            sys.exit(0 if result else 1)
+        else:
+            print("❌ Failed to login as Administrator")
+            sys.exit(1)
     else:
         sys.exit(main())
