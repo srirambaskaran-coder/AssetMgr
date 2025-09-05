@@ -611,6 +611,9 @@ class RestructuredAssetManagementTester:
             print("❌ Skipping Edge Case tests - no asset type created")
             return
         
+        import time
+        timestamp = str(int(time.time()))
+        
         # Test 1: Asset Definition with Asset Manager but no Location
         success, asset_managers = self.run_test(
             "Get Asset Managers for Edge Case Test",
