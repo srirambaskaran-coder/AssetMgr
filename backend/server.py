@@ -1314,6 +1314,27 @@ async def create_asset_definition(
     asset_def_dict["created_at"] = datetime.now(timezone.utc)
     asset_def_dict["created_by"] = current_user.id
     
+    # Populate Asset Manager name if ID is provided
+    if asset_def.assigned_asset_manager_id:
+        asset_manager = await db.users.find_one({
+            "id": asset_def.assigned_asset_manager_id,
+            "roles": {"$in": [UserRole.ASSET_MANAGER]},
+            "is_active": True
+        })
+        if not asset_manager:
+            raise HTTPException(status_code=400, detail="Asset Manager not found or inactive")
+        asset_def_dict["assigned_asset_manager_name"] = asset_manager["name"]
+    
+    # Populate Location name if ID is provided
+    if asset_def.location_id:
+        location = await db.locations.find_one({
+            "id": asset_def.location_id,
+            "status": ActiveStatus.ACTIVE
+        })
+        if not location:
+            raise HTTPException(status_code=400, detail="Location not found or inactive")
+        asset_def_dict["location_name"] = location["name"]
+    
     # Calculate current depreciation value
     if asset_type.get("depreciation_applicable") and asset_def.asset_depreciation_value_per_year:
         years_since_creation = 0  # New asset
