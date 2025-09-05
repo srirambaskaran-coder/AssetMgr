@@ -370,6 +370,8 @@ const AssetDefinitions = () => {
           {selectedAssetDefinition && (
             <AssetDefinitionForm 
               assetTypes={assetTypes}
+              assetManagers={assetManagers}
+              locations={locations}
               initialData={selectedAssetDefinition}
               onSubmit={(formData) => handleUpdateAssetDefinition(selectedAssetDefinition.id, formData)}
             />
