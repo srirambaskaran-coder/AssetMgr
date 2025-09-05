@@ -667,7 +667,7 @@ class RestructuredAssetManagementTester:
             
             edge_case_2_data = {
                 "asset_type_id": self.test_data['asset_type_id'],
-                "asset_code": "EDGE_CASE_2",
+                "asset_code": f"EDGE_CASE_2_{timestamp}",
                 "asset_description": "Location Only Test",
                 "asset_details": "Asset with Location but no Asset Manager",
                 "asset_value": 25000.0,
