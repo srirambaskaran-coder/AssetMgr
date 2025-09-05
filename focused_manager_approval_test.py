@@ -3,7 +3,7 @@ import json
 from datetime import datetime, timedelta
 
 def focused_manager_approval_test():
-    base_url = "https://asset-track-2.preview.emergentagent.com"
+    base_url = "https://resource-manager-6.preview.emergentagent.com"
     api_url = f"{base_url}/api"
     
     print("🎯 FOCUSED MANAGER APPROVAL WORKFLOW TESTING")

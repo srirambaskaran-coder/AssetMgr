@@ -11,7 +11,7 @@ from datetime import datetime, timedelta
 
 class WithdrawalTester:
     def __init__(self):
-        self.base_url = "https://asset-track-2.preview.emergentagent.com"
+        self.base_url = "https://resource-manager-6.preview.emergentagent.com"
         self.api_url = f"{self.base_url}/api"
         self.tokens = {}
         self.users = {}

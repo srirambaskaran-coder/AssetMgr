@@ -9,7 +9,7 @@ import hashlib
 from datetime import datetime
 
 class FinalPasswordTest:
-    def __init__(self, base_url="https://asset-track-2.preview.emergentagent.com"):
+    def __init__(self, base_url="https://resource-manager-6.preview.emergentagent.com"):
         self.base_url = base_url
         self.api_url = f"{base_url}/api"
         
