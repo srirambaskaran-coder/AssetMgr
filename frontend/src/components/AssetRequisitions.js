@@ -551,8 +551,8 @@ const AssetRequisitionForm = ({ assetTypes, users, onSubmit }) => {
   const { user } = useAuth();
   const [formData, setFormData] = useState({
     asset_type_id: '',
-    request_type: 'New Request',
-    request_for: 'self',
+    request_type: 'New Allocation',
+    request_for: 'Self',
     team_member_employee_id: '',
     required_by_date: '',
     justification: '',
@@ -565,12 +565,12 @@ const AssetRequisitionForm = ({ assetTypes, users, onSubmit }) => {
     e.preventDefault();
     setLoading(true);
     
-    // Prepare submit data - map frontend values to backend expected values
+    // Prepare submit data - send exact values expected by backend
     const submitData = {
       asset_type_id: formData.asset_type_id,
       request_type: formData.request_type,
       request_for: formData.request_for,
-      team_member_employee_id: formData.request_for === 'team_member' ? formData.team_member_employee_id : null,
+      team_member_employee_id: formData.request_for === 'Team Member' ? formData.team_member_employee_id : null,
       required_by_date: formData.required_by_date,
       justification: formData.justification,
       reason_for_return_replacement: formData.reason_for_return_replacement || null,
@@ -613,7 +613,7 @@ const AssetRequisitionForm = ({ assetTypes, users, onSubmit }) => {
             <SelectValue placeholder="Select request type" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="New Request">New Request</SelectItem>
+            <SelectItem value="New Allocation">New Allocation</SelectItem>
             <SelectItem value="Replacement">Replacement</SelectItem>
             <SelectItem value="Upgrade">Upgrade</SelectItem>
             <SelectItem value="Return">Return</SelectItem>
@@ -631,14 +631,14 @@ const AssetRequisitionForm = ({ assetTypes, users, onSubmit }) => {
             <SelectValue placeholder="Select who this is for" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="self">Self</SelectItem>
-            <SelectItem value="team_member">Team Member</SelectItem>
+            <SelectItem value="Self">Self</SelectItem>
+            <SelectItem value="Team Member">Team Member</SelectItem>
           </SelectContent>
         </Select>
       </div>
 
       {/* Show user selection dropdown only when "Team Member" is selected */}
-      {formData.request_for === 'team_member' && (
+      {formData.request_for === 'Team Member' && (
         <div>
           <Label htmlFor="team_member_employee_id">Select Team Member *</Label>
           <Select 
