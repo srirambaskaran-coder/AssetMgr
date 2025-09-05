@@ -187,25 +187,33 @@ const AssetDefinitions = () => {
           <p className="text-gray-600 mt-1">Manage individual asset records and their specifications</p>
         </div>
 
-        <Dialog open={isCreateModalOpen} onOpenChange={setIsCreateModalOpen}>
-          <DialogTrigger asChild>
-            <Button className="bg-blue-600 hover:bg-blue-700">
-              <Plus className="mr-2 h-4 w-4" />
-              Add Asset Definition
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="max-w-2xl">
-            <DialogHeader>
-              <DialogTitle>Create New Asset Definition</DialogTitle>
-            </DialogHeader>
-            <AssetDefinitionForm 
-              assetTypes={assetTypes}
-              assetManagers={assetManagers}
-              locations={locations}
-              onSubmit={handleCreateAssetDefinition} 
-            />
-          </DialogContent>
-        </Dialog>
+        <div className="flex items-center gap-2">
+          <ExportButton 
+            data={filteredAssetDefinitions}
+            type="assetDefinitions"
+            disabled={loading}
+          />
+          
+          <Dialog open={isCreateModalOpen} onOpenChange={setIsCreateModalOpen}>
+            <DialogTrigger asChild>
+              <Button className="bg-blue-600 hover:bg-blue-700">
+                <Plus className="mr-2 h-4 w-4" />
+                Add Asset Definition
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-2xl">
+              <DialogHeader>
+                <DialogTitle>Create New Asset Definition</DialogTitle>
+              </DialogHeader>
+              <AssetDefinitionForm 
+                assetTypes={assetTypes}
+                assetManagers={assetManagers}
+                locations={locations}
+                onSubmit={handleCreateAssetDefinition} 
+              />
+            </DialogContent>
+          </Dialog>
+        </div>
       </div>
 
       {/* Filters */}
