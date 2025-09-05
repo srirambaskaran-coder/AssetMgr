@@ -5010,6 +5010,127 @@ class AssetInventoryAPITester:
         
         return True
 
+    def test_delete_specific_test_locations(self):
+        """Test deletion of specific test locations by their codes"""
+        print(f"\n🗑️ Testing Deletion of Specific Test Locations")
+        
+        # Target location codes to delete
+        target_codes = ["TEST124613", "TEST124810", "TEST124853"]
+        
+        # Step 1: Authentication as Administrator
+        print("   Step 1: Authenticating as Administrator...")
+        if "Administrator" not in self.tokens:
+            print("   ❌ Administrator not logged in. Cannot proceed with location deletion.")
+            return False
+        
+        # Step 2: Get all locations to find target locations
+        print("   Step 2: Finding target locations...")
+        success, response = self.run_test(
+            "Get All Locations to Find Targets",
+            "GET",
+            "locations",
+            200,
+            user_role="Administrator"
+        )
+        
+        if not success:
+            print("   ❌ Failed to retrieve locations list")
+            return False
+        
+        print(f"   Found {len(response)} total locations in system")
+        
+        # Find target locations by code
+        target_locations = {}
+        for location in response:
+            if location.get('code') in target_codes:
+                target_locations[location['code']] = location
+                print(f"   ✅ Found target location: {location['code']} - {location['name']} (ID: {location['id']})")
+        
+        # Check which target codes were not found
+        missing_codes = [code for code in target_codes if code not in target_locations]
+        if missing_codes:
+            print(f"   ⚠️ Target location codes not found: {missing_codes}")
+        
+        if not target_locations:
+            print("   ⚠️ None of the target location codes were found in the system")
+            print("   This is not an error - the locations may have already been deleted or never existed")
+            return True  # Not an error if locations don't exist
+        
+        # Step 3: Display current location details before deletion
+        print("   Step 3: Current location details before deletion:")
+        for code, location in target_locations.items():
+            print(f"     - Code: {location['code']}")
+            print(f"       Name: {location['name']}")
+            print(f"       Country: {location['country']}")
+            print(f"       Status: {location['status']}")
+            print(f"       ID: {location['id']}")
+        
+        # Step 4: Delete each found location
+        print("   Step 4: Deleting target locations...")
+        deletion_results = {}
+        
+        for code, location in target_locations.items():
+            location_id = location['id']
+            success, response = self.run_test(
+                f"Delete Location {code}",
+                "DELETE",
+                f"locations/{location_id}",
+                200,  # Expecting successful deletion
+                user_role="Administrator"
+            )
+            
+            deletion_results[code] = success
+            if success:
+                print(f"   ✅ Successfully deleted location {code} (ID: {location_id})")
+            else:
+                print(f"   ❌ Failed to delete location {code} (ID: {location_id})")
+        
+        # Step 5: Verification - Get locations list again to confirm deletions
+        print("   Step 5: Verifying deletions...")
+        success, response = self.run_test(
+            "Verify Locations After Deletion",
+            "GET",
+            "locations",
+            200,
+            user_role="Administrator"
+        )
+        
+        if success:
+            remaining_codes = [loc['code'] for loc in response]
+            print(f"   Remaining locations in system: {len(response)}")
+            
+            # Check that deleted locations are no longer in the list
+            still_present = []
+            for code in target_locations.keys():
+                if code in remaining_codes:
+                    still_present.append(code)
+            
+            if still_present:
+                print(f"   ❌ Locations still present after deletion: {still_present}")
+            else:
+                print("   ✅ All target locations successfully removed from the system")
+        
+        # Step 6: Summary of deletion results
+        print("   Step 6: Deletion Summary:")
+        successful_deletions = [code for code, success in deletion_results.items() if success]
+        failed_deletions = [code for code, success in deletion_results.items() if not success]
+        
+        print(f"     Total target locations found: {len(target_locations)}")
+        print(f"     Successfully deleted: {len(successful_deletions)} - {successful_deletions}")
+        if failed_deletions:
+            print(f"     Failed to delete: {len(failed_deletions)} - {failed_deletions}")
+        if missing_codes:
+            print(f"     Not found in system: {len(missing_codes)} - {missing_codes}")
+        
+        # Return True if all found locations were successfully deleted
+        all_successful = len(failed_deletions) == 0
+        if all_successful:
+            print("   🎉 Location deletion task completed successfully!")
+        else:
+            print("   ⚠️ Some location deletions failed")
+        
+        return all_successful
+
 def main():
     print("🚀 Starting Asset Inventory Management System API Tests")
     print("=" * 60)
