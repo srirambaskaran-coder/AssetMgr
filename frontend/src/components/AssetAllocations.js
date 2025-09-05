@@ -141,8 +141,24 @@ const AssetAllocations = () => {
       setIsCreateModalOpen(false);
       toast.success('Asset allocation created successfully');
       
+      // Reset form data
+      setFormData({
+        asset_type_id: '',
+        asset_definition_id: '',
+        request_type: 'New Request',
+        requested_for: '',
+        remarks: '',
+        dispatch_details: '',
+        requisition_id: null
+      });
+      
       // Refresh asset definitions to update availability
       fetchAssetDefinitions();
+      
+      // If this was from a pending requisition, refresh the pending requisitions
+      if (formData.requisition_id) {
+        fetchPendingRequisitions();
+      }
     } catch (error) {
       console.error('Error creating asset allocation:', error);
       toast.error(error.response?.data?.detail || 'Failed to create asset allocation');
