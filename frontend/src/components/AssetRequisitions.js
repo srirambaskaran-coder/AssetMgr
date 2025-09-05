@@ -260,7 +260,9 @@ const AssetRequisitions = () => {
   // Check if current user can create requisitions
   const canCreateRequisition = () => {
     const accessibleRoles = user?.roles || [];
-    return accessibleRoles.includes('Employee') || accessibleRoles.includes('Manager');
+    return accessibleRoles.includes('Employee') || 
+           accessibleRoles.includes('Manager') || 
+           accessibleRoles.includes('HR Manager');
   };
 
   if (loading) {
