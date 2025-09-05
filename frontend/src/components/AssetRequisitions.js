@@ -192,7 +192,7 @@ const AssetRequisitions = () => {
       toast.success('Requisition withdrawn successfully');
     } catch (error) {
       console.error('Error withdrawing requisition:', error);
-      toast.error(error.response?.data?.detail || 'Failed to withdraw requisition');
+      toast.error(getErrorMessage(error));
     }
   };
 
