@@ -472,14 +472,15 @@ const AssetAllocations = () => {
 };
 
 // Asset Allocation Form Component
-const AssetAllocationForm = ({ assetTypes, assetDefinitions, users, onSubmit }) => {
+const AssetAllocationForm = ({ assetTypes, assetDefinitions, users, onSubmit, initialData, onClose }) => {
   const [formData, setFormData] = useState({
-    asset_type_id: '',
-    asset_definition_id: '',
-    request_type: 'New Request',
-    requested_for: '',
-    remarks: '',
-    dispatch_details: ''
+    asset_type_id: initialData?.asset_type_id || '',
+    asset_definition_id: initialData?.asset_definition_id || '',
+    request_type: initialData?.request_type || 'New Request',
+    requested_for: initialData?.requested_for || '',
+    remarks: initialData?.remarks || '',
+    dispatch_details: initialData?.dispatch_details || '',
+    requisition_id: initialData?.requisition_id || null
   });
   const [loading, setLoading] = useState(false);
   const [filteredAssetDefinitions, setFilteredAssetDefinitions] = useState([]);
