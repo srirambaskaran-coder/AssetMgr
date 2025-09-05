@@ -69,6 +69,32 @@ const AssetDefinitions = () => {
     }
   };
 
+  const fetchAssetManagers = async () => {
+    try {
+      const response = await axios.get(`${API}/users/asset-managers`, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('session_token')}`
+        }
+      });
+      setAssetManagers(response.data);
+    } catch (error) {
+      console.error('Error fetching asset managers:', error);
+    }
+  };
+
+  const fetchLocations = async () => {
+    try {
+      const response = await axios.get(`${API}/locations`, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('session_token')}`
+        }
+      });
+      setLocations(response.data.filter(location => location.status === 'Active'));
+    } catch (error) {
+      console.error('Error fetching locations:', error);
+    }
+  };
+
   const handleCreateAssetDefinition = async (formData) => {
     try {
       const response = await axios.post(`${API}/asset-definitions`, formData);
