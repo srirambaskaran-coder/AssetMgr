@@ -279,10 +279,79 @@ const AssetAllocations = () => {
         </CardContent>
       </Card>
 
+      {/* Pending Requisitions for Allocation */}
+      {pendingRequisitions.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-orange-700">
+              Pending Requisitions for Allocation ({pendingRequisitions.length})
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Requisition ID</TableHead>
+                    <TableHead>Asset Type</TableHead>
+                    <TableHead>Request Type</TableHead>
+                    <TableHead>Requested For</TableHead>
+                    <TableHead>Requested By</TableHead>
+                    <TableHead>Required By</TableHead>
+                    <TableHead>Routing Reason</TableHead>
+                    <TableHead>Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {pendingRequisitions.map((requisition) => (
+                    <TableRow key={requisition.id} className="bg-orange-50">
+                      <TableCell className="font-medium">
+                        {requisition.id}
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant="outline">
+                          {requisition.asset_type_name}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>{requisition.request_type}</TableCell>
+                      <TableCell>
+                        <div className="flex items-center">
+                          <User className="h-4 w-4 text-gray-400 mr-2" />
+                          {requisition.requested_for_name}
+                        </div>
+                      </TableCell>
+                      <TableCell>{requisition.requested_by_name}</TableCell>
+                      <TableCell>
+                        <div className="flex items-center">
+                          <Calendar className="h-4 w-4 text-gray-400 mr-2" />
+                          {new Date(requisition.required_by).toLocaleDateString()}
+                        </div>
+                      </TableCell>
+                      <TableCell className="max-w-xs truncate">
+                        {requisition.routing_reason || '-'}
+                      </TableCell>
+                      <TableCell>
+                        <Button 
+                          size="sm" 
+                          className="bg-blue-600 hover:bg-blue-700"
+                          onClick={() => handleAllocateFromRequisition(requisition)}
+                        >
+                          Allocate
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Asset Allocations Table */}
       <Card>
         <CardHeader>
-          <CardTitle>Asset Allocations ({filteredAllocations.length})</CardTitle>
+          <CardTitle>Completed Allocations ({filteredAllocations.length})</CardTitle>
         </CardHeader>
         <CardContent>
           {filteredAllocations.length === 0 ? (
