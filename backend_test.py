@@ -5708,7 +5708,7 @@ def main():
         return 1
 
 if __name__ == "__main__":
-    # Check if we want to run the focused NDC test
+    # Check if we want to run the focused tests
     import sys
     if len(sys.argv) > 1 and sys.argv[1] == "ndc":
         tester = AssetInventoryAPITester()
@@ -5729,5 +5729,13 @@ if __name__ == "__main__":
         else:
             print("❌ Failed to login as Administrator")
             sys.exit(1)
+    elif len(sys.argv) > 1 and sys.argv[1] == "email":
+        # Run focused email TLS configuration fix test
+        tester = AssetInventoryAPITester()
+        result = tester.run_email_tls_fix_test()
+        sys.exit(0 if result else 1)
     else:
-        sys.exit(main())
+        # Run the email TLS fix test by default as requested
+        tester = AssetInventoryAPITester()
+        result = tester.run_email_tls_fix_test()
+        sys.exit(0 if result else 1)
