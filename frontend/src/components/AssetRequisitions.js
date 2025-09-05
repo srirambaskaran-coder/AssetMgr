@@ -527,7 +527,9 @@ const AssetRequisitionForm = ({ assetTypes, users, onSubmit }) => {
     requested_for: 'self',
     requested_for_user_id: user?.id || '',
     required_by_date: '',
-    justification: ''
+    justification: '',
+    reason_for_return_replacement: '',
+    asset_details: ''
   });
   const [loading, setLoading] = useState(false);
 
@@ -544,6 +546,9 @@ const AssetRequisitionForm = ({ assetTypes, users, onSubmit }) => {
     await onSubmit(submitData);
     setLoading(false);
   };
+
+  // Check if current request type requires additional fields
+  const requiresAdditionalFields = formData.request_type === 'Return' || formData.request_type === 'Replacement';
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
@@ -618,6 +623,37 @@ const AssetRequisitionForm = ({ assetTypes, users, onSubmit }) => {
             </SelectContent>
           </Select>
         </div>
+      )}
+
+      {/* Conditional fields for Return/Replacement */}
+      {requiresAdditionalFields && (
+        <>
+          <div>
+            <Label htmlFor="reason_for_return_replacement">
+              Reason for {formData.request_type} *
+            </Label>
+            <Textarea
+              id="reason_for_return_replacement"
+              value={formData.reason_for_return_replacement}
+              onChange={(e) => setFormData({ ...formData, reason_for_return_replacement: e.target.value })}
+              placeholder={`Enter reason for ${formData.request_type.toLowerCase()}`}
+              rows={3}
+              required
+            />
+          </div>
+
+          <div>
+            <Label htmlFor="asset_details">Asset Details *</Label>
+            <Textarea
+              id="asset_details"
+              value={formData.asset_details}
+              onChange={(e) => setFormData({ ...formData, asset_details: e.target.value })}
+              placeholder="Enter details of the asset (Asset Code, Serial Number, Current Condition, etc.)"
+              rows={3}
+              required
+            />
+          </div>
+        </>
       )}
 
       <div>
