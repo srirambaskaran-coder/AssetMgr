@@ -310,15 +310,14 @@ const AssetTypes = () => {
   );
 };
 
-const AssetTypeForm = ({ initialData, onSubmit, assetManagers = [] }) => {
+const AssetTypeForm = ({ initialData, onSubmit }) => {
   const [formData, setFormData] = useState({
     code: initialData?.code || '',
     name: initialData?.name || '',
     depreciation_applicable: initialData?.depreciation_applicable ?? true,
     asset_life: initialData?.asset_life || '',
     to_be_recovered_on_separation: initialData?.to_be_recovered_on_separation ?? true,
-    status: initialData?.status || 'Active',
-    assigned_asset_manager_id: initialData?.assigned_asset_manager_id ? initialData.assigned_asset_manager_id : 'none'
+    status: initialData?.status || 'Active'
   });
   const [loading, setLoading] = useState(false);
 
