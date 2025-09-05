@@ -40,6 +40,15 @@ const AssetAllocations = () => {
   const [statusFilter, setStatusFilter] = useState('all');
   const [typeFilter, setTypeFilter] = useState('all');
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [formData, setFormData] = useState({
+    asset_type_id: '',
+    asset_definition_id: '',
+    request_type: 'New Request',
+    requested_for: '',
+    remarks: '',
+    dispatch_details: '',
+    requisition_id: null
+  });
   
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
