@@ -567,8 +567,7 @@ metadata:
 
 test_plan:
   current_focus:
-    - "Email Configuration TLS Conflict Fix Completed Successfully"
-    - "Specific Test Location Deletion Task Completed Successfully"
+    - "Asset Allocation Page - Pending Requisitions Display"
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
