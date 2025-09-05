@@ -4761,6 +4761,255 @@ class AssetInventoryAPITester:
         
         return test_result
 
+    def test_asset_system_reset_endpoint(self):
+        """Test the newly implemented /admin/reset-asset-system endpoint"""
+        print(f"\n🔄 Testing Asset System Reset Endpoint")
+        
+        # First, let's get current data counts before reset
+        print("   📊 Getting current data counts before reset...")
+        
+        # Get counts of various collections
+        data_counts_before = {}
+        
+        # Get asset types count
+        success, response = self.run_test(
+            "Get Asset Types Count (Before Reset)",
+            "GET",
+            "asset-types",
+            200,
+            user_role="Administrator"
+        )
+        if success:
+            data_counts_before['asset_types'] = len(response)
+            print(f"   Asset Types: {data_counts_before['asset_types']}")
+        
+        # Get asset definitions count
+        success, response = self.run_test(
+            "Get Asset Definitions Count (Before Reset)",
+            "GET",
+            "asset-definitions",
+            200,
+            user_role="Administrator"
+        )
+        if success:
+            data_counts_before['asset_definitions'] = len(response)
+            print(f"   Asset Definitions: {data_counts_before['asset_definitions']}")
+        
+        # Get asset requisitions count
+        success, response = self.run_test(
+            "Get Asset Requisitions Count (Before Reset)",
+            "GET",
+            "asset-requisitions",
+            200,
+            user_role="Administrator"
+        )
+        if success:
+            data_counts_before['asset_requisitions'] = len(response)
+            print(f"   Asset Requisitions: {data_counts_before['asset_requisitions']}")
+        
+        # Test 1: Access Control - Non-Administrator roles should be denied
+        print("\n   🔒 Testing Access Control...")
+        
+        non_admin_roles = ["Employee", "Manager", "HR Manager", "Asset Manager"]
+        for role in non_admin_roles:
+            if role in self.tokens:
+                success, response = self.run_test(
+                    f"{role} Reset System (Should Fail)",
+                    "POST",
+                    "admin/reset-asset-system",
+                    403,  # Expecting forbidden
+                    user_role=role
+                )
+                
+                if success:
+                    print(f"   ✅ {role} correctly denied access (403 status)")
+                else:
+                    print(f"   ❌ {role} access control failed")
+        
+        # Test 2: Administrator can execute reset successfully
+        print("\n   🔄 Testing Administrator Reset Execution...")
+        
+        success, response = self.run_test(
+            "Administrator Execute Reset",
+            "POST",
+            "admin/reset-asset-system",
+            200,
+            user_role="Administrator"
+        )
+        
+        if success:
+            print("   ✅ Administrator successfully executed reset")
+            
+            # Verify response format
+            required_fields = ["message", "deleted_by", "deletion_summary", "timestamp"]
+            missing_fields = [field for field in required_fields if field not in response]
+            
+            if not missing_fields:
+                print("   ✅ Response includes all required fields")
+                
+                # Check deletion summary structure
+                deletion_summary = response.get("deletion_summary", {})
+                expected_summary_fields = [
+                    "ndc_requests", "ndc_asset_recovery", "asset_retrievals", 
+                    "asset_allocations", "asset_requisitions", "asset_definitions", 
+                    "asset_types", "user_asset_assignments_cleared"
+                ]
+                
+                missing_summary_fields = [field for field in expected_summary_fields if field not in deletion_summary]
+                if not missing_summary_fields:
+                    print("   ✅ Deletion summary includes all expected fields")
+                    print(f"   📊 Deletion Summary:")
+                    for field, count in deletion_summary.items():
+                        print(f"     {field}: {count}")
+                else:
+                    print(f"   ❌ Missing deletion summary fields: {missing_summary_fields}")
+                
+                # Check deleted_by information
+                deleted_by = response.get("deleted_by", {})
+                if "user_id" in deleted_by and "user_name" in deleted_by:
+                    print(f"   ✅ Audit information present: {deleted_by['user_name']} ({deleted_by['user_id']})")
+                else:
+                    print("   ❌ Missing audit information in deleted_by")
+                
+                # Check timestamp format
+                timestamp = response.get("timestamp")
+                if timestamp:
+                    print(f"   ✅ Timestamp present: {timestamp}")
+                else:
+                    print("   ❌ Missing timestamp")
+                    
+            else:
+                print(f"   ❌ Missing required response fields: {missing_fields}")
+        else:
+            print("   ❌ Administrator reset execution failed")
+            return False
+        
+        # Test 3: Verify all collections are empty after reset
+        print("\n   🔍 Verifying Data Deletion...")
+        
+        # Check asset types
+        success, response = self.run_test(
+            "Verify Asset Types Deleted",
+            "GET",
+            "asset-types",
+            200,
+            user_role="Administrator"
+        )
+        if success:
+            if len(response) == 0:
+                print("   ✅ All asset types deleted")
+            else:
+                print(f"   ❌ Asset types not fully deleted: {len(response)} remaining")
+        
+        # Check asset definitions
+        success, response = self.run_test(
+            "Verify Asset Definitions Deleted",
+            "GET",
+            "asset-definitions",
+            200,
+            user_role="Administrator"
+        )
+        if success:
+            if len(response) == 0:
+                print("   ✅ All asset definitions deleted")
+            else:
+                print(f"   ❌ Asset definitions not fully deleted: {len(response)} remaining")
+        
+        # Check asset requisitions
+        success, response = self.run_test(
+            "Verify Asset Requisitions Deleted",
+            "GET",
+            "asset-requisitions",
+            200,
+            user_role="Administrator"
+        )
+        if success:
+            if len(response) == 0:
+                print("   ✅ All asset requisitions deleted")
+            else:
+                print(f"   ❌ Asset requisitions not fully deleted: {len(response)} remaining")
+        
+        # Test 4: Verify system is still functional after reset
+        print("\n   🔧 Testing System Functionality After Reset...")
+        
+        # Test creating new asset type after reset
+        new_asset_type_data = {
+            "code": "POST_RESET_TEST",
+            "name": "Post Reset Test Asset",
+            "depreciation_applicable": False,
+            "to_be_recovered_on_separation": True,
+            "status": "Active"
+        }
+        
+        success, response = self.run_test(
+            "Create Asset Type After Reset",
+            "POST",
+            "asset-types",
+            200,
+            data=new_asset_type_data,
+            user_role="Administrator"
+        )
+        
+        if success:
+            print("   ✅ System functional after reset - can create new asset types")
+            self.test_data['post_reset_asset_type_id'] = response['id']
+            
+            # Test creating asset definition after reset
+            new_asset_def_data = {
+                "asset_type_id": response['id'],
+                "asset_code": "POST_RESET_001",
+                "asset_description": "Post Reset Test Asset",
+                "asset_details": "Test asset created after system reset",
+                "asset_value": 1000.0,
+                "status": "Available"
+            }
+            
+            success, response = self.run_test(
+                "Create Asset Definition After Reset",
+                "POST",
+                "asset-definitions",
+                200,
+                data=new_asset_def_data,
+                user_role="Administrator"
+            )
+            
+            if success:
+                print("   ✅ System functional after reset - can create new asset definitions")
+            else:
+                print("   ❌ System dysfunction after reset - cannot create asset definitions")
+        else:
+            print("   ❌ System dysfunction after reset - cannot create asset types")
+        
+        # Test 5: Test that users are still functional (not deleted)
+        print("\n   👥 Verifying User Data Integrity...")
+        
+        success, response = self.run_test(
+            "Verify Users Still Exist After Reset",
+            "GET",
+            "users",
+            200,
+            user_role="Administrator"
+        )
+        
+        if success:
+            if len(response) > 0:
+                print(f"   ✅ User data preserved - {len(response)} users still exist")
+                
+                # Check if user asset assignments were cleared
+                users_with_asset_assignments = 0
+                for user in response:
+                    if any(field in user for field in ['allocated_to', 'allocation_date', 'acknowledged']):
+                        users_with_asset_assignments += 1
+                
+                if users_with_asset_assignments == 0:
+                    print("   ✅ User asset assignments properly cleared")
+                else:
+                    print(f"   ⚠️ {users_with_asset_assignments} users still have asset assignment fields")
+            else:
+                print("   ❌ Critical error - all users deleted during reset!")
+        
+        return True
+
 def main():
     print("🚀 Starting Asset Inventory Management System API Tests")
     print("=" * 60)
