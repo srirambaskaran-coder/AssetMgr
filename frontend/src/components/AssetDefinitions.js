@@ -319,6 +319,16 @@ const AssetDefinitions = () => {
                         </Badge>
                       </TableCell>
                       <TableCell>
+                        {assetDef.assigned_asset_manager_name || 
+                          <span className="text-gray-400">Not assigned</span>
+                        }
+                      </TableCell>
+                      <TableCell>
+                        {assetDef.location_name || 
+                          <span className="text-gray-400">Not assigned</span>
+                        }
+                      </TableCell>
+                      <TableCell>
                         {assetDef.allocated_to_name || '-'}
                       </TableCell>
                       <TableCell className="text-right">
