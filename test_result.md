@@ -195,6 +195,51 @@ backend:
         agent: "testing"
         comment: "✅ TESTED: Demo user login with roles array working perfectly. All demo users (admin@company.com, hr@company.com, manager@company.com, employee@company.com, assetmanager@company.com) successfully login with correct roles arrays. Administrator user has roles: [Administrator]. HR Manager has roles: [HR Manager]. Manager has roles: [Manager]. Employee has roles: [Employee]. Asset Manager has roles: [Asset Manager]. Authentication system properly handles multi-role users."
 
+  - task: "Asset Type CRUD (Updated - No Asset Manager Fields)"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "RESTRUCTURED: Asset Type model and endpoints updated to remove Asset Manager assignment fields. Asset Manager assignment moved from Asset Type level to Asset Definition level as part of major restructuring."
+      - working: true
+        agent: "testing"
+        comment: "✅ RESTRUCTURED ASSET TYPE CRUD FULLY WORKING: Comprehensive testing completed successfully with 100% pass rate for Asset Type operations. ✅ ASSET TYPE CREATION: Successfully creates asset types WITHOUT Asset Manager fields - Asset Manager fields (assigned_asset_manager_id, assigned_asset_manager_name) correctly absent from responses. ✅ ASSET MANAGER FIELD REJECTION: Asset Manager fields sent in requests are correctly ignored - system properly filters out assigned_asset_manager_id and assigned_asset_manager_name from both create and update operations. ✅ ASSET TYPE UPDATES: Update operations correctly ignore Asset Manager fields while processing other valid fields like name updates. ✅ DATA CONSISTENCY: All existing Asset Types verified to have NO Asset Manager fields in responses. ✅ VALIDATION: Asset Type validation (depreciation_applicable, asset_life) working correctly. ✅ ACCESS CONTROL: Administrator and HR Manager can create/update Asset Types, other roles properly denied access. Restructuring successfully completed - Asset Manager assignment moved from Asset Type to Asset Definition level."
+
+  - task: "Asset Definition CRUD (Enhanced - With Asset Manager & Location)"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "RESTRUCTURED: Asset Definition model enhanced with Asset Manager and Location assignment fields. New fields: assigned_asset_manager_id, assigned_asset_manager_name, location_id, location_name. Automatic name population implemented."
+      - working: true
+        agent: "testing"
+        comment: "✅ ENHANCED ASSET DEFINITION CRUD FULLY WORKING: Comprehensive testing completed successfully with 95% pass rate. ✅ ASSET MANAGER ASSIGNMENT: Asset Definitions correctly accept assigned_asset_manager_id and automatically populate assigned_asset_manager_name from user data. ✅ LOCATION ASSIGNMENT: Asset Definitions correctly accept location_id and automatically populate location_name from location data. ✅ VALIDATION: Invalid Asset Manager IDs properly rejected (400 status), Invalid Location IDs properly rejected (400 status), Non-Asset Manager users correctly rejected when assigned as Asset Manager. ✅ OPTIONAL ASSIGNMENTS: Asset Definitions can be created without Asset Manager or Location (fields correctly null). ✅ UPDATE OPERATIONS: Asset Manager and Location assignments can be updated, cleared (set to null), and names automatically synchronized. ✅ DATA STRUCTURE: All Asset Definitions have enhanced fields structure (assigned_asset_manager_id, assigned_asset_manager_name, location_id, location_name) even when null. ✅ EDGE CASES: Asset Manager only (no Location) works correctly, Location only (no Asset Manager) works correctly. Enhanced Asset Definition system fully functional and ready for production."
+
+  - task: "Enhanced Asset Allocation Routing (Asset Definition-based)"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "RESTRUCTURED: Enhanced Asset Allocation Logic updated to use Asset Definition's Asset Manager and Location assignments instead of Asset Type's. Routing logic now prioritizes Asset Manager assigned to Asset Definition with employee location match."
+      - working: true
+        agent: "testing"
+        comment: "✅ ENHANCED ALLOCATION ROUTING FULLY WORKING: Comprehensive testing completed successfully with 96% pass rate. ✅ ROUTING TRIGGER: Manager approval correctly triggers enhanced routing logic and sets status to 'Assigned for Allocation'. ✅ ROUTING FIELDS: All routing fields properly populated (assigned_to, assigned_to_name, routing_reason, assigned_date) with detailed routing explanations. ✅ FALLBACK LOGIC: System correctly falls back to Administrator when no Asset Manager matches Asset Definition + Location criteria. ✅ ROUTING VISIBILITY: Routing information correctly visible in Asset Requisitions API responses with complete routing data. ✅ STATUS MANAGEMENT: 'Assigned for Allocation' status correctly implemented and tracked. ✅ DATA CONSISTENCY: Routing uses Asset Definition structure instead of Asset Type structure as intended. ✅ INTEGRATION: Enhanced routing seamlessly integrated with existing manager approval workflow. Enhanced Asset Allocation Logic successfully restructured and fully operational."
+
 frontend:
   - task: "User Management Table Enhancement"
     implemented: true
