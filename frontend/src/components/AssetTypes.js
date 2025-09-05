@@ -130,20 +130,28 @@ const AssetTypes = () => {
           <p className="text-gray-600 mt-1">Manage your organization's asset type definitions</p>
         </div>
 
-        <Dialog open={isCreateModalOpen} onOpenChange={setIsCreateModalOpen}>
-          <DialogTrigger asChild>
-            <Button className="bg-blue-600 hover:bg-blue-700">
-              <Plus className="mr-2 h-4 w-4" />
-              Add Asset Type
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="max-w-md">
-            <DialogHeader>
-              <DialogTitle>Create New Asset Type</DialogTitle>
-            </DialogHeader>
-            <AssetTypeForm onSubmit={handleCreateAssetType} />
-          </DialogContent>
-        </Dialog>
+        <div className="flex items-center gap-2">
+          <ExportButton 
+            data={filteredAssetTypes}
+            type="assetTypes"
+            disabled={loading}
+          />
+          
+          <Dialog open={isCreateModalOpen} onOpenChange={setIsCreateModalOpen}>
+            <DialogTrigger asChild>
+              <Button className="bg-blue-600 hover:bg-blue-700">
+                <Plus className="mr-2 h-4 w-4" />
+                Add Asset Type
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-md">
+              <DialogHeader>
+                <DialogTitle>Create New Asset Type</DialogTitle>
+              </DialogHeader>
+              <AssetTypeForm onSubmit={handleCreateAssetType} />
+            </DialogContent>
+          </Dialog>
+        </div>
       </div>
 
       {/* Filters */}
