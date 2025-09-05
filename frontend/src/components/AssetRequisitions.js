@@ -524,8 +524,8 @@ const AssetRequisitionForm = ({ assetTypes, users, onSubmit }) => {
   const [formData, setFormData] = useState({
     asset_type_id: '',
     request_type: 'New Request',
-    requested_for: 'self',
-    requested_for_user_id: user?.id || '',
+    request_for: 'self',
+    team_member_employee_id: '',
     required_by_date: '',
     justification: '',
     reason_for_return_replacement: '',
@@ -537,10 +537,16 @@ const AssetRequisitionForm = ({ assetTypes, users, onSubmit }) => {
     e.preventDefault();
     setLoading(true);
     
-    // Prepare submit data based on requested_for selection
+    // Prepare submit data - map frontend values to backend expected values
     const submitData = {
-      ...formData,
-      requested_for: formData.requested_for === 'self' ? user?.id : formData.requested_for_user_id
+      asset_type_id: formData.asset_type_id,
+      request_type: formData.request_type,
+      request_for: formData.request_for,
+      team_member_employee_id: formData.request_for === 'team_member' ? formData.team_member_employee_id : null,
+      required_by_date: formData.required_by_date,
+      justification: formData.justification,
+      reason_for_return_replacement: formData.reason_for_return_replacement || null,
+      asset_details: formData.asset_details || null
     };
     
     await onSubmit(submitData);
@@ -588,10 +594,10 @@ const AssetRequisitionForm = ({ assetTypes, users, onSubmit }) => {
       </div>
 
       <div>
-        <Label htmlFor="requested_for">Requested For *</Label>
+        <Label htmlFor="request_for">Requested For *</Label>
         <Select 
-          value={formData.requested_for} 
-          onValueChange={(value) => setFormData({ ...formData, requested_for: value })}
+          value={formData.request_for} 
+          onValueChange={(value) => setFormData({ ...formData, request_for: value, team_member_employee_id: '' })}
         >
           <SelectTrigger>
             <SelectValue placeholder="Select who this is for" />
@@ -604,12 +610,12 @@ const AssetRequisitionForm = ({ assetTypes, users, onSubmit }) => {
       </div>
 
       {/* Show user selection dropdown only when "Team Member" is selected */}
-      {formData.requested_for === 'team_member' && (
+      {formData.request_for === 'team_member' && (
         <div>
-          <Label htmlFor="requested_for_user_id">Select Team Member *</Label>
+          <Label htmlFor="team_member_employee_id">Select Team Member *</Label>
           <Select 
-            value={formData.requested_for_user_id} 
-            onValueChange={(value) => setFormData({ ...formData, requested_for_user_id: value })}
+            value={formData.team_member_employee_id} 
+            onValueChange={(value) => setFormData({ ...formData, team_member_employee_id: value })}
           >
             <SelectTrigger>
               <SelectValue placeholder="Select team member" />
