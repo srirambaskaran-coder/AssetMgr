@@ -524,7 +524,8 @@ const AssetRequisitionForm = ({ assetTypes, users, onSubmit }) => {
   const [formData, setFormData] = useState({
     asset_type_id: '',
     request_type: 'New Request',
-    requested_for: user?.id || '',
+    requested_for: 'self',
+    requested_for_user_id: user?.id || '',
     required_by_date: '',
     justification: ''
   });
@@ -533,7 +534,14 @@ const AssetRequisitionForm = ({ assetTypes, users, onSubmit }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-    await onSubmit(formData);
+    
+    // Prepare submit data based on requested_for selection
+    const submitData = {
+      ...formData,
+      requested_for: formData.requested_for === 'self' ? user?.id : formData.requested_for_user_id
+    };
+    
+    await onSubmit(submitData);
     setLoading(false);
   };
 
@@ -569,6 +577,7 @@ const AssetRequisitionForm = ({ assetTypes, users, onSubmit }) => {
             <SelectItem value="New Request">New Request</SelectItem>
             <SelectItem value="Replacement">Replacement</SelectItem>
             <SelectItem value="Upgrade">Upgrade</SelectItem>
+            <SelectItem value="Return">Return</SelectItem>
           </SelectContent>
         </Select>
       </div>
@@ -580,17 +589,36 @@ const AssetRequisitionForm = ({ assetTypes, users, onSubmit }) => {
           onValueChange={(value) => setFormData({ ...formData, requested_for: value })}
         >
           <SelectTrigger>
-            <SelectValue placeholder="Select user" />
+            <SelectValue placeholder="Select who this is for" />
           </SelectTrigger>
           <SelectContent>
-            {users.map(user => (
-              <SelectItem key={user.id} value={user.id}>
-                {user.name} ({user.email})
-              </SelectItem>
-            ))}
+            <SelectItem value="self">Self</SelectItem>
+            <SelectItem value="team_member">Team Member</SelectItem>
           </SelectContent>
         </Select>
       </div>
+
+      {/* Show user selection dropdown only when "Team Member" is selected */}
+      {formData.requested_for === 'team_member' && (
+        <div>
+          <Label htmlFor="requested_for_user_id">Select Team Member *</Label>
+          <Select 
+            value={formData.requested_for_user_id} 
+            onValueChange={(value) => setFormData({ ...formData, requested_for_user_id: value })}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Select team member" />
+            </SelectTrigger>
+            <SelectContent>
+              {users.filter(u => u.id !== user?.id).map(teamUser => (
+                <SelectItem key={teamUser.id} value={teamUser.id}>
+                  {teamUser.name} ({teamUser.email})
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      )}
 
       <div>
         <Label htmlFor="required_by_date">Required By Date *</Label>
