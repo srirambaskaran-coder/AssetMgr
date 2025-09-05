@@ -57,8 +57,8 @@
 ##   test_priority: "high_first"  # or "sequential" or "stuck_first"
 ##
 ## agent_communication:
-##     -agent: "main"  # or "testing" or "user"
-##     -message: "Communication message between agents"
+##     -agent: "main"
+##     -message: "Working on Asset Allocation Page fix - need to display pending requisitions assigned to Asset Manager for allocation, not just completed allocations. Current component fetches pending requisitions but only displays completed allocations table."
 
 # Protocol Guidelines for Main agent
 #
