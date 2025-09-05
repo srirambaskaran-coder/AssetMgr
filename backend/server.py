@@ -2451,7 +2451,7 @@ async def create_asset_allocation(
     if not requisition:
         raise HTTPException(status_code=404, detail="Requisition not found")
     
-    if requisition["status"] not in [RequisitionStatus.MANAGER_APPROVED, RequisitionStatus.HR_APPROVED]:
+    if requisition["status"] not in [RequisitionStatus.MANAGER_APPROVED, RequisitionStatus.HR_APPROVED, RequisitionStatus.ASSIGNED_FOR_ALLOCATION]:
         raise HTTPException(status_code=400, detail="Requisition must be approved before allocation")
     
     # Get asset definition details
