@@ -5131,6 +5131,138 @@ class AssetInventoryAPITester:
         
         return all_successful
 
+    def test_delete_all_asset_requisitions(self):
+        """Test deletion of all asset requisitions from the database"""
+        print(f"\n🗑️ Testing DELETE ALL ASSET REQUISITIONS Task")
+        print("=" * 60)
+        
+        # Step 1: Authentication as Administrator
+        print("\n🔐 Step 1: Authentication as Administrator")
+        if not self.test_login("admin@company.com", "password123", "Administrator"):
+            print("❌ Failed to authenticate as Administrator - cannot proceed")
+            return False
+        
+        # Step 2: Get current asset requisitions
+        print("\n📋 Step 2: Get Current Asset Requisitions")
+        success, response = self.run_test(
+            "Get All Asset Requisitions (Before Deletion)",
+            "GET",
+            "asset-requisitions",
+            200,
+            user_role="Administrator"
+        )
+        
+        if not success:
+            print("❌ Failed to get current asset requisitions")
+            return False
+        
+        initial_requisitions = response
+        initial_count = len(initial_requisitions)
+        print(f"   📊 Current asset requisitions count: {initial_count}")
+        
+        if initial_count == 0:
+            print("   ℹ️ No asset requisitions found to delete")
+            return True
+        
+        # Display basic details of current requisitions
+        print("   📝 Current requisitions summary:")
+        for i, req in enumerate(initial_requisitions[:5]):  # Show first 5
+            req_id = req.get('id', 'Unknown')[:8]
+            asset_type = req.get('asset_type_name', 'Unknown')
+            status = req.get('status', 'Unknown')
+            requested_by = req.get('requested_by_name', 'Unknown')
+            print(f"     {i+1}. ID: {req_id}... | Type: {asset_type} | Status: {status} | By: {requested_by}")
+        
+        if initial_count > 5:
+            print(f"     ... and {initial_count - 5} more requisitions")
+        
+        # Step 3: Delete all asset requisitions individually
+        print(f"\n🗑️ Step 3: Delete All Asset Requisitions ({initial_count} items)")
+        deleted_count = 0
+        failed_deletions = []
+        
+        for i, requisition in enumerate(initial_requisitions):
+            req_id = requisition.get('id')
+            req_short_id = req_id[:8] if req_id else 'Unknown'
+            
+            print(f"   Deleting {i+1}/{initial_count}: {req_short_id}...", end=" ")
+            
+            success, response = self.run_test(
+                f"Delete Asset Requisition {req_short_id}",
+                "DELETE",
+                f"asset-requisitions/{req_id}",
+                200,
+                user_role="Administrator"
+            )
+            
+            if success:
+                deleted_count += 1
+                print("✅")
+            else:
+                failed_deletions.append({
+                    'id': req_id,
+                    'short_id': req_short_id,
+                    'asset_type': requisition.get('asset_type_name', 'Unknown'),
+                    'status': requisition.get('status', 'Unknown')
+                })
+                print("❌")
+        
+        # Step 4: Verification - Get asset requisitions again
+        print(f"\n✅ Step 4: Verification")
+        success, response = self.run_test(
+            "Get All Asset Requisitions (After Deletion)",
+            "GET",
+            "asset-requisitions",
+            200,
+            user_role="Administrator"
+        )
+        
+        if not success:
+            print("❌ Failed to verify deletion - cannot get asset requisitions")
+            return False
+        
+        final_requisitions = response
+        final_count = len(final_requisitions)
+        
+        # Step 5: Display summary results
+        print(f"\n📊 Step 5: Deletion Summary")
+        print("=" * 40)
+        print(f"   Initial count:     {initial_count}")
+        print(f"   Successfully deleted: {deleted_count}")
+        print(f"   Failed deletions:  {len(failed_deletions)}")
+        print(f"   Final count:       {final_count}")
+        print(f"   Expected final:    0")
+        
+        # Report any failed deletions
+        if failed_deletions:
+            print(f"\n❌ Failed Deletions ({len(failed_deletions)} items):")
+            for failed in failed_deletions:
+                print(f"     ID: {failed['short_id']}... | Type: {failed['asset_type']} | Status: {failed['status']}")
+        
+        # Report any remaining requisitions
+        if final_count > 0:
+            print(f"\n⚠️ Remaining Requisitions ({final_count} items):")
+            for req in final_requisitions:
+                req_id = req.get('id', 'Unknown')[:8]
+                asset_type = req.get('asset_type_name', 'Unknown')
+                status = req.get('status', 'Unknown')
+                print(f"     ID: {req_id}... | Type: {asset_type} | Status: {status}")
+        
+        # Final result
+        success_result = (final_count == 0 and len(failed_deletions) == 0)
+        
+        if success_result:
+            print(f"\n🎉 SUCCESS: All {initial_count} asset requisitions deleted successfully!")
+            print("   ✅ Database is now clean of asset requisitions")
+        else:
+            print(f"\n⚠️ PARTIAL SUCCESS: {deleted_count}/{initial_count} requisitions deleted")
+            if final_count > 0:
+                print(f"   ❌ {final_count} requisitions still remain in system")
+            if failed_deletions:
+                print(f"   ❌ {len(failed_deletions)} deletions failed")
+        
+        return success_result
+
 def main():
     print("🚀 Starting Asset Inventory Management System API Tests")
     print("=" * 60)
