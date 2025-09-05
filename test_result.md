@@ -548,7 +548,7 @@ frontend:
         comment: "🎯 DASHBOARD FUNCTIONALITY FULLY WORKING: Comprehensive testing across all user roles completed successfully. ✅ ALL ROLE-BASED DASHBOARDS VERIFIED: Administrator Dashboard (4 cards: Total Asset Types: 5, Total Assets: 2, Available Assets: 2, Pending Requisitions: 0), HR Manager Dashboard (4 cards: Total Assets, Available Assets, Allocated Assets, Pending Requisitions), Employee Dashboard (3 cards: My Requisitions: 18, My Allocated Assets: 0, Available Assets: 2), Asset Manager Dashboard (8+ cards with comprehensive metrics including Damaged Assets, Lost Assets, Under Repair, Pending Retrievals, plus Allocation Rate: 0%, Availability Rate: 100%, Recovery Rate: 0%, and Asset Type Breakdown section). ✅ AUTHENTICATION & API INTEGRATION: All login flows working with 200 responses. Dashboard API calls successful (/api/dashboard/stats and /api/dashboard/asset-manager-stats). ✅ MULTI-ROLE SYSTEM INTEGRATION: Role detection, role badges, welcome messages, and role-specific content all working perfectly. Role hierarchy and navigation working correctly. ✅ NO CRITICAL ISSUES: Dashboard cards are displaying correctly - initial concern was due to incorrect test selectors. All dashboard functionality working perfectly across all user roles."
 
   - task: "Asset Allocation Page - Pending Requisitions Display"
-    implemented: false
+    implemented: true
     working: false
     file: "/app/frontend/src/components/AssetAllocations.js"
     stuck_count: 0
@@ -558,6 +558,9 @@ frontend:
       - working: "NA"
         agent: "main"
         comment: "Asset Allocation page currently only displays completed allocations. Need to add a section to display pending requisitions with 'Assigned for Allocation' status that are assigned to the current Asset Manager. Component already fetches this data but doesn't display it in UI."
+      - working: "unknown"
+        agent: "main"
+        comment: "IMPLEMENTED: Added new section above completed allocations to display pending requisitions assigned to Asset Manager. Features: (1) Pending Requisitions table with columns: Requisition ID, Asset Type, Request Type, Requested For, Requested By, Required By, Routing Reason, Actions. (2) Orange-highlighted rows for pending items. (3) 'Allocate' button for each pending requisition. (4) Pre-population of allocation form with requisition data. (5) Updated form to handle requisition linking. (6) Proper refresh of pending requisitions after allocation. Ready for testing."
 
 metadata:
   created_by: "main_agent"
