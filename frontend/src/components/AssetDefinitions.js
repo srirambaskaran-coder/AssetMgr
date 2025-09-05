@@ -378,7 +378,7 @@ const AssetDefinitions = () => {
   );
 };
 
-const AssetDefinitionForm = ({ assetTypes, initialData, onSubmit }) => {
+const AssetDefinitionForm = ({ assetTypes, assetManagers, locations, initialData, onSubmit }) => {
   const [formData, setFormData] = useState({
     asset_type_id: initialData?.asset_type_id || '',
     asset_code: initialData?.asset_code || '',
@@ -386,7 +386,9 @@ const AssetDefinitionForm = ({ assetTypes, initialData, onSubmit }) => {
     asset_details: initialData?.asset_details || '',
     asset_value: initialData?.asset_value || '',
     asset_depreciation_value_per_year: initialData?.asset_depreciation_value_per_year || '',
-    status: initialData?.status || 'Available'
+    status: initialData?.status || 'Available',
+    assigned_asset_manager_id: initialData?.assigned_asset_manager_id || '',
+    location_id: initialData?.location_id || ''
   });
   const [loading, setLoading] = useState(false);
 
