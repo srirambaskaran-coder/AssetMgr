@@ -52,16 +52,6 @@ const AssetTypes = () => {
     }
   };
 
-  const fetchAssetManagers = async () => {
-    try {
-      const response = await axios.get(`${API}/users/asset-managers`);
-      setAssetManagers(response.data);
-    } catch (error) {
-      console.error('Error fetching asset managers:', error);
-      toast.error('Failed to load asset managers');
-    }
-  };
-
   const handleCreateAssetType = async (formData) => {
     try {
       const response = await axios.post(`${API}/asset-types`, formData);
