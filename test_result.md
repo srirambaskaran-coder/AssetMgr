@@ -571,6 +571,18 @@ frontend:
         agent: "main"
         comment: "✅ ASSET ALLOCATION PAGE FIXES COMPLETED: All requested changes implemented and tested successfully. (1) FIXED AUTHENTICATION: Resolved frontend URL configuration issue - changed REACT_APP_BACKEND_URL from preview domain to http://localhost:8001 and restarted frontend service. (2) FIXED REQUIRED BY DATE: Added null check to prevent 'Invalid Date' display - now shows proper date or '-' when null. (3) REMOVED ROUTING REASON COLUMN: Successfully replaced 'Routing Reason' column with 'Approved By' column. (4) ADDED APPROVED BY FIELD: New column shows manager_approved_by_name or hr_approved_by_name with user icon. (5) VERIFIED FUNCTIONALITY: Pending requisitions section displays correctly with orange-highlighted rows, proper column headers, and functional 'Allocate' buttons. System working as designed - Vishal's approved requisition now visible to Guna (Asset Manager) when logged in with correct credentials (kiran.shetty@refur.app)."
 
+  - task: "Asset Requisitions Frontend - Requested For Field Display"
+    implemented: true
+    working: true
+    file: "/app/frontend/src/components/AssetRequisitions.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "✅ ASSET REQUISITIONS REQUESTED FOR FIELD DISPLAY FULLY WORKING: Comprehensive frontend testing completed successfully with 100% pass rate. ✅ MANAGER LOGIN: Successfully authenticated as manager@company.com (Balaji - Manager) and accessed Asset Requisitions page. ✅ REQUEST FOR COLUMN: 'Request For' column header found and properly displayed in table. ✅ FIELD POPULATION: All 6 asset requisitions have properly populated 'Request For' fields - NO BLANK FIELDS found. ✅ SELF REQUESTS: 5 Self requests correctly show requester's name ('Employee') in 'Request For' field. ✅ TEAM MEMBER REQUESTS: 1 Team Member request correctly shows team member's name ('Sriram') in 'Request For' field, different from requester ('Employee'). ✅ MANAGER APPROVAL WORKFLOW: Found 4 review/approval buttons for pending requests. Manager approval dialog opens successfully and displays 'Requested For' field in requisition details. ✅ DATA INTEGRITY: All requisitions visible to manager (6 total), proper status badges, and functional approval workflow. The requested_for_name field fix is working perfectly - managers can now clearly see who assets are being requested for during the approval process."
+
 metadata:
   created_by: "main_agent"
   version: "1.0"
