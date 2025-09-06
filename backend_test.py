@@ -6806,7 +6806,11 @@ if __name__ == "__main__":
         # Run focused Email Configuration Fix test
         result = run_email_configuration_fix_test()
         sys.exit(0 if result else 1)
+    elif len(sys.argv) > 1 and sys.argv[1] == "debug-requisitions":
+        # Run focused Asset Requisitions Data Population Debug test
+        result = run_asset_requisitions_debug_test()
+        sys.exit(0 if result else 1)
     else:
-        # Run the Email Configuration Fix test by default as requested
-        result = run_email_configuration_fix_test()
+        # Run the Asset Requisitions Debug test by default as requested
+        result = run_asset_requisitions_debug_test()
         sys.exit(0 if result else 1)
