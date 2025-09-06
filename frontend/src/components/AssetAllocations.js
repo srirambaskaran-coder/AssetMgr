@@ -350,7 +350,7 @@ const AssetAllocations = () => {
                     <TableHead>Requested For</TableHead>
                     <TableHead>Requested By</TableHead>
                     <TableHead>Required By</TableHead>
-                    <TableHead>Routing Reason</TableHead>
+                    <TableHead>Approved By</TableHead>
                     <TableHead>Actions</TableHead>
                   </TableRow>
                 </TableHeader>
