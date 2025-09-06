@@ -190,6 +190,7 @@ class AssetRequisition(BaseModel):
     team_member_name: Optional[str] = None
     requested_by: str  # User ID
     requested_by_name: Optional[str] = None
+    requested_for_name: Optional[str] = None  # Name of the person the asset is requested for
     manager_id: Optional[str] = None
     manager_name: Optional[str] = None
     hr_manager_id: Optional[str] = None
