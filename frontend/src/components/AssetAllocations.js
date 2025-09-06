@@ -376,11 +376,17 @@ const AssetAllocations = () => {
                       <TableCell>
                         <div className="flex items-center">
                           <Calendar className="h-4 w-4 text-gray-400 mr-2" />
-                          {new Date(requisition.required_by).toLocaleDateString()}
+                          {requisition.required_by ? 
+                            new Date(requisition.required_by).toLocaleDateString() : 
+                            '-'
+                          }
                         </div>
                       </TableCell>
-                      <TableCell className="max-w-xs truncate">
-                        {requisition.routing_reason || '-'}
+                      <TableCell>
+                        <div className="flex items-center">
+                          <User className="h-4 w-4 text-gray-400 mr-2" />
+                          {requisition.manager_approved_by_name || requisition.hr_approved_by_name || '-'}
+                        </div>
                       </TableCell>
                       <TableCell>
                         <Button 
