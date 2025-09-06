@@ -1629,7 +1629,43 @@ async def get_asset_requisitions(current_user: User = Depends(get_current_user))
         # HR Managers and Administrators can see all requisitions
         requisitions = await db.asset_requisitions.find().to_list(1000)
     
-    return [AssetRequisition(**req) for req in requisitions]
+    # Populate name fields for each requisition
+    enhanced_requisitions = []
+    for req in requisitions:
+        # Get requester info
+        requester = await db.users.find_one({"id": req["requested_by"]})
+        
+        # Populate requested_for_name based on request_for type
+        if req.get("request_for") == "Team Member" and req.get("team_member_employee_id"):
+            # Get team member info
+            team_member = await db.users.find_one({"id": req["team_member_employee_id"]})
+            req["requested_for_name"] = team_member["name"] if team_member else "Unknown Team Member"
+            req["team_member_name"] = team_member["name"] if team_member else None
+        else:
+            # Self request - use requester's name
+            req["requested_for_name"] = requester["name"] if requester else "Unknown User"
+        
+        # Populate other name fields
+        req["requested_by_name"] = requester["name"] if requester else "Unknown User"
+        
+        # Get asset type name
+        if req.get("asset_type_id"):
+            asset_type = await db.asset_types.find_one({"id": req["asset_type_id"]})
+            req["asset_type_name"] = asset_type["name"] if asset_type else None
+        
+        # Get manager approval info
+        if req.get("manager_approved_by"):
+            manager = await db.users.find_one({"id": req["manager_approved_by"]})
+            req["manager_approved_by_name"] = manager["name"] if manager else None
+            
+        # Get HR approval info  
+        if req.get("hr_approved_by"):
+            hr_manager = await db.users.find_one({"id": req["hr_approved_by"]})
+            req["hr_approved_by_name"] = hr_manager["name"] if hr_manager else None
+        
+        enhanced_requisitions.append(AssetRequisition(**req))
+    
+    return enhanced_requisitions
 
 @api_router.delete("/asset-requisitions/{requisition_id}")
 async def delete_asset_requisition(
