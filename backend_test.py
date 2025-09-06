@@ -2444,6 +2444,150 @@ class AssetInventoryAPITester:
         print("✅ All password update and login tests completed")
         return True
 
+    def test_email_configuration_fix(self):
+        """Test Email Configuration Fix with Gmail SMTP credentials"""
+        print(f"\n📧 Testing Email Configuration Fix")
+        
+        # Test 1: Login as Administrator
+        if "Administrator" not in self.tokens:
+            print("❌ Administrator login required for email configuration tests")
+            return False
+        
+        # Test 2: Get current email configuration
+        success, response = self.run_test(
+            "Get Current Email Configuration",
+            "GET",
+            "email-config",
+            200,
+            user_role="Administrator"
+        )
+        
+        current_config_id = None
+        if success:
+            current_config_id = response.get('id')
+            print(f"   Current config ID: {current_config_id}")
+            print(f"   Current SMTP server: {response.get('smtp_server', 'Not set')}")
+            print(f"   Current SMTP username: {response.get('smtp_username', 'Not set')}")
+            print(f"   Current TLS setting: {response.get('use_tls', 'Not set')}")
+            print(f"   Current SSL setting: {response.get('use_ssl', 'Not set')}")
+        else:
+            print("   No existing email configuration found")
+        
+        # Test 3: Update email configuration with correct Gmail credentials
+        gmail_config = {
+            "smtp_server": "smtp.gmail.com",
+            "smtp_port": 587,
+            "smtp_username": "info@hfactor.app",
+            "smtp_password": "kzkjjvzulcvppiry",
+            "use_tls": True,
+            "use_ssl": False,
+            "from_email": "info@hfactor.app",
+            "from_name": "Asset Management System",
+            "is_active": True
+        }
+        
+        if current_config_id:
+            # Update existing configuration
+            success, response = self.run_test(
+                "Update Email Configuration with Gmail Credentials",
+                "PUT",
+                f"email-config/{current_config_id}",
+                200,
+                data=gmail_config,
+                user_role="Administrator"
+            )
+        else:
+            # Create new configuration
+            success, response = self.run_test(
+                "Create Email Configuration with Gmail Credentials",
+                "POST",
+                "email-config",
+                200,
+                data=gmail_config,
+                user_role="Administrator"
+            )
+        
+        if success:
+            config_id = response.get('id', current_config_id)
+            self.test_data['email_config_id'] = config_id
+            print(f"   ✅ Email configuration updated successfully")
+            print(f"   Config ID: {config_id}")
+            print(f"   SMTP Server: {response.get('smtp_server')}")
+            print(f"   SMTP Port: {response.get('smtp_port')}")
+            print(f"   From Email: {response.get('from_email')}")
+            print(f"   TLS: {response.get('use_tls')}")
+            print(f"   SSL: {response.get('use_ssl')}")
+        else:
+            print("   ❌ Failed to update email configuration")
+            return False
+        
+        # Test 4: Test email functionality
+        test_email_data = {
+            "test_email": "info@hfactor.app"
+        }
+        
+        success, response = self.run_test(
+            "Test Email Functionality",
+            "POST",
+            "email-config/test",
+            200,
+            data=test_email_data,
+            user_role="Administrator"
+        )
+        
+        if success:
+            print(f"   ✅ Email test successful")
+            print(f"   Test result: {response.get('message', 'No message')}")
+        else:
+            print(f"   ❌ Email test failed")
+        
+        # Test 5: Verify configuration persistence
+        success, response = self.run_test(
+            "Verify Email Configuration Persistence",
+            "GET",
+            "email-config",
+            200,
+            user_role="Administrator"
+        )
+        
+        if success:
+            print(f"   ✅ Configuration persisted correctly")
+            print(f"   Verified SMTP Server: {response.get('smtp_server')}")
+            print(f"   Verified From Email: {response.get('from_email')}")
+            print(f"   Verified TLS: {response.get('use_tls')}")
+            print(f"   Verified SSL: {response.get('use_ssl')}")
+        
+        # Test 6: Create test asset requisition to trigger email notification
+        if 'asset_type_id' in self.test_data:
+            from datetime import datetime, timedelta
+            required_by_date = (datetime.now() + timedelta(days=7)).isoformat()
+            
+            email_test_requisition = {
+                "asset_type_id": self.test_data['asset_type_id'],
+                "request_type": "New Allocation",
+                "request_for": "Self",
+                "justification": "Test requisition to verify email notifications are working",
+                "required_by_date": required_by_date
+            }
+            
+            success, response = self.run_test(
+                "Create Test Asset Requisition (Email Trigger)",
+                "POST",
+                "asset-requisitions",
+                200,
+                data=email_test_requisition,
+                user_role="Employee"
+            )
+            
+            if success:
+                print(f"   ✅ Test requisition created successfully")
+                print(f"   Requisition ID: {response['id'][:8]}...")
+                print(f"   This should trigger manager notification email")
+            else:
+                print(f"   ⚠️ Could not create test requisition for email notification")
+        
+        return True
+
     def test_email_notification_system(self):
         """Test Email Notification System - SMTP Configuration and Integration"""
         print(f"\n📧 Testing Email Notification System")
