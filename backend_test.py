@@ -5919,7 +5919,7 @@ def run_asset_allocation_system_test():
         print("⚠️ No pending requisitions found for current Asset Manager")
         return False
 
-    def test_asset_requisitions_requested_for_name_fix(self):
+def test_asset_requisitions_requested_for_name_fix(self):
         """Test Asset Requisitions API fix to verify requested_for_name field is properly populated"""
         print(f"\n🔍 Testing Asset Requisitions API - requested_for_name Field Fix")
         
