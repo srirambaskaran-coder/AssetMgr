@@ -101,11 +101,8 @@ const AuthProvider = ({ children }) => {
   }, []);
 
   const login = async (email, password) => {
-    console.log('Login function called with:', { email, API });
     try {
-      console.log('Making API request to:', `${API}/auth/login`);
       const response = await axios.post(`${API}/auth/login`, { email, password });
-      console.log('API response:', response.data);
       if (response.data.success) {
         const token = response.data.session_token;
         localStorage.setItem('session_token', token);
