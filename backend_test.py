@@ -4,7 +4,7 @@ import json
 from datetime import datetime
 
 class AssetInventoryAPITester:
-    def __init__(self, base_url="http://localhost:8001"):
+    def __init__(self, base_url="https://resource-manager-6.preview.emergentagent.com"):
         self.base_url = base_url
         self.api_url = f"{base_url}/api"
         self.tokens = {}  # Store tokens for different users
