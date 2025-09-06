@@ -641,6 +641,21 @@ backend:
         agent: "testing"
         comment: "✅ SPECIFIC LOCATION DELETION TASK COMPLETED SUCCESSFULLY: Comprehensive testing completed with 100% success rate (10/10 tests passed). ✅ AUTHENTICATION: Administrator login successful with proper session token. ✅ LOCATION DISCOVERY: Found all 3 target locations (TEST124613, TEST124810, TEST124853) in system with complete details (Name: Test Routing Office, Country: USA, Status: Active). ✅ ASSET MANAGER ASSIGNMENT REMOVAL: Successfully identified and removed 3 asset manager assignments that were blocking deletion (Routing Test Asset Manager assignments to all target locations). ✅ LOCATION DELETION: Successfully deleted all 3 target locations using DELETE /api/locations/{location_id} with 200 status responses. ✅ VERIFICATION: Confirmed all target locations removed from system - remaining locations reduced from 6 to 3. ✅ COMPREHENSIVE WORKFLOW: Complete end-to-end workflow executed: Authentication → Discovery → Dependency Removal → Deletion → Verification. All specified location codes (TEST124613, TEST124810, TEST124853) successfully deleted from the system."
 
+  - task: "Email Notification System Investigation"
+    implemented: true
+    working: false
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: "NA"
+        agent: "testing"
+        comment: "Investigation task to identify why email notifications are not being sent for requisitions, approvals, allocations, etc. Focus areas: Email Configuration Check, SMTP Settings, Email Service Status, Notification Triggers, Error Analysis."
+      - working: false
+        agent: "testing"
+        comment: "❌ EMAIL NOTIFICATION SYSTEM INVESTIGATION COMPLETED - ROOT CAUSE IDENTIFIED: Comprehensive testing completed with 71.4% success rate (5/7 tests passed). ✅ EMAIL CONFIGURATION EXISTS: Found active email configuration in database with correct settings (SMTP Server: smtp.gmail.com, Port: 587, TLS: true, SSL: false, Active: true). ✅ TLS/SSL CONFIGURATION: No conflicts detected - proper TLS configuration (use_tls: true, use_ssl: false). ✅ EMAIL SERVICE ENDPOINTS: All email configuration API endpoints are accessible and working. ❌ ROOT CAUSE - INVALID SMTP CREDENTIALS: Email test endpoint failed with error '5.7.8 Username and Password not accepted. For more information, go to 5.7.8 https://support.google.com/mail/?p=BadCredentials' - Gmail SMTP authentication is failing due to invalid credentials (test@company.com / test_password_123). ✅ EMAIL TEMPLATES: All email notification templates are properly implemented in EmailService class for asset_request, request_approved, request_rejected, asset_allocated, asset_acknowledged, ndc_created, ndc_completed. ✅ NOTIFICATION TRIGGERS: Email notification code is properly integrated into all workflow endpoints (asset requisition creation, manager approval/rejection, asset allocation, asset acknowledgment). 🔧 SOLUTION REQUIRED: Update email configuration with valid SMTP credentials or configure proper Gmail App Password for authentication. The email notification system is fully implemented and functional - only SMTP authentication credentials need to be fixed."
+
   - task: "Asset Acknowledgment API - POST /api/asset-definitions/{id}/acknowledge"
     implemented: true
     working: true
