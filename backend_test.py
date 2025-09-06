@@ -6061,9 +6061,9 @@ if __name__ == "__main__":
             print("❌ Failed to login as Administrator")
             sys.exit(1)
     elif len(sys.argv) > 1 and sys.argv[1] == "email":
-        # Run focused email TLS configuration fix test
+        # Run comprehensive email notification system investigation
         tester = AssetInventoryAPITester()
-        result = tester.run_email_tls_fix_test()
+        result = tester.run_email_investigation_tests()
         sys.exit(0 if result else 1)
     elif len(sys.argv) > 1 and sys.argv[1] == "asset-allocation":
         # Run focused Asset Allocation System test
