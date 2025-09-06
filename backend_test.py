@@ -5887,7 +5887,7 @@ class AssetInventoryAPITester:
         print("=" * 80)
         print(f"Total Tests Run: {self.tests_run}")
         print(f"Tests Passed: {self.tests_passed}")
-        print(f"Tests Failed: {self.tests_run - self.tests_failed}")
+        print(f"Tests Failed: {self.tests_run - self.tests_passed}")
         print(f"Success Rate: {(self.tests_passed / self.tests_run * 100):.1f}%")
         
         return True
