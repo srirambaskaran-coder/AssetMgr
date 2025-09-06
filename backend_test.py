@@ -6037,7 +6037,6 @@ def run_asset_requisitions_requested_for_name_test():
         print(f"   The requested_for_name field fix may not be working correctly")
         return False
 
-
     def test_email_configuration_system(self):
         """Test Email Configuration System - Investigation Focus"""
         print(f"\n📧 INVESTIGATING EMAIL NOTIFICATION SYSTEM")
