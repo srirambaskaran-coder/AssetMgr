@@ -6464,6 +6464,68 @@ def run_asset_requisitions_requested_for_name_test():
         print(f"   The requested_for_name field fix may not be working correctly")
         return False
 
+def run_email_configuration_fix_test():
+    """Run focused Email Configuration Fix test"""
+    print("🚀 STARTING EMAIL CONFIGURATION FIX TEST")
+    print("=" * 80)
+    
+    tester = AssetInventoryAPITester()
+    
+    # Login as Administrator
+    if not tester.test_login("admin@company.com", "password123", "Administrator"):
+        print("❌ Failed to login as Administrator")
+        return False
+    
+    # Login as Employee for requisition testing
+    if not tester.test_login("employee@company.com", "password123", "Employee"):
+        print("❌ Failed to login as Employee")
+        return False
+    
+    # Create basic test data if needed
+    asset_type_data = {
+        "code": "EMAIL_TEST_LAPTOP",
+        "name": "Email Test Laptop",
+        "depreciation_applicable": True,
+        "asset_life": 3,
+        "to_be_recovered_on_separation": True,
+        "status": "Active"
+    }
+    
+    success, response = tester.run_test(
+        "Create Asset Type for Email Testing",
+        "POST",
+        "asset-types",
+        200,
+        data=asset_type_data,
+        user_role="Administrator"
+    )
+    
+    if success:
+        tester.test_data['asset_type_id'] = response['id']
+    
+    # Run the email configuration fix test
+    result = tester.test_email_configuration_fix()
+    
+    # Print results
+    print("\n" + "=" * 80)
+    print("🎯 EMAIL CONFIGURATION FIX TEST RESULTS")
+    print("=" * 80)
+    print(f"Total Tests Run: {tester.tests_run}")
+    print(f"Tests Passed: {tester.tests_passed}")
+    print(f"Tests Failed: {tester.tests_run - tester.tests_passed}")
+    print(f"Success Rate: {(tester.tests_passed / tester.tests_run * 100):.1f}%")
+    
+    if result and tester.tests_passed == tester.tests_run:
+        print("🎉 EMAIL CONFIGURATION FIX TEST PASSED!")
+        print("✅ Gmail SMTP credentials have been successfully configured")
+        print("✅ Email functionality is now working")
+        print("✅ Email notifications should be sent for asset requisitions")
+        return True
+    else:
+        print("❌ EMAIL CONFIGURATION FIX TEST FAILED!")
+        print("⚠️ Some issues were found with the email configuration")
+        return False
+
 if __name__ == "__main__":
     # Check if we want to run the focused tests
     import sys
