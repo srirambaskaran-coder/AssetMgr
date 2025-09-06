@@ -6066,7 +6066,23 @@ if __name__ == "__main__":
         # Run focused Asset Allocation System test
         result = run_asset_allocation_system_test()
         sys.exit(0 if result else 1)
+    elif len(sys.argv) > 1 and sys.argv[1] == "requested-for-name":
+        # Run focused Asset Requisitions requested_for_name field fix test
+        tester = AssetInventoryAPITester()
+        result = tester.test_asset_requisitions_requested_for_name_fix()
+        print(f"\n🎯 ASSET REQUISITIONS requested_for_name FIX TEST COMPLETED")
+        print(f"📊 Tests Run: {tester.tests_run}")
+        print(f"✅ Tests Passed: {tester.tests_passed}")
+        print(f"❌ Tests Failed: {tester.tests_run - tester.tests_passed}")
+        print(f"📈 Success Rate: {(tester.tests_passed/tester.tests_run)*100:.1f}%")
+        sys.exit(0 if result else 1)
     else:
-        # Run the Asset Allocation System test by default as requested
-        result = run_asset_allocation_system_test()
+        # Run the Asset Requisitions requested_for_name fix test by default as requested
+        tester = AssetInventoryAPITester()
+        result = tester.test_asset_requisitions_requested_for_name_fix()
+        print(f"\n🎯 ASSET REQUISITIONS requested_for_name FIX TEST COMPLETED")
+        print(f"📊 Tests Run: {tester.tests_run}")
+        print(f"✅ Tests Passed: {tester.tests_passed}")
+        print(f"❌ Tests Failed: {tester.tests_run - tester.tests_passed}")
+        print(f"📈 Success Rate: {(tester.tests_passed/tester.tests_run)*100:.1f}%")
         sys.exit(0 if result else 1)
