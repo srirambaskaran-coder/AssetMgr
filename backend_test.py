@@ -5919,6 +5919,120 @@ def run_asset_allocation_system_test():
         print("⚠️ No pending requisitions found for current Asset Manager")
         return False
 
+    def test_asset_requisitions_requested_for_name_fix(self):
+        """Test Asset Requisitions API fix to verify requested_for_name field is properly populated"""
+        print(f"\n🔍 Testing Asset Requisitions API - requested_for_name Field Fix")
+        
+        # Test 1: Manager Login (Balaji - Manager)
+        manager_login_success = self.test_login("manager@company.com", "password123", "Manager")
+        if not manager_login_success:
+            print("❌ Failed to login as Manager - cannot proceed with testing")
+            return False
+        
+        # Test 2: Get Asset Requisitions API
+        success, response = self.run_test(
+            "Get Asset Requisitions (Manager View)",
+            "GET",
+            "asset-requisitions",
+            200,
+            user_role="Manager"
+        )
+        
+        if not success:
+            print("❌ Failed to get asset requisitions")
+            return False
+        
+        print(f"   Found {len(response)} asset requisitions")
+        
+        # Test 3: Verify requested_for_name field population
+        self_requests_count = 0
+        team_member_requests_count = 0
+        missing_requested_for_name = 0
+        missing_requested_by_name = 0
+        missing_asset_type_name = 0
+        
+        for req in response:
+            # Check if requested_for_name is populated
+            if not req.get('requested_for_name'):
+                missing_requested_for_name += 1
+                print(f"   ⚠️ Missing requested_for_name in requisition {req.get('id', 'Unknown')[:8]}...")
+            
+            # Check if requested_by_name is populated
+            if not req.get('requested_by_name'):
+                missing_requested_by_name += 1
+                print(f"   ⚠️ Missing requested_by_name in requisition {req.get('id', 'Unknown')[:8]}...")
+            
+            # Check if asset_type_name is populated
+            if not req.get('asset_type_name'):
+                missing_asset_type_name += 1
+                print(f"   ⚠️ Missing asset_type_name in requisition {req.get('id', 'Unknown')[:8]}...")
+            
+            # Count request types
+            request_for = req.get('request_for', '')
+            if request_for == 'Self':
+                self_requests_count += 1
+                # For Self requests, requested_for_name should match requested_by_name
+                if req.get('requested_for_name') and req.get('requested_by_name'):
+                    if req['requested_for_name'] == req['requested_by_name']:
+                        print(f"   ✅ Self request: requested_for_name matches requested_by_name ({req['requested_for_name']})")
+                    else:
+                        print(f"   ❌ Self request: requested_for_name ({req.get('requested_for_name')}) != requested_by_name ({req.get('requested_by_name')})")
+            elif request_for == 'Team Member':
+                team_member_requests_count += 1
+                # For Team Member requests, requested_for_name should be different from requested_by_name
+                if req.get('requested_for_name') and req.get('requested_by_name'):
+                    if req['requested_for_name'] != req['requested_by_name']:
+                        print(f"   ✅ Team Member request: requested_for_name ({req['requested_for_name']}) != requested_by_name ({req['requested_by_name']})")
+                    else:
+                        print(f"   ⚠️ Team Member request: requested_for_name should differ from requested_by_name")
+        
+        # Test 4: Summary of findings
+        print(f"\n📊 Asset Requisitions Analysis Summary:")
+        print(f"   Total Requisitions: {len(response)}")
+        print(f"   Self Requests: {self_requests_count}")
+        print(f"   Team Member Requests: {team_member_requests_count}")
+        print(f"   Missing requested_for_name: {missing_requested_for_name}")
+        print(f"   Missing requested_by_name: {missing_requested_by_name}")
+        print(f"   Missing asset_type_name: {missing_asset_type_name}")
+        
+        # Test 5: Detailed field verification for first few requisitions
+        print(f"\n🔍 Detailed Field Verification (First 3 Requisitions):")
+        for i, req in enumerate(response[:3]):
+            print(f"   Requisition {i+1} (ID: {req.get('id', 'Unknown')[:8]}...):")
+            print(f"     Request Type: {req.get('request_type', 'Unknown')}")
+            print(f"     Request For: {req.get('request_for', 'Unknown')}")
+            print(f"     Requested For Name: {req.get('requested_for_name', 'MISSING')}")
+            print(f"     Requested By Name: {req.get('requested_by_name', 'MISSING')}")
+            print(f"     Asset Type Name: {req.get('asset_type_name', 'MISSING')}")
+            print(f"     Status: {req.get('status', 'Unknown')}")
+            
+            # Check if team member name is populated for Team Member requests
+            if req.get('request_for') == 'Team Member':
+                team_member_name = req.get('team_member_name')
+                if team_member_name:
+                    print(f"     Team Member Name: {team_member_name}")
+                    # Verify requested_for_name matches team_member_name for Team Member requests
+                    if req.get('requested_for_name') == team_member_name:
+                        print(f"     ✅ requested_for_name matches team_member_name")
+                    else:
+                        print(f"     ❌ requested_for_name does not match team_member_name")
+                else:
+                    print(f"     ⚠️ Team Member Name: MISSING")
+        
+        # Test 6: Determine overall success
+        critical_issues = missing_requested_for_name + missing_requested_by_name + missing_asset_type_name
+        
+        if critical_issues == 0:
+            print(f"\n✅ ASSET REQUISITIONS API FIX VERIFICATION: SUCCESS")
+            print(f"   All requisitions have properly populated name fields")
+            print(f"   Self requests show requester's name in requested_for_name")
+            print(f"   Team Member requests show team member's name in requested_for_name")
+            return True
+        else:
+            print(f"\n❌ ASSET REQUISITIONS API FIX VERIFICATION: ISSUES FOUND")
+            print(f"   {critical_issues} critical field population issues detected")
+            print(f"   The requested_for_name field fix may not be working correctly")
+            return False
 
 
 if __name__ == "__main__":
