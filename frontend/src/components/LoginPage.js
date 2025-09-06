@@ -28,11 +28,8 @@ const LoginPage = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log('Form submitted with:', { email, password });
     setIsLoading(true);
-    console.log('Calling login function...');
-    const result = await login(email, password);
-    console.log('Login result:', result);
+    await login(email, password);
     setIsLoading(false);
   };
 
