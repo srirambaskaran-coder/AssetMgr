@@ -24,15 +24,8 @@ import { Button } from './components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from './components/ui/card';
 import { RoleProvider } from './contexts/RoleContext';
 
-const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
+const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || 'http://localhost:8001';
 const API = `${BACKEND_URL}/api`;
-
-console.log('Environment debug:', { 
-  BACKEND_URL, 
-  API, 
-  NODE_ENV: process.env.NODE_ENV,
-  ALL_ENV: process.env 
-});
 
 // Auth Context
 const AuthContext = createContext(null);
