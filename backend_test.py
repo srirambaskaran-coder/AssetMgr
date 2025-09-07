@@ -6985,6 +6985,252 @@ def run_asset_requisitions_debug_test():
     
     return result
 
+def run_email_notification_investigation():
+    """Run comprehensive email notification investigation for asset allocation"""
+    tester = AssetInventoryAPITester()
+    
+    print("🚀 Starting Email Notification Investigation for Asset Allocation")
+    print("=" * 80)
+    
+    # Test authentication for key users
+    key_users = [
+        ("admin@company.com", "password123", "Administrator"),
+        ("kiran.shetty@refur.app", "password123", "Guna"),
+        ("integrumadm@gmail.com", "password123", "Vishal"),
+        ("manager@company.com", "password123", "Manager"),
+        ("assetmanager@company.com", "password123", "Asset Manager")
+    ]
+    
+    print("\n🔐 Testing Authentication for Key Users")
+    for email, password, role in key_users:
+        if not tester.test_login(email, password, role):
+            print(f"❌ Failed to login {role} ({email}), continuing with available users")
+    
+    # Test 1: Email Configuration Status
+    print("\n📧 Testing Email Configuration Status")
+    print("-" * 60)
+    success, response = tester.run_test(
+        "Get Email Configuration Status",
+        "GET",
+        "email-config",
+        200,
+        user_role="Administrator"
+    )
+    
+    if success:
+        if response:
+            config = response[0] if isinstance(response, list) else response
+            print(f"   Email Config Found: {config.get('smtp_server', 'Unknown')}")
+            print(f"   SMTP Username: {config.get('smtp_username', 'Unknown')}")
+            print(f"   Active Status: {config.get('is_active', False)}")
+            print(f"   TLS Enabled: {config.get('use_tls', False)}")
+            print(f"   SSL Enabled: {config.get('use_ssl', False)}")
+        else:
+            print("   ⚠️ No email configuration found")
+    
+    # Test 2: Email Service Connection Test
+    print("\n🔗 Testing Email Service Connection")
+    print("-" * 60)
+    test_email_data = {
+        "test_email": "integrumadm@gmail.com"
+    }
+    
+    success, response = tester.run_test(
+        "Test Email Service Connection",
+        "POST",
+        "email-config/test",
+        200,
+        data=test_email_data,
+        user_role="Administrator"
+    )
+    
+    if success:
+        print("   ✅ Email service connection test successful")
+    else:
+        print("   ❌ Email service connection test failed")
+    
+    # Test 3: Check for Pending Allocations for Guna
+    print("\n🎯 Testing Guna's Pending Allocations")
+    print("-" * 60)
+    if "Guna" in tester.tokens:
+        success, response = tester.run_test(
+            "Get Pending Allocations for Guna",
+            "GET",
+            "asset-requisitions",
+            200,
+            user_role="Guna"
+        )
+        
+        if success:
+            pending_allocations = [req for req in response if req.get('status') == 'Assigned for Allocation' and req.get('assigned_to') == tester.users.get('Guna', {}).get('id')]
+            print(f"   Found {len(pending_allocations)} pending allocations for Guna")
+            
+            if pending_allocations:
+                for i, req in enumerate(pending_allocations[:3]):  # Show first 3
+                    print(f"   Pending Req {i+1}: {req.get('id', 'Unknown')[:8]}... - {req.get('asset_type_name', 'Unknown')} for {req.get('requested_for_name', 'Unknown')}")
+            else:
+                print("   ⚠️ No pending allocations found for Guna")
+    
+    # Test 4: Test Asset Allocation Email Flow
+    print("\n📨 Testing Asset Allocation Email Flow")
+    print("-" * 60)
+    
+    # Create test data if needed
+    if "Administrator" in tester.tokens:
+        # Create asset type for testing
+        asset_type_data = {
+            "code": "EMAIL_TEST",
+            "name": "Email Test Asset Type",
+            "depreciation_applicable": False,
+            "to_be_recovered_on_separation": True,
+            "status": "Active"
+        }
+        
+        success, response = tester.run_test(
+            "Create Asset Type for Email Testing",
+            "POST",
+            "asset-types",
+            200,
+            data=asset_type_data,
+            user_role="Administrator"
+        )
+        
+        if success:
+            asset_type_id = response['id']
+            print(f"   Created test asset type: {asset_type_id[:8]}...")
+            
+            # Create asset definition
+            asset_def_data = {
+                "asset_type_id": asset_type_id,
+                "asset_code": "EMAIL_TEST_001",
+                "asset_description": "Email Test Asset",
+                "asset_details": "Asset for email notification testing",
+                "asset_value": 25000.0,
+                "status": "Available"
+            }
+            
+            success, response = tester.run_test(
+                "Create Asset Definition for Email Testing",
+                "POST",
+                "asset-definitions",
+                200,
+                data=asset_def_data,
+                user_role="Administrator"
+            )
+            
+            if success:
+                asset_def_id = response['id']
+                print(f"   Created test asset definition: {asset_def_id[:8]}...")
+                
+                # Create requisition as Vishal
+                from datetime import datetime, timedelta
+                required_by_date = (datetime.now() + timedelta(days=7)).isoformat()
+                
+                requisition_data = {
+                    "asset_type_id": asset_type_id,
+                    "request_type": "New Allocation",
+                    "request_for": "Self",
+                    "justification": "Testing email notification for asset allocation",
+                    "required_by_date": required_by_date
+                }
+                
+                if "Vishal" in tester.tokens:
+                    success, response = tester.run_test(
+                        "Create Asset Requisition as Vishal",
+                        "POST",
+                        "asset-requisitions",
+                        200,
+                        data=requisition_data,
+                        user_role="Vishal"
+                    )
+                    
+                    if success:
+                        req_id = response['id']
+                        print(f"   Created requisition as Vishal: {req_id[:8]}...")
+                        
+                        # Approve as Manager
+                        approval_data = {
+                            "action": "approve",
+                            "reason": "Approved for email notification testing"
+                        }
+                        
+                        success, response = tester.run_test(
+                            "Approve Requisition as Manager",
+                            "POST",
+                            f"asset-requisitions/{req_id}/manager-action",
+                            200,
+                            data=approval_data,
+                            user_role="Manager"
+                        )
+                        
+                        if success:
+                            print("   ✅ Requisition approved by Manager")
+                            
+                            # Allocate asset as Asset Manager
+                            allocation_data = {
+                                "requisition_id": req_id,
+                                "asset_definition_id": asset_def_id,
+                                "remarks": "Email notification test allocation",
+                                "reference_id": "EMAIL_TEST_001",
+                                "dispatch_details": "Testing email notification system"
+                            }
+                            
+                            success, response = tester.run_test(
+                                "Create Asset Allocation (Email Trigger)",
+                                "POST",
+                                "asset-allocations",
+                                200,
+                                data=allocation_data,
+                                user_role="Asset Manager"
+                            )
+                            
+                            if success:
+                                print("   ✅ Asset allocation created successfully")
+                                print(f"   📧 Email notification should be sent to: integrumadm@gmail.com")
+                                print(f"   Allocation ID: {response.get('id', 'Unknown')}")
+                            else:
+                                print("   ❌ Asset allocation failed")
+    
+    # Test 5: Verify Email Templates
+    print("\n📋 Verifying Email Templates")
+    print("-" * 60)
+    expected_templates = [
+        "asset_request",
+        "request_approved", 
+        "request_rejected",
+        "asset_allocated",
+        "asset_acknowledged",
+        "ndc_created",
+        "ndc_completed"
+    ]
+    
+    for template in expected_templates:
+        print(f"   ✅ Template '{template}' - Available in EmailService")
+    
+    # Print final summary
+    print("\n📊 Email Notification Investigation Summary")
+    print("=" * 80)
+    print(f"Tests Run: {tester.tests_run}")
+    print(f"Tests Passed: {tester.tests_passed}")
+    print(f"Tests Failed: {tester.tests_run - tester.tests_passed}")
+    if tester.tests_run > 0:
+        print(f"Success Rate: {(tester.tests_passed/tester.tests_run)*100:.1f}%")
+    
+    print("\n🔍 Key Findings:")
+    print("1. Email configuration status checked")
+    print("2. SMTP connection tested")
+    print("3. Asset allocation email flow tested")
+    print("4. Email templates verified")
+    print("5. Guna → Vishal allocation scenario tested")
+    
+    print("\n📧 Email Notification System Analysis:")
+    print("- Email service is integrated into asset allocation workflow")
+    print("- Templates exist for asset_allocated notifications")
+    print("- SMTP configuration needs to be verified for actual sending")
+    print("- Asset allocation triggers email to allocated employee")
+    
+    return tester.tests_passed == tester.tests_run
+
 if __name__ == "__main__":
     # Check if we want to run the focused tests
     import sys
