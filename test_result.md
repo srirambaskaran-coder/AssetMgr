@@ -644,7 +644,7 @@ metadata:
 
 test_plan:
   current_focus:
-    - "Employee Acknowledgment Functionality - My Assets Page"
+    - "Asset Allocation Email Notification Investigation"
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
