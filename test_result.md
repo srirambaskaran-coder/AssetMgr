@@ -644,7 +644,7 @@ metadata:
 
 test_plan:
   current_focus:
-    - "Asset Allocation Email Notification Investigation"
+    - "Complete Email Notification Workflow - Guna to Vishal Asset Allocation"
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
