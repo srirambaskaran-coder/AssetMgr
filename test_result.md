@@ -632,7 +632,7 @@ metadata:
 
 test_plan:
   current_focus:
-    - "Asset Allocation Form - Redesigned Form Testing (Screen Resolution & Data Population Fixes)"
+    - "Asset Allocation Form - Asset Details Section Removal and Asset Description Field Testing"
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
