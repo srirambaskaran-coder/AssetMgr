@@ -500,12 +500,13 @@ const AssetAllocationForm = ({ assetTypes, assetDefinitions, users, onSubmit, in
     allocated_date: new Date().toISOString().split('T')[0], // Default to today
     dispatch_details: initialData?.dispatch_details || '',
     reference_id: '',
-    remarks: initialData?.remarks || '',
+    remarks: '', // Keep empty by default
     // Read-only fields from requisition
     requisition_id: initialData?.requisition_id || null,
     request_type: initialData?.request_type || '',
     asset_type_id: initialData?.asset_type_id || '',
     requested_for: initialData?.requested_for || '',
+    requested_for_name: initialData?.requested_for_name || '',
     approved_by: initialData?.manager_action_by_name || initialData?.hr_action_by_name || ''
   });
   const [loading, setLoading] = useState(false);
@@ -519,11 +520,12 @@ const AssetAllocationForm = ({ assetTypes, assetDefinitions, users, onSubmit, in
         ...prev,
         asset_definition_id: initialData.asset_definition_id || '',
         dispatch_details: initialData.dispatch_details || '',
-        remarks: initialData.remarks || '',
+        remarks: '', // Keep empty
         requisition_id: initialData.requisition_id || null,
         request_type: initialData.request_type || '',
         asset_type_id: initialData.asset_type_id || '',
         requested_for: initialData.requested_for || '',
+        requested_for_name: initialData.requested_for_name || '',
         approved_by: initialData.manager_action_by_name || initialData.hr_action_by_name || ''
       }));
     }
@@ -573,191 +575,196 @@ const AssetAllocationForm = ({ assetTypes, assetDefinitions, users, onSubmit, in
     setLoading(false);
   };
 
-  // Get requested employee name
-  const requestedEmployee = users.find(user => user.id === formData.requested_for);
+  // Get requested employee name - use from initialData first, then users array
+  const requestedEmployeeName = formData.requested_for_name || 
+    (users.find(user => user.id === formData.requested_for)?.name) || 
+    'Unknown Employee';
   
   // Get asset type name
   const assetType = assetTypes.find(type => type.id === formData.asset_type_id);
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
-      {/* Read-only Fields Section */}
-      <div className="bg-gray-50 p-4 rounded-lg">
-        <h3 className="text-sm font-semibold text-gray-900 mb-3">Requisition Details (Read-only)</h3>
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <Label className="text-gray-600">Requisition ID</Label>
-            <Input 
-              value={formData.requisition_id || 'System Generated'} 
-              disabled 
-              className="bg-gray-100 text-gray-700"
-            />
-          </div>
-          <div>
-            <Label className="text-gray-600">Request Type</Label>
-            <Input 
-              value={formData.request_type} 
-              disabled 
-              className="bg-gray-100 text-gray-700"
-            />
-          </div>
-          <div>
-            <Label className="text-gray-600">Asset Type</Label>
-            <Input 
-              value={assetType?.name || 'Unknown'} 
-              disabled 
-              className="bg-gray-100 text-gray-700"
-            />
-          </div>
-          <div>
-            <Label className="text-gray-600">Requested For (Employee)</Label>
-            <Input 
-              value={requestedEmployee ? `${requestedEmployee.name} (${requestedEmployee.email})` : 'Unknown Employee'} 
-              disabled 
-              className="bg-gray-100 text-gray-700"
-            />
-          </div>
-          <div className="col-span-2">
-            <Label className="text-gray-600">Approved By</Label>
-            <Input 
-              value={formData.approved_by || 'Not Available'} 
-              disabled 
-              className="bg-gray-100 text-gray-700"
-            />
-          </div>
-        </div>
-      </div>
-
-      {/* Asset Details Section (Read-only) */}
-      {selectedAssetDetails && (
-        <div className="bg-blue-50 p-4 rounded-lg">
-          <h3 className="text-sm font-semibold text-blue-900 mb-3">Asset Details (Read-only)</h3>
-          <div className="grid grid-cols-2 gap-4">
+    <div className="max-h-[90vh] overflow-y-auto">
+      <form onSubmit={handleSubmit} className="space-y-4">
+        {/* Read-only Fields Section - More Compact */}
+        <div className="bg-gray-50 p-3 rounded-lg">
+          <h3 className="text-sm font-semibold text-gray-900 mb-2">Requisition Details (Read-only)</h3>
+          <div className="grid grid-cols-3 gap-3">
             <div>
-              <Label className="text-blue-700">Asset Code</Label>
+              <Label className="text-xs text-gray-600">Requisition ID</Label>
               <Input 
-                value={selectedAssetDetails.asset_code} 
+                value={formData.requisition_id || 'System Generated'} 
                 disabled 
-                className="bg-blue-100 text-blue-900"
+                className="bg-gray-100 text-gray-700 h-8 text-sm"
               />
             </div>
             <div>
-              <Label className="text-blue-700">Asset Description</Label>
+              <Label className="text-xs text-gray-600">Request Type</Label>
               <Input 
-                value={selectedAssetDetails.asset_description} 
+                value={formData.request_type} 
                 disabled 
-                className="bg-blue-100 text-blue-900"
+                className="bg-gray-100 text-gray-700 h-8 text-sm"
               />
             </div>
             <div>
-              <Label className="text-blue-700">Brand</Label>
+              <Label className="text-xs text-gray-600">Asset Type</Label>
               <Input 
-                value={selectedAssetDetails.brand || 'N/A'} 
+                value={assetType?.name || 'Unknown'} 
                 disabled 
-                className="bg-blue-100 text-blue-900"
+                className="bg-gray-100 text-gray-700 h-8 text-sm"
               />
             </div>
             <div>
-              <Label className="text-blue-700">Model</Label>
+              <Label className="text-xs text-gray-600">Requested For</Label>
               <Input 
-                value={selectedAssetDetails.model || 'N/A'} 
+                value={requestedEmployeeName} 
                 disabled 
-                className="bg-blue-100 text-blue-900"
+                className="bg-gray-100 text-gray-700 h-8 text-sm"
+              />
+            </div>
+            <div className="col-span-2">
+              <Label className="text-xs text-gray-600">Approved By</Label>
+              <Input 
+                value={formData.approved_by || 'Not Available'} 
+                disabled 
+                className="bg-gray-100 text-gray-700 h-8 text-sm"
               />
             </div>
           </div>
         </div>
-      )}
 
-      {/* Editable Fields Section */}
-      <div className="bg-green-50 p-4 rounded-lg">
-        <h3 className="text-sm font-semibold text-green-900 mb-3">Asset Manager Input Fields</h3>
-        <div className="space-y-4">
-          <div>
-            <Label htmlFor="asset_definition_id" className="text-green-800">Asset Definition ID *</Label>
-            <Select 
-              value={formData.asset_definition_id} 
-              onValueChange={(value) => setFormData({ ...formData, asset_definition_id: value })}
-            >
-              <SelectTrigger className="bg-white">
-                <SelectValue placeholder={
-                  filteredAssetDefinitions.length === 0 
-                    ? "No available assets for this type" 
-                    : "Select asset to allocate"
-                } />
-              </SelectTrigger>
-              <SelectContent>
-                {filteredAssetDefinitions.map(asset => (
-                  <SelectItem key={asset.id} value={asset.id}>
-                    {asset.asset_code} - {asset.asset_description}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+        {/* Asset Details Section (Read-only) - More Compact */}
+        {selectedAssetDetails && (
+          <div className="bg-blue-50 p-3 rounded-lg">
+            <h3 className="text-sm font-semibold text-blue-900 mb-2">Asset Details (Read-only)</h3>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label className="text-xs text-blue-700">Asset Code</Label>
+                <Input 
+                  value={selectedAssetDetails.asset_code} 
+                  disabled 
+                  className="bg-blue-100 text-blue-900 h-8 text-sm"
+                />
+              </div>
+              <div>
+                <Label className="text-xs text-blue-700">Asset Description</Label>
+                <Input 
+                  value={selectedAssetDetails.asset_description} 
+                  disabled 
+                  className="bg-blue-100 text-blue-900 h-8 text-sm"
+                />
+              </div>
+              <div>
+                <Label className="text-xs text-blue-700">Brand</Label>
+                <Input 
+                  value={selectedAssetDetails.brand || 'N/A'} 
+                  disabled 
+                  className="bg-blue-100 text-blue-900 h-8 text-sm"
+                />
+              </div>
+              <div>
+                <Label className="text-xs text-blue-700">Model</Label>
+                <Input 
+                  value={selectedAssetDetails.model || 'N/A'} 
+                  disabled 
+                  className="bg-blue-100 text-blue-900 h-8 text-sm"
+                />
+              </div>
+            </div>
           </div>
+        )}
 
-          <div>
-            <Label htmlFor="allocated_date" className="text-green-800">Allocated Date *</Label>
-            <Input
-              id="allocated_date"
-              type="date"
-              value={formData.allocated_date}
-              onChange={(e) => setFormData({ ...formData, allocated_date: e.target.value })}
-              className="bg-white"
-              required
-            />
-          </div>
+        {/* Editable Fields Section - More Compact */}
+        <div className="bg-green-50 p-3 rounded-lg">
+          <h3 className="text-sm font-semibold text-green-900 mb-2">Asset Manager Input Fields</h3>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="col-span-2">
+              <Label htmlFor="asset_definition_id" className="text-xs text-green-800">Asset Definition ID *</Label>
+              <Select 
+                value={formData.asset_definition_id} 
+                onValueChange={(value) => setFormData({ ...formData, asset_definition_id: value })}
+              >
+                <SelectTrigger className="bg-white h-8">
+                  <SelectValue placeholder={
+                    filteredAssetDefinitions.length === 0 
+                      ? "No available assets for this type" 
+                      : "Select asset to allocate"
+                  } />
+                </SelectTrigger>
+                <SelectContent>
+                  {filteredAssetDefinitions.map(asset => (
+                    <SelectItem key={asset.id} value={asset.id}>
+                      {asset.asset_code} - {asset.asset_description}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
 
-          <div>
-            <Label htmlFor="dispatch_details" className="text-green-800">Dispatch Details</Label>
-            <Textarea
-              id="dispatch_details"
-              value={formData.dispatch_details}
-              onChange={(e) => setFormData({ ...formData, dispatch_details: e.target.value })}
-              placeholder="Enter dispatch or delivery details"
-              rows={2}
-              className="bg-white"
-            />
-          </div>
+            <div>
+              <Label htmlFor="allocated_date" className="text-xs text-green-800">Allocated Date *</Label>
+              <Input
+                id="allocated_date"
+                type="date"
+                value={formData.allocated_date}
+                onChange={(e) => setFormData({ ...formData, allocated_date: e.target.value })}
+                className="bg-white h-8"
+                required
+              />
+            </div>
 
-          <div>
-            <Label htmlFor="reference_id" className="text-green-800">Reference ID</Label>
-            <Input
-              id="reference_id"
-              value={formData.reference_id}
-              onChange={(e) => setFormData({ ...formData, reference_id: e.target.value })}
-              placeholder="Enter reference ID (invoice, delivery note, etc.)"
-              className="bg-white"
-            />
-          </div>
+            <div>
+              <Label htmlFor="reference_id" className="text-xs text-green-800">Reference ID</Label>
+              <Input
+                id="reference_id"
+                value={formData.reference_id}
+                onChange={(e) => setFormData({ ...formData, reference_id: e.target.value })}
+                placeholder="Invoice, delivery note, etc."
+                className="bg-white h-8 text-sm"
+              />
+            </div>
 
-          <div>
-            <Label htmlFor="remarks" className="text-green-800">Remarks</Label>
-            <Textarea
-              id="remarks"
-              value={formData.remarks}
-              onChange={(e) => setFormData({ ...formData, remarks: e.target.value })}
-              placeholder="Enter any additional remarks"
-              rows={3}
-              className="bg-white"
-            />
+            <div className="col-span-2">
+              <Label htmlFor="dispatch_details" className="text-xs text-green-800">Dispatch Details</Label>
+              <Textarea
+                id="dispatch_details"
+                value={formData.dispatch_details}
+                onChange={(e) => setFormData({ ...formData, dispatch_details: e.target.value })}
+                placeholder="Enter dispatch or delivery details"
+                rows={2}
+                className="bg-white text-sm"
+              />
+            </div>
+
+            <div className="col-span-2">
+              <Label htmlFor="remarks" className="text-xs text-green-800">Remarks</Label>
+              <Textarea
+                id="remarks"
+                value={formData.remarks}
+                onChange={(e) => setFormData({ ...formData, remarks: e.target.value })}
+                placeholder="Enter any additional remarks"
+                rows={2}
+                className="bg-white text-sm"
+              />
+            </div>
           </div>
         </div>
-      </div>
 
-      <div className="flex justify-end gap-2 pt-4">
-        <Button type="button" variant="outline" onClick={onClose}>
-          Cancel
-        </Button>
-        <Button 
-          type="submit" 
-          disabled={loading || !formData.asset_definition_id} 
-          className="bg-blue-600 hover:bg-blue-700"
-        >
-          {loading ? 'Allocating...' : 'Allocate Asset'}
-        </Button>
-      </div>
-    </form>
+        {/* Buttons - Always Visible */}
+        <div className="flex justify-end gap-2 pt-2 bg-white sticky bottom-0 border-t border-gray-200 mt-4">
+          <Button type="button" variant="outline" onClick={onClose} className="h-9">
+            Cancel
+          </Button>
+          <Button 
+            type="submit" 
+            disabled={loading || !formData.asset_definition_id} 
+            className="bg-blue-600 hover:bg-blue-700 h-9"
+          >
+            {loading ? 'Allocating...' : 'Allocate Asset'}
+          </Button>
+        </div>
+      </form>
+    </div>
   );
 };
 
