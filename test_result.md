@@ -715,9 +715,9 @@ backend:
 
   - task: "Asset Allocation Email Notification Investigation"
     implemented: true
-    working: true
+    working: false
     file: "/app/backend/server.py"
-    stuck_count: 0
+    stuck_count: 1
     priority: "high"
     needs_retesting: false
     status_history:
