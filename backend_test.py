@@ -1136,10 +1136,10 @@ class AssetInventoryAPITester:
         print(f"\n🎯 PHASE 3: Routing Verification to Guna")
         
         # Get updated requisition to check routing
-        success, updated_requisition = self.run_test(
-            "Get Updated Requisition After Approval",
+        success, all_requisitions = self.run_test(
+            "Get All Requisitions After Approval",
             "GET",
-            f"asset-requisitions/{self.test_data['workflow_requisition_id']}",
+            "asset-requisitions",
             200,
             user_role="Manager"
         )
