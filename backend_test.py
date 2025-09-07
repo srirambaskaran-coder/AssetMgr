@@ -7565,6 +7565,44 @@ def run_email_notification_investigation():
     
     return tester.tests_passed == tester.tests_run
 
+def run_complete_email_workflow_test():
+    """Run complete email notification workflow test - Guna allocates assets to Vishal"""
+    print("📧 COMPLETE EMAIL NOTIFICATION WORKFLOW TEST")
+    print("=" * 80)
+    print("Testing complete workflow: Vishal Request → Manager Approval → Guna Allocation → Email to Vishal")
+    print()
+    
+    tester = AssetInventoryAPITester()
+    
+    # Run the complete workflow test
+    workflow_results = tester.test_complete_email_notification_workflow()
+    
+    # Print final results
+    print("\n" + "=" * 80)
+    print("🏁 COMPLETE EMAIL WORKFLOW TEST COMPLETED")
+    print("=" * 80)
+    print(f"📊 Total Tests Run: {tester.tests_run}")
+    print(f"✅ Tests Passed: {tester.tests_passed}")
+    print(f"❌ Tests Failed: {tester.tests_run - tester.tests_passed}")
+    
+    if tester.tests_run > 0:
+        success_rate = (tester.tests_passed / tester.tests_run) * 100
+        print(f"📈 Success Rate: {success_rate:.1f}%")
+    
+    # Determine overall success
+    total_phases = len(workflow_results)
+    passed_phases = sum(workflow_results.values())
+    workflow_success = passed_phases == total_phases
+    
+    print(f"🎯 Workflow Success: {passed_phases}/{total_phases} phases completed")
+    
+    if workflow_success:
+        print("🎉 RESULT: Email notification workflow is WORKING correctly!")
+    else:
+        print("⚠️ RESULT: Email notification workflow has issues that need attention")
+    
+    return workflow_success
+
 def run_routing_investigation():
     """Run routing investigation to identify why Vishal's requisitions go to Anish instead of Guna"""
     print("🔍 ROUTING INVESTIGATION: User Locations and Asset Manager Assignments")
