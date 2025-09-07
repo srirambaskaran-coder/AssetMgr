@@ -632,7 +632,7 @@ metadata:
 
 test_plan:
   current_focus:
-    - "Comprehensive Authentication Testing"
+    - "Asset Allocation Form - Redesigned Form Testing (Screen Resolution & Data Population Fixes)"
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
