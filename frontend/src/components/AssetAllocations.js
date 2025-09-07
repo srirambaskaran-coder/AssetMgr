@@ -172,9 +172,12 @@ const AssetAllocations = () => {
       asset_definition_id: '', // This will be selected by the Asset Manager
       request_type: requisition.request_type,
       requested_for: requisition.requested_for,
-      remarks: `Allocated from requisition ${requisition.id}`,
+      requested_for_name: requisition.requested_for_name, // Include employee name
+      remarks: '', // Keep empty as requested
       dispatch_details: '',
-      requisition_id: requisition.id // Add this to link the allocation to the requisition
+      requisition_id: requisition.id, // Add this to link the allocation to the requisition
+      manager_action_by_name: requisition.manager_action_by_name, // Include approver name
+      hr_action_by_name: requisition.hr_action_by_name
     });
     setIsCreateModalOpen(true);
   };
