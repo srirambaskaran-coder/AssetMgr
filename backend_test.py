@@ -1270,10 +1270,10 @@ class AssetInventoryAPITester:
         print(f"\n📬 PHASE 5: Email Notification Verification")
         
         # Check email configuration
-        success, email_configs = self.run_test(
+        success, email_config = self.run_test(
             "Check Email Configuration",
             "GET",
-            "email-configurations",
+            "email-config",
             200,
             user_role="Guna"
         )
