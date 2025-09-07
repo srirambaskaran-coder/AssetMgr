@@ -7863,7 +7863,11 @@ if __name__ == "__main__":
         # Run routing investigation
         result = run_routing_investigation()
         sys.exit(0 if result else 1)
+    elif len(sys.argv) > 1 and sys.argv[1] == "email-workflow":
+        # Run complete email notification workflow test
+        result = run_complete_email_workflow_test()
+        sys.exit(0 if result else 1)
     else:
-        # Run routing investigation by default as requested
-        result = run_routing_investigation()
+        # Run complete email workflow test by default as requested
+        result = run_complete_email_workflow_test()
         sys.exit(0 if result else 1)
