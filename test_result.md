@@ -644,7 +644,7 @@ metadata:
 
 test_plan:
   current_focus:
-    - "Asset Allocation Form - Asset Details Section Removal and Asset Description Field Testing"
+    - "Employee Acknowledgment Functionality - My Assets Page"
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
