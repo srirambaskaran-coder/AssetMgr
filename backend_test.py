@@ -1100,7 +1100,7 @@ class AssetInventoryAPITester:
         
         # Phase 2: Manager Approval Process
         print(f"\n👔 PHASE 2: Manager Approval Process")
-        manager_success = self.test_login("manager@company.com", "password123", "Manager")
+        manager_success = self.test_login("kirankshetty@yahoo.com", "password123", "Manager")
         
         if not manager_success:
             print("❌ Manager login failed - cannot proceed with approval")
