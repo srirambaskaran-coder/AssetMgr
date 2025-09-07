@@ -665,6 +665,18 @@ const AssetAllocationForm = ({ assetTypes, assetDefinitions, users, onSubmit, in
               </Select>
             </div>
 
+            {/* Asset Description - Shows when asset is selected */}
+            {selectedAssetDetails && (
+              <div className="col-span-2">
+                <Label className="text-xs text-gray-600">Asset Description</Label>
+                <Input 
+                  value={selectedAssetDetails.asset_description} 
+                  disabled 
+                  className="bg-gray-100 text-gray-700 h-8 text-sm"
+                />
+              </div>
+            )}
+
             <div>
               <Label htmlFor="allocated_date" className="text-xs text-green-800">Allocated Date *</Label>
               <Input
