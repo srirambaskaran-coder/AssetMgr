@@ -1269,36 +1269,43 @@ class AssetInventoryAPITester:
         # Phase 5: Email Verification
         print(f"\n📬 PHASE 5: Email Notification Verification")
         
-        # Check email configuration
-        success, email_config = self.run_test(
-            "Check Email Configuration",
-            "GET",
-            "email-config",
-            200,
-            user_role="Guna"
-        )
+        # Login as Administrator to check email configuration
+        admin_success = self.test_login("admin@company.com", "password123", "Administrator")
         
-        if success:
-            print("✅ Email configuration found:")
-            print(f"     - SMTP Server: {email_config.get('smtp_server', 'Unknown')}")
-            print(f"     - From Email: {email_config.get('from_email', 'Unknown')}")
-            print(f"     - Active: {email_config.get('is_active', False)}")
+        if admin_success:
+            # Check email configuration
+            success, email_config = self.run_test(
+                "Check Email Configuration",
+                "GET",
+                "email-config",
+                200,
+                user_role="Administrator"
+            )
+            
+            if success:
+                print("✅ Email configuration found:")
+                print(f"     - SMTP Server: {email_config.get('smtp_server', 'Unknown')}")
+                print(f"     - From Email: {email_config.get('from_email', 'Unknown')}")
+                print(f"     - Active: {email_config.get('is_active', False)}")
+            else:
+                print("❌ No email configuration found")
+            
+            # Test email functionality
+            test_email_data = {
+                "test_email": "integrumadm@gmail.com"
+            }
+            
+            success, email_test_response = self.run_test(
+                "Test Email Send to Vishal",
+                "POST",
+                "email-config/test",
+                200,
+                data=test_email_data,
+                user_role="Administrator"
+            )
         else:
-            print("❌ No email configuration found")
-        
-        # Test email functionality
-        test_email_data = {
-            "test_email": "integrumadm@gmail.com"
-        }
-        
-        success, email_test_response = self.run_test(
-            "Test Email Send to Vishal",
-            "POST",
-            "email-config/test",
-            200,
-            data=test_email_data,
-            user_role="Guna"
-        )
+            print("❌ Failed to login as Administrator for email testing")
+            success = False
         
         if success:
             workflow_results["email_notification"] = True
