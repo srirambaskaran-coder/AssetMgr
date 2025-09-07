@@ -636,46 +636,7 @@ const AssetAllocationForm = ({ assetTypes, assetDefinitions, users, onSubmit, in
           </div>
         </div>
 
-        {/* Asset Details Section (Read-only) - More Compact */}
-        {selectedAssetDetails && (
-          <div className="bg-blue-50 p-3 rounded-lg">
-            <h3 className="text-sm font-semibold text-blue-900 mb-2">Asset Details (Read-only)</h3>
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <Label className="text-xs text-blue-700">Asset Code</Label>
-                <Input 
-                  value={selectedAssetDetails.asset_code} 
-                  disabled 
-                  className="bg-blue-100 text-blue-900 h-8 text-sm"
-                />
-              </div>
-              <div>
-                <Label className="text-xs text-blue-700">Asset Description</Label>
-                <Input 
-                  value={selectedAssetDetails.asset_description} 
-                  disabled 
-                  className="bg-blue-100 text-blue-900 h-8 text-sm"
-                />
-              </div>
-              <div>
-                <Label className="text-xs text-blue-700">Brand</Label>
-                <Input 
-                  value={selectedAssetDetails.brand || 'N/A'} 
-                  disabled 
-                  className="bg-blue-100 text-blue-900 h-8 text-sm"
-                />
-              </div>
-              <div>
-                <Label className="text-xs text-blue-700">Model</Label>
-                <Input 
-                  value={selectedAssetDetails.model || 'N/A'} 
-                  disabled 
-                  className="bg-blue-100 text-blue-900 h-8 text-sm"
-                />
-              </div>
-            </div>
-          </div>
-        )}
+
 
         {/* Editable Fields Section - More Compact */}
         <div className="bg-green-50 p-3 rounded-lg">
