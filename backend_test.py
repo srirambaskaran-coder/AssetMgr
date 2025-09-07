@@ -1279,17 +1279,12 @@ class AssetInventoryAPITester:
         )
         
         if success:
-            active_configs = [config for config in email_configs if config.get('is_active', False)]
-            print(f"   Active email configurations: {len(active_configs)}")
-            
-            if active_configs:
-                config = active_configs[0]
-                print("✅ Email configuration found:")
-                print(f"     - SMTP Server: {config.get('smtp_server', 'Unknown')}")
-                print(f"     - From Email: {config.get('from_email', 'Unknown')}")
-                print(f"     - Active: {config.get('is_active', False)}")
-            else:
-                print("❌ No active email configuration found")
+            print("✅ Email configuration found:")
+            print(f"     - SMTP Server: {email_config.get('smtp_server', 'Unknown')}")
+            print(f"     - From Email: {email_config.get('from_email', 'Unknown')}")
+            print(f"     - Active: {email_config.get('is_active', False)}")
+        else:
+            print("❌ No email configuration found")
         
         # Test email functionality
         test_email_data = {
