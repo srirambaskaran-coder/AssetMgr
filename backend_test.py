@@ -1145,23 +1145,33 @@ class AssetInventoryAPITester:
         )
         
         if success:
-            status = updated_requisition.get('status', 'Unknown')
-            assigned_to = updated_requisition.get('assigned_to_name', 'Unknown')
-            routing_reason = updated_requisition.get('routing_reason', 'Not specified')
+            # Find our specific requisition
+            updated_requisition = None
+            for req in all_requisitions:
+                if req.get('id') == self.test_data['workflow_requisition_id']:
+                    updated_requisition = req
+                    break
             
-            print(f"   - Current Status: {status}")
-            print(f"   - Assigned To: {assigned_to}")
-            print(f"   - Routing Reason: {routing_reason}")
-            
-            if status == "Assigned for Allocation" and "guna" in assigned_to.lower():
-                workflow_results["routing_to_guna"] = True
-                print("✅ Requisition correctly routed to Guna for allocation")
+            if updated_requisition:
+                status = updated_requisition.get('status', 'Unknown')
+                assigned_to = updated_requisition.get('assigned_to_name', 'Unknown')
+                routing_reason = updated_requisition.get('routing_reason', 'Not specified')
+                
+                print(f"   - Current Status: {status}")
+                print(f"   - Assigned To: {assigned_to}")
+                print(f"   - Routing Reason: {routing_reason}")
+                
+                if status == "Assigned for Allocation" and "guna" in assigned_to.lower():
+                    workflow_results["routing_to_guna"] = True
+                    print("✅ Requisition correctly routed to Guna for allocation")
+                else:
+                    print("❌ Requisition not properly routed to Guna")
+                    print(f"   Expected: Status='Assigned for Allocation', Assigned to Guna")
+                    print(f"   Actual: Status='{status}', Assigned to '{assigned_to}'")
             else:
-                print("❌ Requisition not properly routed to Guna")
-                print(f"   Expected: Status='Assigned for Allocation', Assigned to Guna")
-                print(f"   Actual: Status='{status}', Assigned to '{assigned_to}'")
+                print("❌ Could not find our test requisition in the list")
         else:
-            print("❌ Failed to retrieve updated requisition")
+            print("❌ Failed to retrieve requisitions")
         
         # Phase 4: Asset Allocation by Guna
         print(f"\n🔧 PHASE 4: Asset Allocation by Guna")
