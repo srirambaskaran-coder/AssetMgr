@@ -7231,6 +7231,258 @@ def run_email_notification_investigation():
     
     return tester.tests_passed == tester.tests_run
 
+def run_routing_investigation():
+    """Run routing investigation to identify why Vishal's requisitions go to Anish instead of Guna"""
+    print("🔍 ROUTING INVESTIGATION: User Locations and Asset Manager Assignments")
+    print("=" * 80)
+    
+    tester = AssetInventoryAPITester()
+    
+    # Step 1: Login as Administrator
+    print("\n📋 STEP 1: Administrator Authentication")
+    if not tester.test_login("admin@company.com", "password123", "Administrator"):
+        print("❌ Failed to login as Administrator - cannot proceed with investigation")
+        return False
+    
+    # Step 2: Find Vishal's user details and location assignment
+    print("\n👤 STEP 2: Investigating Vishal's User Details")
+    success, users_response = tester.run_test(
+        "Get All Users to Find Vishal",
+        "GET",
+        "users",
+        200,
+        user_role="Administrator"
+    )
+    
+    vishal_user = None
+    if success:
+        for user in users_response:
+            if user.get('email') == 'integrumadm@gmail.com':
+                vishal_user = user
+                break
+        
+        if vishal_user:
+            print(f"   ✅ Found Vishal: {vishal_user.get('name', 'Unknown Name')}")
+            print(f"   📧 Email: {vishal_user.get('email')}")
+            print(f"   🆔 User ID: {vishal_user.get('id')}")
+            print(f"   📍 Location ID: {vishal_user.get('location_id', 'NOT SET')}")
+            print(f"   📍 Location Name: {vishal_user.get('location_name', 'NOT SET')}")
+            print(f"   👔 Roles: {vishal_user.get('roles', [])}")
+            print(f"   🏢 Designation: {vishal_user.get('designation', 'NOT SET')}")
+            print(f"   👨‍💼 Reporting Manager: {vishal_user.get('reporting_manager_name', 'NOT SET')}")
+        else:
+            print("   ❌ Vishal (integrumadm@gmail.com) not found in users list")
+    
+    # Step 3: Find Guna's user details and check Asset Manager role
+    print("\n👤 STEP 3: Investigating Guna's User Details")
+    guna_user = None
+    if success:
+        for user in users_response:
+            if user.get('email') == 'kiran.shetty@refur.app':
+                guna_user = user
+                break
+        
+        if guna_user:
+            print(f"   ✅ Found Guna: {guna_user.get('name', 'Unknown Name')}")
+            print(f"   📧 Email: {guna_user.get('email')}")
+            print(f"   🆔 User ID: {guna_user.get('id')}")
+            print(f"   📍 Location ID: {guna_user.get('location_id', 'NOT SET')}")
+            print(f"   📍 Location Name: {guna_user.get('location_name', 'NOT SET')}")
+            print(f"   👔 Roles: {guna_user.get('roles', [])}")
+            print(f"   🏢 Designation: {guna_user.get('designation', 'NOT SET')}")
+            is_asset_manager = 'Asset Manager' in guna_user.get('roles', [])
+            print(f"   🔧 Is Asset Manager: {'YES' if is_asset_manager else 'NO'}")
+        else:
+            print("   ❌ Guna (kiran.shetty@refur.app) not found in users list")
+    
+    # Step 4: Find Anish's user details and check Asset Manager role
+    print("\n👤 STEP 4: Investigating Anish's User Details")
+    anish_user = None
+    if success:
+        for user in users_response:
+            if user.get('email') == 'admin@refur.app':
+                anish_user = user
+                break
+        
+        if anish_user:
+            print(f"   ✅ Found Anish: {anish_user.get('name', 'Unknown Name')}")
+            print(f"   📧 Email: {anish_user.get('email')}")
+            print(f"   🆔 User ID: {anish_user.get('id')}")
+            print(f"   📍 Location ID: {anish_user.get('location_id', 'NOT SET')}")
+            print(f"   📍 Location Name: {anish_user.get('location_name', 'NOT SET')}")
+            print(f"   👔 Roles: {anish_user.get('roles', [])}")
+            print(f"   🏢 Designation: {anish_user.get('designation', 'NOT SET')}")
+            is_asset_manager = 'Asset Manager' in anish_user.get('roles', [])
+            is_administrator = 'Administrator' in anish_user.get('roles', [])
+            print(f"   🔧 Is Asset Manager: {'YES' if is_asset_manager else 'NO'}")
+            print(f"   👑 Is Administrator: {'YES' if is_administrator else 'NO'}")
+        else:
+            print("   ❌ Anish (admin@refur.app) not found in users list")
+    
+    # Step 5: Get all locations to understand location structure
+    print("\n🌍 STEP 5: Investigating All Locations")
+    success, locations_response = tester.run_test(
+        "Get All Locations",
+        "GET",
+        "locations",
+        200,
+        user_role="Administrator"
+    )
+    
+    if success:
+        print(f"   📍 Found {len(locations_response)} locations:")
+        for location in locations_response:
+            print(f"     - {location.get('name', 'Unknown')} (Code: {location.get('code', 'N/A')}, Country: {location.get('country', 'N/A')}, Status: {location.get('status', 'N/A')})")
+    
+    # Step 6: Get Asset Manager Location Assignments
+    print("\n🔗 STEP 6: Investigating Asset Manager Location Assignments")
+    success, assignments_response = tester.run_test(
+        "Get Asset Manager Location Assignments",
+        "GET",
+        "asset-manager-locations",
+        200,
+        user_role="Administrator"
+    )
+    
+    guna_assignments = []
+    anish_assignments = []
+    
+    if success:
+        print(f"   🔗 Found {len(assignments_response)} asset manager location assignments:")
+        
+        for assignment in assignments_response:
+            asset_manager_name = assignment.get('asset_manager_name', 'Unknown')
+            location_name = assignment.get('location_name', 'Unknown')
+            print(f"     - {asset_manager_name} manages {location_name}")
+            
+            if guna_user and assignment.get('asset_manager_id') == guna_user.get('id'):
+                guna_assignments.append(assignment)
+            if anish_user and assignment.get('asset_manager_id') == anish_user.get('id'):
+                anish_assignments.append(assignment)
+        
+        print(f"\n   🔧 Guna's Location Assignments: {len(guna_assignments)}")
+        for assignment in guna_assignments:
+            print(f"     - Manages: {assignment.get('location_name', 'Unknown')}")
+        
+        print(f"\n   🔧 Anish's Location Assignments: {len(anish_assignments)}")
+        for assignment in anish_assignments:
+            print(f"     - Manages: {assignment.get('location_name', 'Unknown')}")
+    
+    # Step 7: Get Asset Definitions to check Asset Manager assignments
+    print("\n💻 STEP 7: Investigating Asset Definition Assignments")
+    success, asset_defs_response = tester.run_test(
+        "Get Asset Definitions for Manager Assignments",
+        "GET",
+        "asset-definitions",
+        200,
+        user_role="Administrator"
+    )
+    
+    guna_asset_assignments = []
+    anish_asset_assignments = []
+    
+    if success:
+        print(f"   💻 Found {len(asset_defs_response)} asset definitions")
+        
+        for asset_def in asset_defs_response:
+            assigned_manager_id = asset_def.get('assigned_asset_manager_id')
+            assigned_manager_name = asset_def.get('assigned_asset_manager_name', 'Unassigned')
+            asset_code = asset_def.get('asset_code', 'Unknown')
+            location_name = asset_def.get('location_name', 'No Location')
+            
+            if assigned_manager_id:
+                print(f"     - Asset {asset_code}: Assigned to {assigned_manager_name} (Location: {location_name})")
+                
+                if guna_user and assigned_manager_id == guna_user.get('id'):
+                    guna_asset_assignments.append(asset_def)
+                if anish_user and assigned_manager_id == anish_user.get('id'):
+                    anish_asset_assignments.append(asset_def)
+        
+        print(f"\n   🔧 Guna's Asset Assignments: {len(guna_asset_assignments)}")
+        for asset_def in guna_asset_assignments:
+            print(f"     - Asset: {asset_def.get('asset_code')} in {asset_def.get('location_name', 'No Location')}")
+        
+        print(f"\n   🔧 Anish's Asset Assignments: {len(anish_asset_assignments)}")
+        for asset_def in anish_asset_assignments:
+            print(f"     - Asset: {asset_def.get('asset_code')} in {asset_def.get('location_name', 'No Location')}")
+    
+    # Step 8: Check recent requisitions to see routing behavior
+    print("\n📝 STEP 8: Investigating Recent Asset Requisitions Routing")
+    success, requisitions_response = tester.run_test(
+        "Get Asset Requisitions for Routing Analysis",
+        "GET",
+        "asset-requisitions",
+        200,
+        user_role="Administrator"
+    )
+    
+    vishal_requisitions = []
+    
+    if success:
+        print(f"   📝 Found {len(requisitions_response)} asset requisitions")
+        
+        for req in requisitions_response:
+            requested_by_name = req.get('requested_by_name', 'Unknown')
+            assigned_to_name = req.get('assigned_to_name', 'Unassigned')
+            status = req.get('status', 'Unknown')
+            routing_reason = req.get('routing_reason', 'No routing reason')
+            
+            if vishal_user and req.get('requested_by') == vishal_user.get('id'):
+                vishal_requisitions.append(req)
+                print(f"     - Vishal's Request: Status={status}, Assigned to={assigned_to_name}")
+                if routing_reason != 'No routing reason':
+                    print(f"       Routing Reason: {routing_reason}")
+        
+        print(f"\n   📋 Vishal's Total Requisitions: {len(vishal_requisitions)}")
+        for req in vishal_requisitions:
+            print(f"     - ID: {req.get('id', 'Unknown')[:8]}... Status: {req.get('status')} → {req.get('assigned_to_name', 'Unassigned')}")
+    
+    # Step 9: Analysis and Recommendations
+    print("\n🔍 STEP 9: ROUTING ANALYSIS AND RECOMMENDATIONS")
+    print("=" * 60)
+    
+    if vishal_user and guna_user and anish_user:
+        vishal_location = vishal_user.get('location_name', 'NOT SET')
+        guna_locations = [assignment.get('location_name') for assignment in guna_assignments]
+        anish_locations = [assignment.get('location_name') for assignment in anish_assignments]
+        
+        print(f"📍 LOCATION ANALYSIS:")
+        print(f"   - Vishal's Location: {vishal_location}")
+        print(f"   - Guna manages locations: {guna_locations}")
+        print(f"   - Anish manages locations: {anish_locations}")
+        
+        # Check if Vishal's location matches Guna's managed locations
+        location_match_guna = vishal_location in guna_locations if vishal_location != 'NOT SET' else False
+        location_match_anish = vishal_location in anish_locations if vishal_location != 'NOT SET' else False
+        
+        print(f"\n🎯 ROUTING LOGIC ANALYSIS:")
+        print(f"   - Vishal's location matches Guna's assignments: {'YES' if location_match_guna else 'NO'}")
+        print(f"   - Vishal's location matches Anish's assignments: {'YES' if location_match_anish else 'NO'}")
+        
+        print(f"\n💡 RECOMMENDATIONS:")
+        if vishal_location == 'NOT SET':
+            print("   1. ❗ CRITICAL: Vishal has no location assigned")
+            print("      → Assign Vishal to a location that Guna manages")
+        elif not location_match_guna and location_match_anish:
+            print("   1. 🔄 ROUTING ISSUE IDENTIFIED: Vishal's location is managed by Anish, not Guna")
+            print("      → Option A: Assign Guna to manage Vishal's location")
+            print("      → Option B: Move Vishal to a location that Guna manages")
+        elif not location_match_guna and not location_match_anish:
+            print("   1. ❗ LOCATION MISMATCH: Vishal's location is not managed by either Guna or Anish")
+            print("      → Assign Guna to manage Vishal's location")
+        else:
+            print("   1. ✅ Location assignments look correct - check asset definition assignments")
+    
+    # Print final results
+    print("\n" + "=" * 80)
+    print("🏁 ROUTING INVESTIGATION COMPLETED")
+    print("=" * 80)
+    print(f"📊 Total Tests Run: {tester.tests_run}")
+    print(f"✅ Tests Passed: {tester.tests_passed}")
+    print(f"❌ Tests Failed: {tester.tests_run - tester.tests_passed}")
+    
+    return tester.tests_passed == tester.tests_run
+
 if __name__ == "__main__":
     # Check if we want to run the focused tests
     import sys
