@@ -1294,7 +1294,7 @@ class AssetInventoryAPITester:
         success, email_test_response = self.run_test(
             "Test Email Send to Vishal",
             "POST",
-            "email-configurations/test",
+            "email-config/test",
             200,
             data=test_email_data,
             user_role="Guna"
