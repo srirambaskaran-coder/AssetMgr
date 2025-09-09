@@ -354,7 +354,7 @@ const AssetRequisitions = () => {
         
         <div className="flex items-center gap-2">
           <ExportButton 
-            data={filteredAssetRequisitions}
+            data={tableControls.filteredData}
             type="assetRequisitions"
             disabled={loading}
           />
