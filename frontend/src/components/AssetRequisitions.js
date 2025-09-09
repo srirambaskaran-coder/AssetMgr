@@ -382,52 +382,29 @@ const AssetRequisitions = () => {
         </div>
       </div>
 
-      {/* Filters */}
-      <Card>
-        <CardContent className="p-6">
-          <div className="flex flex-col lg:flex-row gap-4">
-            <div className="flex-1">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-                <Input
-                  placeholder="Search requisitions..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10"
-                />
-              </div>
-            </div>
-            <div className="flex items-center gap-2">
-              <Filter className="h-4 w-4 text-gray-500" />
-              <Select value={typeFilter} onValueChange={setTypeFilter}>
-                <SelectTrigger className="w-[180px]">
-                  <SelectValue placeholder="Filter by type" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Types</SelectItem>
-                  {assetTypes.map(type => (
-                    <SelectItem key={type.id} value={type.id}>{type.name}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger className="w-[200px]">
-                  <SelectValue placeholder="Filter by status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Status</SelectItem>
-                  <SelectItem value="Pending">Pending</SelectItem>
-                  <SelectItem value="Manager Approved">Manager Approved</SelectItem>
-                  <SelectItem value="HR Approved">HR Approved</SelectItem>
-                  <SelectItem value="Rejected">Rejected</SelectItem>
-                  <SelectItem value="Assigned for Allocation">Assigned for Allocation</SelectItem>
-                  <SelectItem value="Allocated">Allocated</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+      {/* Enhanced Filters */}
+      <AdvancedFilters
+        searchTerm={searchTerm}
+        onSearchChange={setSearchTerm}
+        filters={filters}
+        onFilterChange={(key, value) => {
+          if (key === 'status') setStatusFilter(value);
+          if (key === 'asset_type_id') setTypeFilter(value);
+        }}
+        dateFilters={dateFilters}
+        onDateFilterChange={tableControls.handleDateFilterChange}
+        onClearFilters={() => {
+          setSearchTerm('');
+          setStatusFilter('all');
+          setTypeFilter('all');
+          tableControls.clearFilters();
+        }}
+        activeFiltersCount={
+          (statusFilter !== 'all' ? 1 : 0) + 
+          (typeFilter !== 'all' ? 1 : 0) + 
+          Object.values(tableControls.dateFilters).filter(v => v).length
+        }
+      />
 
       {/* Asset Requisitions Table */}
       <Card>
