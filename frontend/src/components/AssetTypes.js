@@ -134,7 +134,7 @@ const AssetTypes = () => {
 
         <div className="flex items-center gap-2">
           <ExportButton 
-            data={filteredAssetTypes}
+            data={tableControls.filteredData}
             type="assetTypes"
             disabled={loading}
           />
