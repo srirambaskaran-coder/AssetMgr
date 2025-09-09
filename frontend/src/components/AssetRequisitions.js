@@ -196,35 +196,103 @@ const AssetRequisitions = () => {
     }
   };
 
-  // Filter asset requisitions based on search term and filters
-  const filteredAssetRequisitions = assetRequisitions.filter(requisition => {
-    const matchesSearch = 
-      requisition.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      requisition.asset_type_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      requisition.requested_for_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      requisition.requested_by_name?.toLowerCase().includes(searchTerm.toLowerCase());
-    
-    const matchesStatus = statusFilter === 'all' || requisition.status === statusFilter;
-    const matchesType = typeFilter === 'all' || requisition.asset_type_id === typeFilter;
-    
-    return matchesSearch && matchesStatus && matchesType;
+  // Enhanced table controls
+  const tableControls = useTableControls(assetRequisitions, {
+    initialItemsPerPage: 10,
+    searchFields: ['id', 'asset_type_name', 'requested_for_name', 'requested_by_name'],
+    sortableFields: {
+      id: { sortFn: (a, b, direction) => direction === 'asc' ? a.localeCompare(b) : b.localeCompare(a) },
+      asset_type_name: { sortFn: (a, b, direction) => direction === 'asc' ? a.localeCompare(b) : b.localeCompare(a) },
+      request_type: { sortFn: (a, b, direction) => direction === 'asc' ? a.localeCompare(b) : b.localeCompare(a) },
+      status: { sortFn: (a, b, direction) => direction === 'asc' ? a.localeCompare(b) : b.localeCompare(a) },
+      created_at: { sortFn: (a, b, direction) => {
+        const dateA = new Date(a);
+        const dateB = new Date(b);
+        return direction === 'asc' ? dateA - dateB : dateB - dateA;
+      }},
+      required_by_date: { sortFn: (a, b, direction) => {
+        const dateA = new Date(a);
+        const dateB = new Date(b);
+        return direction === 'asc' ? dateA - dateB : dateB - dateA;
+      }}
+    }
   });
 
-  // Pagination logic
-  const totalItems = filteredAssetRequisitions.length;
-  const totalPages = Math.ceil(totalItems / itemsPerPage);
-  const startIndex = (currentPage - 1) * itemsPerPage;
-  const endIndex = startIndex + itemsPerPage;
-  const paginatedAssetRequisitions = filteredAssetRequisitions.slice(startIndex, endIndex);
-
-  const handlePageChange = (page) => {
-    setCurrentPage(page);
-  };
-
-  // Reset to page 1 when filters change
+  // Update filters from legacy state to new format
   useEffect(() => {
-    setCurrentPage(1);
-  }, [searchTerm, statusFilter, typeFilter]);
+    const newFilters = {};
+    if (statusFilter && statusFilter !== 'all') {
+      newFilters.status = statusFilter;
+    }
+    if (typeFilter && typeFilter !== 'all') {
+      newFilters.asset_type_id = typeFilter;
+    }
+    
+    // Update table controls filters
+    Object.keys(newFilters).forEach(key => {
+      if (tableControls.filters[key] !== newFilters[key]) {
+        tableControls.handleFilterChange(key, newFilters[key]);
+      }
+    });
+  }, [statusFilter, typeFilter]);
+
+  // Sync legacy search with new controls
+  useEffect(() => {
+    if (tableControls.searchTerm !== searchTerm) {
+      tableControls.handleSearchChange(searchTerm);
+    }
+  }, [searchTerm]);
+
+  // Define filters for the advanced filter component
+  const filters = [
+    {
+      key: 'asset_type_id',
+      label: 'Asset Type',
+      placeholder: 'Filter by type',
+      width: 'w-[180px]',
+      value: typeFilter,
+      defaultValue: 'all',
+      options: [
+        { value: 'all', label: 'All Types' },
+        ...assetTypes.map(type => ({
+          value: type.id,
+          label: type.name
+        }))
+      ]
+    },
+    {
+      key: 'status',
+      label: 'Status',
+      placeholder: 'Filter by status',
+      width: 'w-[200px]',
+      value: statusFilter,
+      defaultValue: 'all',
+      options: [
+        { value: 'all', label: 'All Status' },
+        { value: 'Pending', label: 'Pending' },
+        { value: 'Manager Approved', label: 'Manager Approved' },
+        { value: 'HR Approved', label: 'HR Approved' },
+        { value: 'Rejected', label: 'Rejected' },
+        { value: 'Assigned for Allocation', label: 'Assigned for Allocation' },
+        { value: 'Allocated', label: 'Allocated' }
+      ]
+    }
+  ];
+
+  const dateFilters = [
+    {
+      key: 'created_at',
+      label: 'Request Date From',
+      placeholder: 'From date',
+      value: tableControls.dateFilters.created_at || ''
+    },
+    {
+      key: 'required_by_date',
+      label: 'Required Date From',
+      placeholder: 'Required from',
+      value: tableControls.dateFilters.required_by_date || ''
+    }
+  ];
 
   const getStatusIcon = (status) => {
     switch (status) {
