@@ -278,12 +278,13 @@ const AssetTypes = () => {
               </div>
               
               {/* Pagination */}
-              <DataPagination
-                currentPage={currentPage}
-                totalPages={Math.ceil(filteredAssetTypes.length / itemsPerPage)}
-                totalItems={filteredAssetTypes.length}
-                itemsPerPage={itemsPerPage}
-                onPageChange={handlePageChange}
+              <EnhancedPagination
+                currentPage={tableControls.currentPage}
+                totalPages={tableControls.totalPages}
+                totalItems={tableControls.totalItems}
+                itemsPerPage={tableControls.itemsPerPage}
+                onPageChange={tableControls.handlePageChange}
+                onItemsPerPageChange={tableControls.handleItemsPerPageChange}
               />
             </>
           )}
