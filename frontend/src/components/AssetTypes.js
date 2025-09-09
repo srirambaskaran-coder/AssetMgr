@@ -9,16 +9,17 @@ import { Switch } from './ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from './ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './ui/table';
-import { DataPagination } from './ui/data-pagination';
+import TableHeaderSortable from './ui/table-header-sortable';
+import AdvancedFilters from './ui/advanced-filters';
+import EnhancedPagination from './ui/enhanced-pagination';
 import ExportButton from './ui/export-button';
+import useTableControls from '../hooks/useTableControls';
 import { toast } from 'sonner';
 import { 
   Plus, 
-  Search, 
   Edit, 
   Trash2, 
-  Package,
-  Filter
+  Package
 } from 'lucide-react';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
