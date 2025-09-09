@@ -409,10 +409,10 @@ const AssetRequisitions = () => {
       {/* Asset Requisitions Table */}
       <Card>
         <CardHeader>
-          <CardTitle>Asset Requisitions ({filteredAssetRequisitions.length})</CardTitle>
+          <CardTitle>Asset Requisitions ({tableControls.totalItems})</CardTitle>
         </CardHeader>
         <CardContent>
-          {filteredAssetRequisitions.length === 0 ? (
+          {tableControls.totalItems === 0 ? (
             <div className="text-center py-8 text-gray-500">
               <ClipboardList className="mx-auto h-12 w-12 text-gray-400" />
               <h3 className="mt-2 text-sm font-semibold text-gray-900">No requisitions found</h3>
@@ -429,20 +429,56 @@ const AssetRequisitions = () => {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Requisition ID</TableHead>
-                      <TableHead>Asset Type</TableHead>
-                      <TableHead>Request Type</TableHead>
+                      <TableHeaderSortable
+                        sortKey="id"
+                        currentSort={tableControls.sortConfig}
+                        onSort={tableControls.handleSort}
+                      >
+                        Requisition ID
+                      </TableHeaderSortable>
+                      <TableHeaderSortable
+                        sortKey="asset_type_name"
+                        currentSort={tableControls.sortConfig}
+                        onSort={tableControls.handleSort}
+                      >
+                        Asset Type
+                      </TableHeaderSortable>
+                      <TableHeaderSortable
+                        sortKey="request_type"
+                        currentSort={tableControls.sortConfig}
+                        onSort={tableControls.handleSort}
+                      >
+                        Request Type
+                      </TableHeaderSortable>
                       <TableHead>Request For</TableHead>
                       <TableHead>Requested By</TableHead>
-                      <TableHead>Required By</TableHead>
-                      <TableHead>Status</TableHead>
+                      <TableHeaderSortable
+                        sortKey="required_by_date"
+                        currentSort={tableControls.sortConfig}
+                        onSort={tableControls.handleSort}
+                      >
+                        Required By
+                      </TableHeaderSortable>
+                      <TableHeaderSortable
+                        sortKey="status"
+                        currentSort={tableControls.sortConfig}
+                        onSort={tableControls.handleSort}
+                      >
+                        Status
+                      </TableHeaderSortable>
                       <TableHead>Assigned To</TableHead>
-                      <TableHead>Request Date</TableHead>
+                      <TableHeaderSortable
+                        sortKey="created_at"
+                        currentSort={tableControls.sortConfig}
+                        onSort={tableControls.handleSort}
+                      >
+                        Request Date
+                      </TableHeaderSortable>
                       <TableHead className="text-right">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {paginatedAssetRequisitions.map((requisition) => (
+                    {tableControls.data.map((requisition) => (
                       <TableRow key={requisition.id}>
                         <TableCell className="font-medium">{requisition.id}</TableCell>
                         <TableCell>
