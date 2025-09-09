@@ -169,20 +169,17 @@ const AssetTypes = () => {
       {/* Asset Types Table */}
       <Card>
         <CardHeader>
-          <div className="flex items-center">
-            <Package className="mr-2 h-5 w-5 text-blue-600" />
-            <CardTitle>Asset Types ({filteredAssetTypes.length})</CardTitle>
-          </div>
+          <CardTitle>Asset Types ({tableControls.totalItems})</CardTitle>
         </CardHeader>
         <CardContent>
-          {filteredAssetTypes.length === 0 ? (
-            <div className="text-center py-12">
+          {tableControls.totalItems === 0 ? (
+            <div className="text-center py-8 text-gray-500">
               <Package className="mx-auto h-12 w-12 text-gray-400" />
-              <h3 className="mt-2 text-lg font-medium text-gray-900">No asset types found</h3>
+              <h3 className="mt-2 text-sm font-semibold text-gray-900">No asset types found</h3>
               <p className="mt-1 text-sm text-gray-500">
-                {searchTerm || statusFilter !== 'all' 
-                  ? 'Try adjusting your search or filter criteria.' 
-                  : 'Get started by creating your first asset type.'
+                {tableControls.searchTerm || tableControls.activeFiltersCount > 0
+                  ? 'Try adjusting your search or filters.' 
+                  : 'Get started by creating a new asset type.'
                 }
               </p>
             </div>
@@ -192,17 +189,39 @@ const AssetTypes = () => {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Code</TableHead>
-                      <TableHead>Name</TableHead>
-                      <TableHead>Depreciation</TableHead>
-                      <TableHead>Asset Life</TableHead>
-                      <TableHead>Recovery Required</TableHead>
-                      <TableHead>Status</TableHead>
+                      <TableHeaderSortable
+                        sortKey="code"
+                        currentSort={tableControls.sortConfig}
+                        onSort={tableControls.handleSort}
+                      >
+                        Code
+                      </TableHeaderSortable>
+                      <TableHeaderSortable
+                        sortKey="name"
+                        currentSort={tableControls.sortConfig}
+                        onSort={tableControls.handleSort}
+                      >
+                        Name
+                      </TableHeaderSortable>
+                      <TableHeaderSortable
+                        sortKey="asset_life"
+                        currentSort={tableControls.sortConfig}
+                        onSort={tableControls.handleSort}
+                      >
+                        Asset Life (Months)
+                      </TableHeaderSortable>
+                      <TableHeaderSortable
+                        sortKey="status"
+                        currentSort={tableControls.sortConfig}
+                        onSort={tableControls.handleSort}
+                      >
+                        Status
+                      </TableHeaderSortable>
                       <TableHead className="text-right">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {paginatedAssetTypes.map((assetType) => (
+                    {tableControls.data.map((assetType) => (
                       <TableRow key={assetType.id}>
                         <TableCell className="font-medium">{assetType.code}</TableCell>
                         <TableCell>{assetType.name}</TableCell>
