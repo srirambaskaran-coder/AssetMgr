@@ -578,12 +578,13 @@ const AssetRequisitions = () => {
                 </Table>
               </div>
 
-              <DataPagination
-                currentPage={currentPage}
-                totalPages={totalPages}
-                totalItems={totalItems}
-                itemsPerPage={itemsPerPage}
-                onPageChange={handlePageChange}
+              <EnhancedPagination
+                currentPage={tableControls.currentPage}
+                totalPages={tableControls.totalPages}
+                totalItems={tableControls.totalItems}
+                itemsPerPage={tableControls.itemsPerPage}
+                onPageChange={tableControls.handlePageChange}
+                onItemsPerPageChange={tableControls.handleItemsPerPageChange}
               />
             </>
           )}
