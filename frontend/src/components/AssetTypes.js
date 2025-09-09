@@ -28,15 +28,21 @@ const API = `${BACKEND_URL}/api`;
 const AssetTypes = () => {
   const [assetTypes, setAssetTypes] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState('all');
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [selectedAssetType, setSelectedAssetType] = useState(null);
-  
-  // Pagination state
-  const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage] = useState(10);
+
+  // Enhanced table controls
+  const tableControls = useTableControls(assetTypes, {
+    initialItemsPerPage: 10,
+    searchFields: ['name', 'code'],
+    sortableFields: {
+      code: { sortFn: (a, b, direction) => direction === 'asc' ? a.localeCompare(b) : b.localeCompare(a) },
+      name: { sortFn: (a, b, direction) => direction === 'asc' ? a.localeCompare(b) : b.localeCompare(a) },
+      status: { sortFn: (a, b, direction) => direction === 'asc' ? a.localeCompare(b) : b.localeCompare(a) },
+      asset_life: { sortFn: (a, b, direction) => direction === 'asc' ? (a || 0) - (b || 0) : (b || 0) - (a || 0) }
+    }
+  });
 
   useEffect(() => {
     fetchAssetTypes();
