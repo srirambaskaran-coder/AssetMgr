@@ -14,9 +14,7 @@ import ExportButton from './ui/export-button';
 import { toast } from 'sonner';
 import { 
   Plus, 
-  Search, 
   ClipboardList,
-  Filter,
   Clock,
   CheckCircle,
   XCircle,
@@ -27,6 +25,10 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../App';
 import { useRole } from '../contexts/RoleContext';
+import TableHeaderSortable from './ui/table-header-sortable';
+import AdvancedFilters from './ui/advanced-filters';
+import EnhancedPagination from './ui/enhanced-pagination';
+import useTableControls from '../hooks/useTableControls';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
