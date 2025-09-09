@@ -644,7 +644,7 @@ metadata:
 
 test_plan:
   current_focus:
-    - "Complete Email Notification Workflow - Guna to Vishal Asset Allocation"
+    - "Enhanced Pagination, Sorting, and Filtering Functionality Testing"
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
