@@ -98,27 +98,22 @@ const AssetTypes = () => {
     }
   };
 
-  // Filter asset types first
-  const filteredAssetTypes = assetTypes.filter(assetType => {
-    const matchesSearch = assetType.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         assetType.code.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus = statusFilter === 'all' || assetType.status === statusFilter;
-    return matchesSearch && matchesStatus;
-  });
-
-  // Apply pagination to filtered results
-  const startIndex = (currentPage - 1) * itemsPerPage;
-  const endIndex = startIndex + itemsPerPage;
-  const paginatedAssetTypes = filteredAssetTypes.slice(startIndex, endIndex);
-
-  const handlePageChange = (page) => {
-    setCurrentPage(page);
-  };
-
-  // Reset to first page when search or filter changes
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [searchTerm, statusFilter]);
+  // Update table controls filters
+  const filters = [
+    {
+      key: 'status',
+      label: 'Status',
+      placeholder: 'Filter by status',
+      width: 'w-[150px]',
+      value: tableControls.filters.status || 'all',
+      defaultValue: 'all',
+      options: [
+        { value: 'all', label: 'All Status' },
+        { value: 'Active', label: 'Active' },
+        { value: 'Inactive', label: 'Inactive' }
+      ]
+    }
+  ];
 
   if (loading) {
     return (
